@@ -45,7 +45,7 @@ export function EventDetail() {
     setMeta('og:description', localized(event.description_en, event.description_hi, lang)?.substring(0, 160) || '')
     if (event.image_url) setMeta('og:image', event.image_url)
     setMeta('og:type', 'article')
-    return () => { document.title = 'Akhil Bharatiya Goshwami Sabha' }
+    return () => { document.title = 'Akhil Bharatiya Goswami Sabha' }
   }, [event, lang])
 
   if (loading) {

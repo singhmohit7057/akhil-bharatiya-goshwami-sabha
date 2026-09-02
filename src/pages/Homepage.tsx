@@ -299,7 +299,7 @@ export function Homepage() {
       <section className="py-14 px-4 bg-white">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-extrabold text-text-primary mb-3">Join Our Growing Community</h2>
-          <p className="text-text-secondary mb-6">Become a member of Akhil Bharatiya Goshwami Sabha and connect with the community across West Bengal.</p>
+          <p className="text-text-secondary mb-6">Become a member of Akhil Bharatiya Goswami Sabha and connect with the community across West Bengal.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/register" className="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition-colors">
               Register Now

@@ -52,7 +52,7 @@ export function VerifyMember() {
           </div>
           <h1 className="text-2xl font-bold text-text-primary mb-2">Verify Member</h1>
           <p className="text-sm text-text-secondary mb-6">
-            Enter a membership ID to verify if someone is a registered member of Akhil Bharatiya Goshwami Sabha.
+            Enter a membership ID to verify if someone is a registered member of Akhil Bharatiya Goswami Sabha.
           </p>
           <form onSubmit={handleSearch} className="flex gap-2 mb-4">
             <input
@@ -123,7 +123,7 @@ export function VerifyMember() {
             {isActive ? 'Verified Member' : 'Inactive Member'}
           </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Akhil Bharatiya Goshwami Sabha, Paschim Bangal
+            Akhil Bharatiya Goswami Sabha, Paschim Bangal
           </p>
         </div>
 
@@ -191,7 +191,7 @@ export function VerifyMember() {
           {/* Green footer */}
           <div className="bg-gradient-to-r from-[#1a6b3c] to-[#138808] px-6 py-3 text-center">
             <p className="text-[10px] text-white/80">
-              Verified by Akhil Bharatiya Goshwami Sabha, Paschim Bangal
+              Verified by Akhil Bharatiya Goswami Sabha, Paschim Bangal
             </p>
             <p className="text-[9px] text-white/60 mt-0.5">akhilbharatiyagoswami.com</p>
           </div>

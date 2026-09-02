@@ -43,6 +43,11 @@ export function useAuth() {
 
     if (!error && data) {
       setProfile(data as Profile)
+    } else if (error) {
+      await supabase.auth.signOut()
+      setUser(null)
+      setSession(null)
+      setProfile(null)
     }
     setLoading(false)
   }

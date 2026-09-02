@@ -24,7 +24,7 @@ export function Register() {
   const [showPassword, setShowPassword] = useState(false)
 
   if (authLoading) return null
-  if (user) return <Navigate to="/profile" replace />
+  if (!submitted && user) return <Navigate to="/profile" replace />
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -75,7 +75,6 @@ export function Register() {
 
     setSubmitted(true)
     setLoading(false)
-    await supabase.auth.signOut()
   }
 
   if (submitted) {
