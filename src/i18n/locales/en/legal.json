@@ -1,0 +1,58 @@
+{
+  "privacy": {
+    "title": "Privacy Policy",
+    "intro": "This Privacy Policy explains how Akhil Bharatiya Goshwami Sabha Paschim Bangal collects, uses, and protects your personal information.",
+    "collection": {
+      "title": "Information We Collect",
+      "description": "We collect information you provide during registration including your name, email, phone number, address, date of birth, gotra, and family details. We may also collect information about your business for the directory listing."
+    },
+    "usage": {
+      "title": "How We Use Your Information",
+      "description": "Your information is used to manage your membership, facilitate community events, provide matrimonial services to eligible members, and maintain the business directory. We do not sell your personal information to third parties."
+    },
+    "protection": {
+      "title": "Data Protection",
+      "description": "We implement appropriate security measures to protect your personal information. Access to member data is restricted to authorized administrators."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "description": "For any privacy concerns, please contact the organization's administration."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "intro": "By using this website, you agree to the following terms and conditions.",
+    "membership": {
+      "title": "Membership",
+      "description": "Membership is subject to admin approval. Members must provide accurate information and maintain respectful conduct within the community platform."
+    },
+    "conduct": {
+      "title": "Code of Conduct",
+      "description": "Members are expected to behave respectfully. Any misuse of the platform, false information, or inappropriate behavior may result in account suspension."
+    },
+    "content": {
+      "title": "Content",
+      "description": "Users are responsible for the content they submit. The organization reserves the right to remove any content that violates these terms."
+    },
+    "liability": {
+      "title": "Limitation of Liability",
+      "description": "The organization provides this platform as-is and makes no warranties regarding the accuracy of member-submitted information."
+    }
+  },
+  "cookies": {
+    "title": "Cookie Policy",
+    "intro": "This website uses cookies to improve your browsing experience.",
+    "what": {
+      "title": "What Are Cookies",
+      "description": "Cookies are small text files stored on your device when you visit our website. They help us remember your preferences and improve your experience."
+    },
+    "types": {
+      "title": "Cookies We Use",
+      "description": "We use essential cookies for authentication and session management, and preference cookies to remember your language selection."
+    },
+    "manage": {
+      "title": "Managing Cookies",
+      "description": "You can control cookies through your browser settings. Disabling essential cookies may affect the functionality of the website."
+    }
+  }
+}

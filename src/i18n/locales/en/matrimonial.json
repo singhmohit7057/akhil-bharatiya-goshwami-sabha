@@ -1,0 +1,27 @@
+{
+  "title": "Matrimonial",
+  "subtitle": "Find suitable matches within the Goshwami community",
+  "filters": {
+    "gender": "Gender",
+    "education": "Education",
+    "gotra": "Gotra",
+    "all": "All"
+  },
+  "profile": {
+    "height": "Height",
+    "education": "Education",
+    "occupation": "Occupation",
+    "income": "Income Range",
+    "maritalStatus": "Marital Status",
+    "about": "About",
+    "preferences": "Partner Preferences",
+    "unmarried": "Unmarried",
+    "divorced": "Divorced",
+    "widowed": "Widowed"
+  },
+  "create": "Create Matrimonial Profile",
+  "editProfile": "Edit Matrimonial Profile",
+  "noProfiles": "No matrimonial profiles available at this time.",
+  "executiveOnly": "Matrimonial section is available only for Executive Members. Please contact the administration for more details.",
+  "viewProfile": "View Profile"
+}

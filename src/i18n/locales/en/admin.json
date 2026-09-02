@@ -1,0 +1,58 @@
+{
+  "title": "Admin Dashboard",
+  "nav": {
+    "dashboard": "Dashboard",
+    "pendingApprovals": "Pending Approvals",
+    "allMembers": "All Members",
+    "events": "Events",
+    "donations": "Donations",
+    "directory": "Directory",
+    "matrimonial": "Matrimonial"
+  },
+  "dashboard": {
+    "pendingApprovals": "Pending Approvals",
+    "totalMembers": "Total Members",
+    "totalEvents": "Total Events",
+    "totalDonations": "Total Donations"
+  },
+  "members": {
+    "title": "Members",
+    "pending": "Pending Approvals",
+    "all": "All Members",
+    "assignRole": "Assign Role",
+    "toggleExecutive": "Toggle Executive Member",
+    "approveConfirm": "Approve this registration?",
+    "rejectConfirm": "Reject this registration?",
+    "approved": "Member approved successfully",
+    "rejected": "Member rejected",
+    "roleUpdated": "Role updated successfully",
+    "executiveUpdated": "Executive member status updated"
+  },
+  "events": {
+    "title": "Manage Events",
+    "addEvent": "Add Event",
+    "editEvent": "Edit Event",
+    "titleEn": "Title (English)",
+    "titleHi": "Title (Hindi)",
+    "descEn": "Description (English)",
+    "descHi": "Description (Hindi)",
+    "eventDate": "Event Date",
+    "endDate": "End Date",
+    "location": "Location",
+    "image": "Event Image",
+    "created": "Event created successfully",
+    "updated": "Event updated successfully",
+    "deleted": "Event deleted successfully"
+  },
+  "donations": {
+    "title": "Manage Donations",
+    "record": "Record Donation",
+    "selectMember": "Select Member",
+    "amount": "Amount (INR)",
+    "date": "Donation Date",
+    "purpose": "Purpose",
+    "paymentMethod": "Payment Method",
+    "transactionId": "Transaction ID",
+    "recorded": "Donation recorded successfully"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "hero": {
+    "title": "Akhil Bharatiya Goshwami Sabha",
+    "subtitle": "Paschim Bangal",
+    "description": "United for the welfare and progress of the Goshwami community in West Bengal",
+    "joinUs": "Join Our Community",
+    "learnMore": "Learn More"
+  },
+  "about": {
+    "title": "About Our Community",
+    "description": "The Akhil Bharatiya Goshwami Sabha Paschim Bangal is a community organization committed to preserving our cultural heritage, promoting education, and fostering unity among members of the Goshwami community across West Bengal.",
+    "readMore": "Read More About Us"
+  },
+  "events": {
+    "title": "Upcoming Events",
+    "noEvents": "No upcoming events at this time.",
+    "viewAll": "View All Events"
+  },
+  "stats": {
+    "members": "Members",
+    "cities": "Cities",
+    "events": "Events Organized",
+    "years": "Years of Service"
+  },
+  "features": {
+    "title": "What We Offer",
+    "community": "Community Network",
+    "communityDesc": "Connect with Goshwami families across West Bengal",
+    "matrimonial": "Matrimonial Services",
+    "matrimonialDesc": "Find suitable matches within the community",
+    "business": "Business Directory",
+    "businessDesc": "Support community businesses and professionals",
+    "events": "Events & Gatherings",
+    "eventsDesc": "Participate in cultural and community events"
+  }
+}

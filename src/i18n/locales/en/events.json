@@ -1,0 +1,10 @@
+{
+  "title": "Events",
+  "upcoming": "Upcoming Events",
+  "past": "Past Events",
+  "noUpcoming": "No upcoming events scheduled.",
+  "noPast": "No past events to display.",
+  "date": "Date",
+  "location": "Location",
+  "details": "Event Details"
+}

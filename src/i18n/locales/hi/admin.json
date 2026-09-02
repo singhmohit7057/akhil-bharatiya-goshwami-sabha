@@ -1,0 +1,58 @@
+{
+  "title": "प्रशासन डैशबोर्ड",
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "pendingApprovals": "लंबित अनुमोदन",
+    "allMembers": "सभी सदस्य",
+    "events": "कार्यक्रम",
+    "donations": "दान",
+    "directory": "निर्देशिका",
+    "matrimonial": "वैवाहिक"
+  },
+  "dashboard": {
+    "pendingApprovals": "लंबित अनुमोदन",
+    "totalMembers": "कुल सदस्य",
+    "totalEvents": "कुल कार्यक्रम",
+    "totalDonations": "कुल दान"
+  },
+  "members": {
+    "title": "सदस्य",
+    "pending": "लंबित अनुमोदन",
+    "all": "सभी सदस्य",
+    "assignRole": "पद निर्धारित करें",
+    "toggleExecutive": "कार्यकारी सदस्य टॉगल करें",
+    "approveConfirm": "इस पंजीकरण को स्वीकृत करें?",
+    "rejectConfirm": "इस पंजीकरण को अस्वीकार करें?",
+    "approved": "सदस्य सफलतापूर्वक स्वीकृत",
+    "rejected": "सदस्य अस्वीकृत",
+    "roleUpdated": "पद सफलतापूर्वक अपडेट किया गया",
+    "executiveUpdated": "कार्यकारी सदस्य स्थिति अपडेट की गई"
+  },
+  "events": {
+    "title": "कार्यक्रम प्रबंधन",
+    "addEvent": "कार्यक्रम जोड़ें",
+    "editEvent": "कार्यक्रम संपादित करें",
+    "titleEn": "शीर्षक (अंग्रेजी)",
+    "titleHi": "शीर्षक (हिंदी)",
+    "descEn": "विवरण (अंग्रेजी)",
+    "descHi": "विवरण (हिंदी)",
+    "eventDate": "कार्यक्रम तिथि",
+    "endDate": "समाप्ति तिथि",
+    "location": "स्थान",
+    "image": "कार्यक्रम छवि",
+    "created": "कार्यक्रम सफलतापूर्वक बनाया गया",
+    "updated": "कार्यक्रम सफलतापूर्वक अपडेट किया गया",
+    "deleted": "कार्यक्रम सफलतापूर्वक हटाया गया"
+  },
+  "donations": {
+    "title": "दान प्रबंधन",
+    "record": "दान दर्ज करें",
+    "selectMember": "सदस्य चुनें",
+    "amount": "राशि (INR)",
+    "date": "दान तिथि",
+    "purpose": "उद्देश्य",
+    "paymentMethod": "भुगतान विधि",
+    "transactionId": "लेनदेन आईडी",
+    "recorded": "दान सफलतापूर्वक दर्ज किया गया"
+  }
+}

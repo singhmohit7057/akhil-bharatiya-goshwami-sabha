@@ -1,0 +1,74 @@
+{
+  "title": "About Us",
+  "history": {
+    "title": "Our History",
+    "description": "The Akhil Bharatiya Goshwami Sabha has been serving the Goshwami community for decades, working towards the social, cultural, and economic upliftment of our community members."
+  },
+  "goswami": {
+    "title": "The Goswami Samaj",
+    "subtitle": "Also known as the Dashnami Gosavi or Gosai community",
+    "intro": "The Goswami Samaj is a distinguished community with deep roots in Indian spiritual and monastic traditions.",
+    "etymology": {
+      "title": "Etymology & Meaning",
+      "gau": "Gau",
+      "gauDesc": "Refers to the five senses (indriyas)",
+      "swami": "Swami",
+      "swamiDesc": "Means master or controller",
+      "goswami": "Goswami",
+      "goswamiDesc": "Signifies someone who has mastered and controlled their senses"
+    },
+    "origin": {
+      "title": "Origins & The Ten Orders",
+      "description": "Adi Shankaracharya established four primary mathas (monasteries) across India and appointed disciples whose lineages formed ten distinct names (Dashnami), representing different paths of asceticism and scholarship."
+    },
+    "tenOrders": {
+      "title": "Ten Orders (Dashnami)",
+      "description": "Members of the Goswami community belong to ten distinct monastic sub-traditions, each bearing a unique name:",
+      "orders": "Giri, Puri, Bharti, Ban, Aranya, Sagar, Aashram, Saraswati, Tirth, and Parwat/Yogi",
+      "note": "These ten names (Dashnami) represent the diverse branches of the monastic order established by Adi Shankaracharya, each preserving unique traditions while sharing a common spiritual foundation."
+    },
+    "mathas": {
+      "title": "The Four Sacred Mathas",
+      "north": {
+        "name": "Jyotirmath (North)",
+        "orders": "Giri, Parvat, Sagar"
+      },
+      "west": {
+        "name": "Dwarka (West)",
+        "orders": "Tirtha, Ashram"
+      },
+      "east": {
+        "name": "Puri (East)",
+        "orders": "Ban, Aranya"
+      },
+      "south": {
+        "name": "Sringeri (South)",
+        "orders": "Saraswati, Bharati, Puri"
+      }
+    },
+    "divisions": {
+      "title": "Lifestyle Divisions",
+      "description": "The Goswami community traditionally comprises two main lifestyle divisions:",
+      "mathdhari": {
+        "title": "Mathdhari",
+        "description": "Monastery dwellers who dedicate their lives to spiritual practice, scholarship, and the preservation of ancient knowledge."
+      },
+      "gharbari": {
+        "title": "Gharbari",
+        "description": "Householders who live within society, many of whom serve as family priests (purohits), teachers (gurus), and community leaders — carrying forward the spiritual traditions into everyday life."
+      }
+    }
+  },
+  "mission": {
+    "title": "Our Mission",
+    "description": "To unite the Goshwami community, preserve our cultural heritage, promote education, and create opportunities for the holistic development of every member."
+  },
+  "vision": {
+    "title": "Our Vision",
+    "description": "A progressive, empowered, and united Goshwami community that contributes meaningfully to nation-building while preserving its rich cultural traditions."
+  },
+  "leadership": {
+    "title": "Our Leadership",
+    "description": "Meet the dedicated leaders who guide our organization"
+  }
+}

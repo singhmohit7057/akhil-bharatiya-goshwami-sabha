@@ -1,0 +1,52 @@
+{
+  "title": "My Profile",
+  "edit": "Edit Profile",
+  "tabs": {
+    "profile": "Profile",
+    "edit": "Edit Profile",
+    "family": "Family Members",
+    "business": "Business Details",
+    "donations": "My Donations",
+    "matrimonial": "Matrimonial"
+  },
+  "personalInfo": "Personal Information",
+  "contactInfo": "Contact Information",
+  "familyMembers": {
+    "title": "Family Members",
+    "addNew": "Add Family Member",
+    "name": "Name",
+    "relation": "Relation",
+    "dob": "Date of Birth",
+    "gender": "Gender",
+    "occupation": "Occupation",
+    "noMembers": "No family members added yet.",
+    "editMember": "Edit Member",
+    "deleteMember": "Delete Member",
+    "confirmDelete": "Are you sure you want to delete this family member?"
+  },
+  "businessDetails": {
+    "title": "Job / Business Details",
+    "isEmployed": "Employment Type",
+    "employed": "Employed",
+    "businessOwner": "Business Owner",
+    "businessName": "Business Name",
+    "employerName": "Employer Name",
+    "sector": "Industry / Sector",
+    "designation": "Designation / Role",
+    "location": "Location",
+    "description": "Description",
+    "website": "Website",
+    "phone": "Phone",
+    "noDetails": "No business details added yet."
+  },
+  "donations": {
+    "title": "My Donations",
+    "amount": "Amount",
+    "date": "Date",
+    "purpose": "Purpose",
+    "receipt": "Receipt",
+    "noDonations": "No donation records found."
+  },
+  "updateSuccess": "Profile updated successfully!",
+  "updateError": "Failed to update profile. Please try again."
+}

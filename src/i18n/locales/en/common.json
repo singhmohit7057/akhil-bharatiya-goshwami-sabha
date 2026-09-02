@@ -1,0 +1,62 @@
+{
+  "orgName": "Akhil Bharatiya Goshwami Sabha",
+  "orgSubtitle": "Paschim Bangal",
+  "nav": {
+    "home": "Home",
+    "about": "About Us",
+    "events": "Events",
+    "directory": "Businesses",
+    "matrimonial": "Matrimonial",
+    "login": "Login",
+    "register": "Register",
+    "profile": "My Profile",
+    "admin": "Admin",
+    "logout": "Logout"
+  },
+  "footer": {
+    "description": "A community organization dedicated to the welfare and development of the Goshwami community in West Bengal.",
+    "quickLinks": "Quick Links",
+    "contact": "Contact Us",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "cookiePolicy": "Cookie Policy",
+    "rights": "All rights reserved."
+  },
+  "buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "viewAll": "View All",
+    "back": "Back",
+    "loading": "Loading...",
+    "approve": "Approve",
+    "reject": "Reject",
+    "viewDetails": "View Details"
+  },
+  "labels": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "pincode": "Pincode",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "dateOfBirth": "Date of Birth",
+    "gotra": "Gotra",
+    "role": "Role",
+    "status": "Status",
+    "actions": "Actions",
+    "noData": "No data available",
+    "language": "Language"
+  }
+}
