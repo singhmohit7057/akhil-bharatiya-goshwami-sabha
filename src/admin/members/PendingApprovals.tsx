@@ -56,9 +56,9 @@ export function PendingApprovals() {
 
   async function handleReject(id: string) {
     if (!confirm(t('members.rejectConfirm'))) return
-    const { error } = await supabase.from('profiles').update({ account_status: 'rejected' }).eq('id', id)
-    if (error) { toast.error('Failed'); return }
-    toast.success(t('members.rejected'))
+    const { error } = await supabase.rpc('delete_user_completely', { user_id: id })
+    if (error) { toast.error('Failed to reject'); return }
+    toast.success('Registration rejected & deleted')
     fetchPending()
   }
 
@@ -75,24 +75,33 @@ export function PendingApprovals() {
       ) : (
         <div className="space-y-3">
           {members.map((m) => (
-            <div key={m.id} className="bg-white rounded-xl border border-border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <p className="font-medium text-text-primary">{m.full_name}</p>
-                <p className="text-sm text-text-secondary">{m.email} {m.phone ? `· ${m.phone}` : ''}</p>
-                <p className="text-xs text-text-secondary mt-1">
-                  {m.city}{m.state ? `, ${m.state}` : ''} · Registered {formatDate(m.created_at, lang)}
-                </p>
-              </div>
-              {superAdmin && (
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => handleApprove(m.id)} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
-                    <Check className="w-4 h-4" /> {t('common:buttons.approve')}
-                  </button>
-                  <button onClick={() => handleReject(m.id)} className="flex items-center gap-1 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">
-                    <X className="w-4 h-4" /> {t('common:buttons.reject')}
-                  </button>
+            <div key={m.id} className="bg-white rounded-xl border border-border p-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="font-medium text-text-primary">{m.full_name}</p>
+                  <p className="text-sm text-text-secondary">{m.email}</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-text-secondary">
+                    {m.phone && <span>Phone: <strong className="text-text-primary">{m.phone}</strong></span>}
+                    {m.gender && <span>Gender: <strong className="text-text-primary capitalize">{m.gender}</strong></span>}
+                    {m.gotra && <span>Gotra: <strong className="text-text-primary">{m.gotra}</strong></span>}
+                    {m.city && <span>City: <strong className="text-text-primary">{m.city}</strong></span>}
+                    {m.state && <span>State: <strong className="text-text-primary">{m.state}</strong></span>}
+                  </div>
+                  <p className="text-[11px] text-text-secondary mt-2">
+                    Registered {formatDate(m.created_at, lang)}
+                  </p>
                 </div>
-              )}
+                {superAdmin && (
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => handleApprove(m.id)} className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
+                      <Check className="w-4 h-4" /> {t('common:buttons.approve')}
+                    </button>
+                    <button onClick={() => handleReject(m.id)} className="flex items-center gap-1 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100">
+                      <X className="w-4 h-4" /> {t('common:buttons.reject')}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

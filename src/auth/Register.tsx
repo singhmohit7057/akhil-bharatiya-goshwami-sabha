@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { UserPlus, CheckCircle, Clock } from 'lucide-react'
+import { UserPlus, CheckCircle, Clock, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
@@ -21,6 +21,7 @@ export function Register() {
   })
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   if (authLoading) return null
   if (user) return <Navigate to="/profile" replace />
@@ -31,6 +32,12 @@ export function Register() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+    if (!emailRegex.test(form.email)) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+
     setLoading(true)
 
     const { data, error } = await supabase.auth.signUp({
@@ -50,15 +57,23 @@ export function Register() {
     }
 
     if (data.user) {
-      await supabase.from('profiles').update({
-        phone: form.phone || null,
-        gender: form.gender || null,
-        gotra: form.gotra || null,
-        city: form.city || null,
-        state: form.state || null,
-      }).eq('id', data.user.id)
+      const updateProfile = async (retries = 3) => {
+        const { error: updateError } = await supabase.from('profiles').update({
+          phone: form.phone || null,
+          gender: form.gender || null,
+          gotra: form.gotra || null,
+          city: form.city || null,
+          state: form.state || null,
+        }).eq('id', data.user!.id)
+        if (updateError && retries > 0) {
+          await new Promise((r) => setTimeout(r, 500))
+          return updateProfile(retries - 1)
+        }
+      }
+      await updateProfile()
     }
 
+    await supabase.auth.signOut()
     setSubmitted(true)
     setLoading(false)
   }
@@ -117,7 +132,7 @@ export function Register() {
             </div>
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">{t('register.phone')}</label>
-              <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} />
+              <input type="tel" maxLength={10} value={form.phone} onChange={(e) => updateField('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} className={inputClass} />
             </div>
           </div>
 
@@ -128,7 +143,12 @@ export function Register() {
 
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">{t('register.password')} *</label>
-            <input type="password" required minLength={6} value={form.password} onChange={(e) => updateField('password', e.target.value)} className={inputClass} />
+            <div className="relative">
+              <input type={showPassword ? 'text' : 'password'} required minLength={6} value={form.password} onChange={(e) => updateField('password', e.target.value)} className={`${inputClass} pr-10`} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-4 gap-3">

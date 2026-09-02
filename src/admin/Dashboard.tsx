@@ -79,7 +79,7 @@ export function AdminDashboard() {
 
   async function handleReject(member: Profile) {
     if (!confirm(`Reject ${member.full_name}?`)) return
-    const { error } = await supabase.from('profiles').update({ account_status: 'rejected' }).eq('id', member.id)
+    const { error } = await supabase.rpc('delete_user_completely', { user_id: member.id })
     if (error) { toast.error('Failed'); return }
     toast.success('Rejected')
     setPendingMembers(pendingMembers.filter((m) => m.id !== member.id))
