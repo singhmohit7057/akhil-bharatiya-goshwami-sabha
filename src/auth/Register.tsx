@@ -73,9 +73,9 @@ export function Register() {
       await updateProfile()
     }
 
-    await supabase.auth.signOut()
     setSubmitted(true)
     setLoading(false)
+    await supabase.auth.signOut()
   }
 
   if (submitted) {
