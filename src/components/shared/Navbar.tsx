@@ -21,6 +21,7 @@ export function Navbar() {
   ]
 
   navLinks.push({ to: '/matrimonial', label: t('nav.matrimonial') })
+  navLinks.push({ to: '/gallery', label: 'Gallery' })
 
   function isActive(path: string) {
     if (path === '/') return location.pathname === '/'

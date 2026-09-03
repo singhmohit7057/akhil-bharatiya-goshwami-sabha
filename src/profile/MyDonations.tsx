@@ -28,7 +28,7 @@ function getExpiryDate(dateStr: string): string {
 function generateReceipt(donation: Donation, profileName: string, type: 'donation' | 'membership') {
   const receiptContent = `
 ════════════════════════════════════════════
-      AKHIL BHARATIYA GOSHWAMI SABHA
+      AKHIL BHARATIYA GOSWAMI SABHA
             PASCHIM BANGAL
 ════════════════════════════════════════════
 

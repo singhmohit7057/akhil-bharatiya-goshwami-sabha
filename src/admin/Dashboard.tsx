@@ -40,7 +40,7 @@ export function AdminDashboard() {
       supabase.from('profiles').select('*').eq('account_status', 'pending_approval').order('created_at', { ascending: false }).limit(5),
       supabase.from('events').select('*').gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(3),
       supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name)').order('donation_date', { ascending: false }).limit(5),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', monthStart.toISOString()),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').gte('created_at', monthStart.toISOString()),
     ]).then(([pendingRes, totalRes, execRes, eventsRes, donationsRes, bizRes, matRes, pendingList, eventList, paymentList, newMonthRes]) => {
       const totalDonations = (donationsRes.data || []).reduce((sum: number, d: { amount: number }) => sum + Number(d.amount), 0)
       setStats({

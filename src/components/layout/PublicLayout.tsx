@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { Navbar } from '../shared/Navbar'
 import { Footer } from '../shared/Footer'
+import { PromoPopup } from '../shared/PromoPopup'
 
 export function PublicLayout() {
   return (
@@ -10,6 +11,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
+      <PromoPopup />
     </div>
   )
 }

@@ -20,8 +20,11 @@ import { TermsOfService } from './pages/TermsOfService'
 import { CookiePolicy } from './pages/CookiePolicy'
 import { NotFound } from './pages/NotFound'
 import { VerifyMember } from './pages/VerifyMember'
-import { Unauthorized } from './pages/Unauthorized'
 import { PendingApproval } from './pages/PendingApproval'
+import { Members } from './pages/Members'
+import { Gallery } from './pages/Gallery'
+import { GalleryAlbum } from './pages/GalleryAlbum'
+import { Souvenirs } from './pages/Souvenirs'
 
 import { Login } from './auth/Login'
 import { Register } from './auth/Register'
@@ -42,22 +45,20 @@ import { AddPayment } from './admin/members/AddPayment'
 import { AllMembers } from './admin/members/AllMembers'
 import { AddMember } from './admin/members/AddMember'
 import { MemberDetail } from './admin/members/MemberDetail'
-import { ManageEvents } from './admin/events/ManageEvents'
-import { AddEvent } from './admin/events/AddEvent'
-import { EditEvent } from './admin/events/EditEvent'
-import { ManageDonations } from './admin/donations/ManageDonations'
-import { RecordDonation } from './admin/donations/RecordDonation'
+import { AddEvent } from './admin/yearly-planner/AddEvent'
+import { EditEvent } from './admin/yearly-planner/EditEvent'
 import { ManageDirectory } from './admin/directory/ManageDirectory'
 import { AddBusiness } from './admin/directory/AddBusiness'
 import { EditBusiness } from './admin/directory/EditBusiness'
 import { ManageMatrimonial } from './admin/matrimonial/ManageMatrimonial'
 import { AddMatrimonial } from './admin/matrimonial/AddMatrimonial'
+import { EditMatrimonial } from './admin/matrimonial/EditMatrimonial'
 import { SubAdmins } from './admin/sub-admins/SubAdmins'
 import { AddSubAdmin } from './admin/sub-admins/AddSubAdmin'
 import { Designations } from './admin/designations/Designations'
 import { YearlyPlanner } from './admin/yearly-planner/YearlyPlanner'
-import { CompanyMaster } from './admin/company-master/CompanyMaster'
 import { Souvenir } from './admin/souvenir/Souvenir'
+import { ManageGallery } from './admin/gallery/ManageGallery'
 import { PromoPopups } from './admin/promo-popups/PromoPopups'
 
 export default function App() {
@@ -71,6 +72,10 @@ export default function App() {
         <Route path="/" element={<PublicLayout />}>
           <Route index element={<Homepage />} />
           <Route path="about" element={<About />} />
+          <Route path="members" element={<Members />} />
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="gallery/:id" element={<GalleryAlbum />} />
+          <Route path="souvenirs" element={<Souvenirs />} />
           <Route path="events" element={<Events />} />
           <Route path="events/:id" element={<EventDetail />} />
           <Route path="businesses" element={<BusinessDirectory />} />
@@ -78,7 +83,6 @@ export default function App() {
           <Route path="terms-of-service" element={<TermsOfService />} />
           <Route path="cookie-policy" element={<CookiePolicy />} />
           <Route path="pending-approval" element={<PendingApproval />} />
-          <Route path="unauthorized" element={<Unauthorized />} />
           <Route path="verify" element={<VerifyMember />} />
           <Route path="verify/:memberId" element={<VerifyMember />} />
         </Route>
@@ -140,11 +144,11 @@ export default function App() {
           <Route path="members" element={<AllMembers />} />
           <Route path="members/add" element={<AddMember />} />
           <Route path="members/pending" element={<PendingApprovals />} />
-          <Route path="members/payments" element={<PaymentHistory />} />
 
           {/* Payments */}
           <Route path="payments" element={<PaymentHistory />} />
           <Route path="payments/add" element={<AddPayment />} />
+          <Route path="payments/edit/:id" element={<AddPayment />} />
           <Route path="members/:id" element={<MemberDetail />} />
 
           {/* Designations */}
@@ -153,6 +157,7 @@ export default function App() {
           {/* Matrimonial */}
           <Route path="matrimonial" element={<ManageMatrimonial />} />
           <Route path="matrimonial/add" element={<AddMatrimonial />} />
+          <Route path="matrimonial/edit/:id" element={<EditMatrimonial />} />
 
           {/* Business / Directory */}
           <Route path="business" element={<ManageDirectory />} />
@@ -163,20 +168,13 @@ export default function App() {
           <Route path="yearly-planner" element={<YearlyPlanner />} />
           <Route path="yearly-planner/add" element={<AddEvent />} />
 
-          {/* Company Master */}
-          <Route path="company-master" element={<CompanyMaster />} />
-          <Route path="company-master/add" element={<CompanyMaster />} />
-
           {/* Events */}
-          <Route path="events" element={<ManageEvents />} />
-          <Route path="events/add" element={<AddEvent />} />
           <Route path="events/:id/edit" element={<EditEvent />} />
 
           {/* Finance & Promotions */}
           <Route path="souvenir" element={<Souvenir />} />
+          <Route path="gallery" element={<ManageGallery />} />
           <Route path="promo-popups" element={<PromoPopups />} />
-          <Route path="donations" element={<ManageDonations />} />
-          <Route path="donations/add" element={<RecordDonation />} />
         </Route>
 
         {/* 404 */}

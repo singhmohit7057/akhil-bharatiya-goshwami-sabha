@@ -53,6 +53,8 @@ export function Login() {
             <label className="block text-sm font-medium text-text-primary mb-1">{t('login.email')}</label>
             <input
               type="email"
+              name="email"
+              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -65,6 +67,8 @@ export function Login() {
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password"
+                autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

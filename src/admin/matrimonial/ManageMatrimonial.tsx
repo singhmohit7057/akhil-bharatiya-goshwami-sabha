@@ -30,7 +30,7 @@ export function ManageMatrimonial() {
   async function fetchProfiles() {
     const { data } = await supabase
       .from('matrimonial_profiles')
-      .select('*, profiles(full_name, email, city, gender, date_of_birth, profile_photo_url)')
+      .select('*, profiles(full_name, email, city, gender, date_of_birth, profile_photo_url), matrimonial_photos(photo_url)')
       .order('created_at', { ascending: false })
     setProfiles((data as MpWithProfile[]) || [])
     setLoading(false)
@@ -43,10 +43,12 @@ export function ManageMatrimonial() {
   }
 
   const filtered = profiles.filter((mp) => {
-    const matchSearch = !search || mp.profiles?.full_name?.toLowerCase().includes(search.toLowerCase())
+    const name = (mp as any).candidate_name || mp.profiles?.full_name || ''
+    const gender = (mp as any).candidate_gender || mp.profiles?.gender
+    const matchSearch = !search || name.toLowerCase().includes(search.toLowerCase())
     const matchStatus = !statusFilter ||
-      (statusFilter === 'male' && mp.is_active && mp.profiles?.gender === 'male') ||
-      (statusFilter === 'female' && mp.is_active && mp.profiles?.gender === 'female') ||
+      (statusFilter === 'male' && mp.is_active && gender === 'male') ||
+      (statusFilter === 'female' && mp.is_active && gender === 'female') ||
       (statusFilter === 'inactive' && !mp.is_active)
     return matchSearch && matchStatus
   })
@@ -54,8 +56,9 @@ export function ManageMatrimonial() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
   const total = profiles.length
-  const activeMale = profiles.filter((p) => p.is_active && p.profiles?.gender === 'male').length
-  const activeFemale = profiles.filter((p) => p.is_active && p.profiles?.gender === 'female').length
+  const getGender = (p: any) => p.candidate_gender || p.profiles?.gender
+  const activeMale = profiles.filter((p) => p.is_active && getGender(p) === 'male').length
+  const activeFemale = profiles.filter((p) => p.is_active && getGender(p) === 'female').length
   const inactive = profiles.filter((p) => !p.is_active).length
 
   return (
@@ -126,24 +129,24 @@ export function ManageMatrimonial() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                          {mp.profiles?.profile_photo_url ? (
-                            <img src={mp.profiles.profile_photo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                          {(mp as any).matrimonial_photos?.[0]?.photo_url ? (
+                            <img src={(mp as any).matrimonial_photos[0].photo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                           ) : (
                             <User className="w-4 h-4 text-primary" />
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-text-primary">{mp.profiles?.full_name}</p>
+                          <p className="font-medium text-text-primary">{(mp as any).candidate_name || mp.profiles?.full_name}</p>
                           <p className="text-xs text-text-secondary">
-                            {mp.profiles?.gender === 'male' ? 'M' : 'F'}
-                            {mp.profiles?.date_of_birth ? ` · ${calculateAge(mp.profiles.date_of_birth)}y` : ''}
+                            {((mp as any).candidate_gender || mp.profiles?.gender) === 'male' ? 'M' : 'F'}
+                            {((mp as any).date_of_birth || mp.profiles?.date_of_birth) ? ` · ${calculateAge((mp as any).date_of_birth || mp.profiles?.date_of_birth)}y` : ''}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-text-secondary">{mp.education || '—'}</td>
                     <td className="px-4 py-3 text-text-secondary">{mp.occupation || '—'}</td>
-                    <td className="px-4 py-3 text-text-secondary">{mp.profiles?.city || '—'}</td>
+                    <td className="px-4 py-3 text-text-secondary">{(mp as any).city || mp.profiles?.city || '—'}</td>
                     <td className="px-4 py-3">
                       {mp.is_active ? (
                         <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Visible</span>

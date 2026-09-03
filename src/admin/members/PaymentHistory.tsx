@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { IndianRupee, Crown, Search, Plus, X } from 'lucide-react'
+import { IndianRupee, Crown, Search, Plus, X, Edit2, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
@@ -25,6 +25,7 @@ export function PaymentHistory() {
   const [showForm, setShowForm] = useState(false)
   const [paymentType, setPaymentType] = useState<'donation' | 'membership'>('donation')
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({
     user_id: '',
     amount: '',
@@ -49,6 +50,15 @@ export function PaymentHistory() {
     setForm({ user_id: '', amount: '', donation_date: new Date().toISOString().split('T')[0], purpose: '', payment_method: '', transaction_id: '' })
     setShowForm(false)
     setPaymentType('donation')
+    setEditingId(null)
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Delete this payment record?')) return
+    await supabase.from('donations').delete().eq('id', id)
+    toast.success('Payment deleted')
+    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email)').order('donation_date', { ascending: false })
+    if (data) setPayments(data as PaymentWithProfile[])
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -58,7 +68,7 @@ export function PaymentHistory() {
     const purpose = paymentType === 'membership' ? 'Executive Membership' : (form.purpose || 'General Donation')
     const amount = paymentType === 'membership' ? MEMBERSHIP_FEE : parseFloat(form.amount)
 
-    const { error } = await supabase.from('donations').insert({
+    const payload = {
       user_id: form.user_id,
       amount,
       donation_date: form.donation_date,
@@ -66,15 +76,21 @@ export function PaymentHistory() {
       payment_method: form.payment_method || null,
       transaction_id: form.transaction_id || null,
       recorded_by: user?.id,
-    })
+    }
 
-    if (error) { toast.error('Failed to record payment'); setSaving(false); return }
-
-    if (paymentType === 'membership') {
-      await supabase.from('profiles').update({ is_executive_member: true }).eq('id', form.user_id)
-      toast.success('Membership payment recorded & executive status activated')
+    if (editingId) {
+      const { error } = await supabase.from('donations').update(payload).eq('id', editingId)
+      if (error) { toast.error('Failed to update'); setSaving(false); return }
+      toast.success('Payment updated')
     } else {
-      toast.success('Donation recorded')
+      const { error } = await supabase.from('donations').insert(payload)
+      if (error) { toast.error('Failed to record payment'); setSaving(false); return }
+      if (paymentType === 'membership') {
+        await supabase.from('profiles').update({ is_executive_member: true }).eq('id', form.user_id)
+        toast.success('Membership payment recorded & executive status activated')
+      } else {
+        toast.success('Donation recorded')
+      }
     }
 
     resetForm()
@@ -115,7 +131,7 @@ export function PaymentHistory() {
       {showForm && superAdmin && (
         <div className="bg-white rounded-xl border border-border p-5 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-semibold text-text-primary">Record Payment</h3>
+            <h3 className="text-sm font-semibold text-text-primary">{editingId ? 'Edit Payment' : 'Record Payment'}</h3>
             <button onClick={resetForm}><X className="w-4 h-4 text-text-secondary" /></button>
           </div>
 
@@ -182,14 +198,12 @@ export function PaymentHistory() {
                 <label className="block text-xs font-medium text-text-primary mb-1">Payment Method</label>
                 <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className={`${inputClass} bg-white`}>
                   <option value="">Select</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Cheque">Cheque</option>
+                  <option value="Online">Online</option>
+                  <option value="Offline">Offline</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Transaction ID</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Remark</label>
                 <input type="text" placeholder="Optional" value={form.transaction_id} onChange={(e) => setForm({ ...form, transaction_id: e.target.value })} className={inputClass} />
               </div>
             </div>
@@ -197,12 +211,12 @@ export function PaymentHistory() {
             {paymentType === 'membership' && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
                 <Crown className="w-3.5 h-3.5 inline mr-1" />
-                Recording this payment will automatically activate <strong>Executive Member</strong> status for the selected member. Membership valid for 1 year from payment date.
+                This will automatically activate <strong>Executive Member</strong> status. Membership valid for 1 year from membership start date.
               </div>
             )}
 
             <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
-              {saving ? '...' : paymentType === 'membership' ? 'Record & Activate Membership' : 'Record Donation'}
+              {saving ? '...' : editingId ? 'Update Payment' : paymentType === 'membership' ? 'Record & Activate Membership' : 'Record Donation'}
             </button>
           </form>
         </div>
@@ -262,6 +276,7 @@ export function PaymentHistory() {
                   <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
                   <th className="px-4 py-3 font-medium text-text-secondary">Type</th>
                   <th className="px-4 py-3 font-medium text-text-secondary">Payment</th>
+                  {superAdmin && <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -280,6 +295,18 @@ export function PaymentHistory() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-text-secondary">{p.payment_method || '—'}</td>
+                    {superAdmin && (
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <a href={`/admin/payments/edit/${p.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
+                            <Edit2 className="w-3.5 h-3.5" /> Edit
+                          </a>
+                          <button onClick={() => handleDelete(p.id)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-red-500">
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

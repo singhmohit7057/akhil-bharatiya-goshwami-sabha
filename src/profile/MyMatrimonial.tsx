@@ -183,7 +183,7 @@ export function MyMatrimonial() {
       if (error) { toast.error('Failed to update'); setSaving(false); return }
       entryId = editing.id
     } else {
-      const { data, error } = await supabase.from('matrimonial_profiles').insert({ ...payload, is_active: true, is_approved: false }).select('id').single()
+      const { data, error } = await supabase.from('matrimonial_profiles').insert({ ...payload, is_active: true, is_approved: true }).select('id').single()
       if (error || !data) { toast.error('Failed to create'); setSaving(false); return }
       entryId = data.id
     }
@@ -530,9 +530,6 @@ export function MyMatrimonial() {
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${entry.is_approved ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
-                        {entry.is_approved ? 'Approved' : 'Pending'}
-                      </span>
                       <button onClick={() => startEdit(entry)} className="p-1.5 text-text-secondary hover:text-primary"><Edit2 className="w-4 h-4" /></button>
                       <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-text-secondary hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                     </div>

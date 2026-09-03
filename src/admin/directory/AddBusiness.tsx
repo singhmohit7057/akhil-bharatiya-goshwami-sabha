@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { User, Globe, GlobeOff, Plus, Trash2, X } from 'lucide-react'
+import { User, Globe, GlobeOff, Plus, Trash2, X, Upload, Image } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
@@ -23,6 +23,10 @@ export function AddBusiness() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [showBranch, setShowBranch] = useState(false)
   const [branchForm, setBranchForm] = useState({ name: '', address: '', city: '', phone: '' })
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [vcFrontUrl, setVcFrontUrl] = useState<string | null>(null)
+  const [vcBackUrl, setVcBackUrl] = useState<string | null>(null)
+  const [uploadingField, setUploadingField] = useState('')
   const [form, setForm] = useState({
     user_id: '',
     business_name: '',
@@ -55,6 +59,22 @@ export function AddBusiness() {
     setShowBranch(false)
   }
 
+  async function handleUpload(file: File, type: 'logo' | 'vc_front' | 'vc_back') {
+    if (!form.user_id) { toast.error('Select a member first'); return }
+    if (file.size > 2 * 1024 * 1024) { toast.error('File must be under 2MB'); return }
+    setUploadingField(type)
+    const ext = file.name.split('.').pop()
+    const path = `business/${form.user_id}/${type}.${ext}`
+    const { error } = await supabase.storage.from('profile-photos').upload(path, file, { upsert: true })
+    if (error) { toast.error('Upload failed'); setUploadingField(''); return }
+    const { data } = supabase.storage.from('profile-photos').getPublicUrl(path)
+    if (type === 'logo') setLogoUrl(data.publicUrl)
+    else if (type === 'vc_front') setVcFrontUrl(data.publicUrl)
+    else setVcBackUrl(data.publicUrl)
+    toast.success('Uploaded!')
+    setUploadingField('')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -73,11 +93,37 @@ export function AddBusiness() {
       email: form.email || null,
       website: form.has_website ? (form.website || null) : null,
       branches: branches.length > 0 ? branches : [],
+      logo_url: logoUrl,
       is_approved: true,
       is_active: true,
     })
 
     if (error) { toast.error('Failed'); setSaving(false); return }
+
+    const { data: existingDetail } = await supabase.from('business_details').select('id').eq('user_id', form.user_id).maybeSingle()
+    const detailPayload = {
+      user_id: form.user_id,
+      is_employed: false,
+      business_name: form.business_name,
+      sector: form.sector || null,
+      designation: form.designation || null,
+      location: form.address || null,
+      description: form.description || null,
+      website: form.has_website ? (form.website || null) : null,
+      has_website: form.has_website,
+      phone: form.phone || null,
+      gst_number: form.gst_number || null,
+      branches: branches.length > 0 ? branches : [],
+      logo_url: logoUrl,
+      visiting_card_front: vcFrontUrl,
+      visiting_card_back: vcBackUrl,
+    }
+    if (existingDetail) {
+      await supabase.from('business_details').update(detailPayload).eq('id', existingDetail.id)
+    } else {
+      await supabase.from('business_details').insert(detailPayload)
+    }
+
     toast.success('Business added')
     navigate('/admin/business')
   }
@@ -149,7 +195,7 @@ export function AddBusiness() {
               <input type="text" placeholder="e.g. 12, MG Road" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={inputClass} />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">City</label>
                 <input type="text" placeholder="e.g. Kolkata" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputClass} />
@@ -158,9 +204,16 @@ export function AddBusiness() {
                 <label className="block text-xs font-medium text-text-primary mb-1">State</label>
                 <input type="text" placeholder="e.g. West Bengal" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className={inputClass} />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Phone</label>
                 <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Email</label>
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
               </div>
             </div>
 
@@ -185,6 +238,46 @@ export function AddBusiness() {
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Description</label>
               <textarea placeholder="What does this business do..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className={inputClass} />
+            </div>
+
+            {/* Logo & Visiting Card */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-2">Business Logo</label>
+                <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo" className="w-16 h-16 mx-auto rounded-lg object-contain" />
+                  ) : (
+                    <><Upload className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Logo</p></>
+                  )}
+                  <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'logo')} className="hidden" />
+                  {uploadingField === 'logo' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
+                </label>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-2">Visiting Card (Front)</label>
+                <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
+                  {vcFrontUrl ? (
+                    <img src={vcFrontUrl} alt="VC Front" className="w-full h-16 mx-auto rounded-lg object-contain" />
+                  ) : (
+                    <><Image className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Front</p></>
+                  )}
+                  <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'vc_front')} className="hidden" />
+                  {uploadingField === 'vc_front' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
+                </label>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-2">Visiting Card (Back) <span className="text-text-secondary font-normal">optional</span></label>
+                <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
+                  {vcBackUrl ? (
+                    <img src={vcBackUrl} alt="VC Back" className="w-full h-16 mx-auto rounded-lg object-contain" />
+                  ) : (
+                    <><Image className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Back</p></>
+                  )}
+                  <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'vc_back')} className="hidden" />
+                  {uploadingField === 'vc_back' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
+                </label>
+              </div>
             </div>
 
             <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">

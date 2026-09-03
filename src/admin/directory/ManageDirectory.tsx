@@ -19,9 +19,17 @@ export function ManageDirectory() {
     fetchListings()
   }, [])
 
+  const [ownerNames, setOwnerNames] = useState<Record<string, string>>({})
+
   async function fetchListings() {
-    const { data } = await supabase.from('business_directory').select('*').order('created_at', { ascending: false })
-    setListings((data as BusinessListing[]) || [])
+    const { data } = await supabase.from('business_directory').select('*, profiles(full_name)').order('created_at', { ascending: false })
+    const items = (data || []) as (BusinessListing & { profiles?: { full_name: string } })[]
+    setListings(items)
+    const names: Record<string, string> = {}
+    items.forEach((item) => {
+      if (item.profiles?.full_name) names[item.id] = item.profiles.full_name
+    })
+    setOwnerNames(names)
     setLoading(false)
   }
 
@@ -38,8 +46,6 @@ export function ManageDirectory() {
       (statusFilter === 'hidden' && !l.is_active)
     return matchSearch && matchStatus
   })
-
-  const ownerNames: Record<string, string> = {}
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 

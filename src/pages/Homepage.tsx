@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Users, MapPin, Calendar, Award, Handshake, Heart, Briefcase, PartyPopper, ChevronLeft, ChevronRight, User } from 'lucide-react'
+import { Users, Shield, Crown, UserCheck, MapPin, Handshake, Heart, Briefcase, PartyPopper, ChevronLeft, ChevronRight, User, Calendar } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 import { localized, formatDate, getRoleLabel } from '../lib/utils'
@@ -16,6 +16,7 @@ export function Homepage() {
   const [events, setEvents] = useState<Event[]>([])
   const [boardMembers, setBoardMembers] = useState<Profile[]>([])
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [memberStats, setMemberStats] = useState({ governing: 0, executive: 0, members: 0, total: 0 })
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length)
@@ -52,13 +53,28 @@ export function Homepage() {
       .then(({ data }) => {
         if (data) setBoardMembers(data as Profile[])
       })
+
+    Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').in('role', ADMIN_ROLES),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', true),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', false),
+    ]).then(([govRes, execRes, memRes]) => {
+      const exec = execRes.count || 0
+      const mem = memRes.count || 0
+      setMemberStats({
+        governing: govRes.count || 0,
+        executive: exec,
+        members: mem,
+        total: exec + mem,
+      })
+    })
   }, [])
 
   const stats = [
-    { icon: Users, value: '500+', label: t('stats.members') },
-    { icon: MapPin, value: '50+', label: t('stats.cities') },
-    { icon: Calendar, value: '100+', label: t('stats.events') },
-    { icon: Award, value: '25+', label: t('stats.years') },
+    { icon: Shield, value: memberStats.governing, label: 'Governing Members', color: 'bg-orange-50 text-orange-600' },
+    { icon: Crown, value: memberStats.executive, label: 'Executive Members', color: 'bg-amber-50 text-amber-600' },
+    { icon: UserCheck, value: memberStats.members, label: 'Members', color: 'bg-blue-50 text-blue-600' },
+    { icon: Users, value: memberStats.total, label: 'Total Members', color: 'bg-green-50 text-green-600' },
   ]
 
   const features = [
@@ -90,7 +106,7 @@ export function Homepage() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="max-w-4xl mx-auto text-center px-4">
             <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">{t('hero.title')}</h1>
-            <p className="text-xl md:text-2xl font-medium text-white/90 mb-2">{t('hero.subtitle')}</p>
+            <p className="text-2xl md:text-3xl font-semibold text-white/90 mb-2">{t('hero.subtitle')}</p>
             <p className="text-lg text-white/80 max-w-2xl mx-auto">{t('hero.description')}</p>
           </div>
         </div>
@@ -117,68 +133,53 @@ export function Homepage() {
 
       {/* Stats Bar */}
       <section className="bg-white border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <stat.icon className="w-5 h-5 text-primary" />
+            <div key={stat.label} className={`rounded-xl p-5 ${stat.color.split(' ')[0]} text-center`}>
+              <div className={`w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center mx-auto mb-3`}>
+                <stat.icon className={`w-5 h-5 ${stat.color.split(' ')[1]}`} />
               </div>
-              <div>
-                <p className="text-xl font-bold text-text-primary leading-tight">{stat.value}</p>
-                <p className="text-xs text-text-secondary">{stat.label}</p>
-              </div>
+              <p className="text-3xl font-bold text-text-primary">{stat.value}</p>
+              <p className="text-xs text-text-secondary mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* About + Features combined */}
-      <section className="py-14 px-4 bg-surface">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row gap-10 items-start">
-            {/* About */}
-            <div className="lg:w-1/2">
-              <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">About Us</p>
-              <h2 className="text-3xl font-bold text-text-primary mb-4">{t('about.title')}</h2>
-              <p className="text-text-secondary leading-relaxed mb-6">{t('about.description')}</p>
-              <Link
-                to="/about"
-                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-              >
-                {t('about.readMore')} →
-              </Link>
+      <section className="py-12 px-4 bg-surface">
+        <div className="max-w-4xl mx-auto text-center mb-10">
+          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">About Us</p>
+          <h2 className="text-2xl font-bold text-text-primary mb-4">{t('about.title')}</h2>
+          <p className="text-sm text-text-secondary leading-relaxed">{t('about.description')}</p>
+        </div>
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {features.map((f) => (
+            <div key={f.title} className="bg-white p-5 rounded-xl border border-border hover:shadow-md transition-shadow text-center">
+              <div className={`w-10 h-10 rounded-lg ${f.color} flex items-center justify-center mx-auto mb-3`}>
+                <f.icon className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-semibold text-text-primary mb-1">{f.title}</h3>
+              <p className="text-xs text-text-secondary leading-relaxed">{f.desc}</p>
             </div>
-
-            {/* Features grid */}
-            <div className="lg:w-1/2 grid grid-cols-2 gap-3">
-              {features.map((f) => (
-                <div key={f.title} className="bg-white p-4 rounded-xl border border-border hover:shadow-md transition-shadow">
-                  <div className={`w-9 h-9 rounded-lg ${f.color} flex items-center justify-center mb-3`}>
-                    <f.icon className="w-4.5 h-4.5" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-text-primary mb-1">{f.title}</h3>
-                  <p className="text-xs text-text-secondary leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
+        </div>
+        <div className="text-center">
+          <Link
+            to="/about"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            {t('about.readMore')} →
+          </Link>
         </div>
       </section>
 
       {/* Upcoming Events */}
-      <section className="py-14 px-4 bg-white">
+      <section className="py-12 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-1">What's Happening</p>
-              <h2 className="text-2xl font-bold text-text-primary">{t('events.title')}</h2>
-            </div>
-            <Link
-              to="/events"
-              className="text-sm font-medium text-primary hover:underline hidden sm:block"
-            >
-              {t('events.viewAll')} →
-            </Link>
+          <div className="text-center mb-8">
+            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">What's Happening</p>
+            <h2 className="text-2xl font-bold text-text-primary">{t('events.title')}</h2>
           </div>
 
           {events.length > 0 ? (
@@ -224,7 +225,7 @@ export function Homepage() {
             <p className="text-center text-text-secondary py-8">{t('events.noEvents')}</p>
           )}
 
-          <div className="text-center mt-6 sm:hidden">
+          <div className="text-center mt-8">
             <Link to="/events" className="text-sm font-medium text-primary hover:underline">
               {t('events.viewAll')} →
             </Link>
@@ -233,10 +234,10 @@ export function Homepage() {
       </section>
 
       {/* Governing Members */}
-      <section className="py-14 px-4 bg-surface">
+      <section className="py-12 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
-            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-1">Our Leadership</p>
+            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">Our Leadership</p>
             <h2 className="text-2xl font-bold text-text-primary">Governing Members</h2>
           </div>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
@@ -288,23 +289,23 @@ export function Homepage() {
             )}
           </div>
           <div className="text-center mt-6">
-            <Link to="/about" className="text-sm font-medium text-primary hover:underline">
-              View All Leaders →
+            <Link to="/members" className="text-sm font-medium text-primary hover:underline">
+              View All Members →
             </Link>
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-14 px-4 bg-white">
+      <section className="py-12 px-4 bg-white">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-text-primary mb-3">Join Our Growing Community</h2>
-          <p className="text-text-secondary mb-6">Become a member of Akhil Bharatiya Goswami Sabha and connect with the community across West Bengal.</p>
+          <h2 className="text-2xl font-bold text-text-primary mb-3">Join Our Growing Community</h2>
+          <p className="text-sm text-text-secondary mb-6">Become a member of Akhil Bharatiya Goswami Sabha and connect with the community across West Bengal.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/register" className="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition-colors">
+            <Link to="/register" className="px-8 py-2.5 bg-primary text-white font-medium text-sm rounded-lg hover:bg-primary-dark transition-colors">
               Register Now
             </Link>
-            <Link to="/about" className="px-8 py-3 border border-border text-text-secondary font-semibold rounded-lg hover:bg-white transition-colors">
+            <Link to="/about" className="px-8 py-2.5 border border-border text-text-secondary font-medium text-sm rounded-lg hover:bg-white transition-colors">
               Learn More
             </Link>
           </div>

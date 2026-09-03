@@ -38,18 +38,14 @@ export function Membership() {
         const history = (donations as Donation[]) || []
         const latestPayment = history.length > 0 ? history[0] : null
         const paidOn = latestPayment?.donation_date || null
-        let validUntil: string | null = null
-        if (paidOn) {
-          const d = new Date(paidOn)
-          d.setFullYear(d.getFullYear() + 1)
-          validUntil = d.toISOString().split('T')[0]
-        }
+        const validFrom = (profile as any).membership_start_date || paidOn
+        const validUntil = (profile as any).membership_end_date || (validFrom ? (() => { const d = new Date(validFrom); d.setFullYear(d.getFullYear() + 1); return d.toISOString().split('T')[0] })() : null)
         const isActive = profile.is_executive_member && validUntil ? new Date(validUntil) >= new Date() : false
 
         setData({
           is_active: isActive,
           paid_on: paidOn,
-          valid_from: paidOn,
+          valid_from: validFrom,
           valid_until: validUntil,
           payment_history: history,
         })
@@ -102,7 +98,7 @@ export function Membership() {
               </p>
             )}
             <p className="text-xs text-text-secondary mt-2">
-              One-time annual fee of <strong>₹{MEMBERSHIP_FEE.toLocaleString()}</strong> · Valid for 1 year from payment date
+              One-time annual fee of <strong>₹{MEMBERSHIP_FEE.toLocaleString()}</strong> · Valid for 1 year from start date
             </p>
           </div>
         </div>
@@ -116,7 +112,7 @@ export function Membership() {
           </h3>
           <div className="flex items-center gap-3">
             <div className="flex-1 bg-surface rounded-lg p-4 text-center">
-              <p className="text-xs text-text-secondary mb-1">Paid On</p>
+              <p className="text-xs text-text-secondary mb-1">Starts From</p>
               <p className="text-sm font-semibold text-text-primary">{formatDate(data.valid_from, lang)}</p>
             </div>
             <ArrowRight className="w-5 h-5 text-text-secondary shrink-0" />

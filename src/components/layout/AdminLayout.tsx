@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShieldCheck, Users, Award, Heart, Briefcase,
-  CalendarRange, Building2, Gift, Megaphone, IndianRupee,
+  CalendarRange, Gift, IndianRupee, Images, Megaphone,
   ChevronDown, Menu,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -101,21 +101,14 @@ const sections: NavSection[] = [
           { to: '/admin/yearly-planner', label: 'All Events', dot: true },
         ],
       },
-      {
-        to: '/admin/company-master', icon: Building2, label: 'Company Master',
-        children: [
-          { to: '/admin/company-master/add', label: 'Add' },
-          { to: '/admin/company-master', label: 'All Companies' },
-        ],
-      },
     ],
   },
   {
-    title: 'FINANCE & PROMOTIONS',
+    title: 'MEDIA & PROMOTIONS',
     items: [
+      { to: '/admin/gallery', icon: Images, label: 'Gallery' },
       { to: '/admin/souvenir', icon: Gift, label: 'Souvenir' },
       { to: '/admin/promo-popups', icon: Megaphone, label: 'Promo Popups' },
-      { to: '/admin/donations', icon: IndianRupee, label: 'Donations' },
     ],
   },
 ]
@@ -157,7 +150,7 @@ export function AdminLayout() {
   const sidebar = (
     <div className="flex flex-col h-full bg-white border-r border-border">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+      <Link to="/" className="flex items-center gap-3 px-5 py-5 border-b border-border hover:bg-gray-50 transition-colors">
         <img src="/logo.png" alt="ABGSPB" className="w-10 h-10 rounded-full object-cover shrink-0" />
         <div>
           <p className="text-sm font-bold leading-tight text-text-primary">ABGSPB</p>
@@ -168,7 +161,7 @@ export function AdminLayout() {
             </span>
           </p>
         </div>
-      </div>
+      </Link>
 
       {/* Nav sections */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4">

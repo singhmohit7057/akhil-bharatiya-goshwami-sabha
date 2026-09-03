@@ -20,7 +20,7 @@ export function Matrimonial() {
   useEffect(() => {
     supabase
       .from('matrimonial_profiles')
-      .select('*, profiles(*)')
+      .select('*, profiles(*), matrimonial_photos(*)')
       .eq('is_active', true)
       .eq('is_approved', true)
       .order('created_at', { ascending: false })
@@ -74,9 +74,9 @@ export function Matrimonial() {
               >
                 <div className="p-5">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                      {mp.profiles?.profile_photo_url ? (
-                        <img src={mp.profiles.profile_photo_url} alt="" className="w-16 h-16 rounded-full object-cover" />
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                      {(mp as any).matrimonial_photos?.[0]?.photo_url ? (
+                        <img src={(mp as any).matrimonial_photos[0].photo_url} alt="" className="w-16 h-16 rounded-full object-cover" />
                       ) : (
                         <User className="w-8 h-8 text-primary" />
                       )}

@@ -99,7 +99,7 @@ export function MyProfile() {
                 <div className="flex items-center gap-2.5">
                   <img src="/logo.png" alt="" className="w-9 h-9 rounded-full object-contain bg-white/20 p-0.5" />
                   <div>
-                    <p className="text-[10px] font-bold text-white tracking-wide leading-tight">AKHIL BHARATIYA GOSHWAMI SABHA</p>
+                    <p className="text-[10px] font-bold text-white tracking-wide leading-tight">AKHIL BHARATIYA GOSWAMI SABHA</p>
                     <p className="text-[8px] text-white/80 tracking-wider">PASCHIM BANGAL</p>
                   </div>
                 </div>

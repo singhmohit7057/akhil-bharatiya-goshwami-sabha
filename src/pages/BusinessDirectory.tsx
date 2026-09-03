@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, MapPin, Phone, Globe } from 'lucide-react'
+import { Search, MapPin, Phone, Globe, Mail, Building2, CreditCard } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 import { localized } from '../lib/utils'
@@ -15,6 +15,8 @@ export function BusinessDirectory() {
   const [category, setCategory] = useState('')
   const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [viewBranches, setViewBranches] = useState<string | null>(null)
+  const [viewCard, setViewCard] = useState<string | null>(null)
 
   useEffect(() => {
     supabase
@@ -115,12 +117,49 @@ export function BusinessDirectory() {
                   {item.phone && (
                     <p className="flex items-center gap-1"><Phone className="w-3 h-3" /> {item.phone}</p>
                   )}
+                  {(item as any).email && (
+                    <p className="flex items-center gap-1"><Mail className="w-3 h-3" /> {(item as any).email}</p>
+                  )}
                   {item.website && (
                     <a href={item.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
                       <Globe className="w-3 h-3" /> {t('website')}
                     </a>
                   )}
                 </div>
+                {(((item as any).branches?.length > 0) || (item as any).visiting_card_front) && (
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+                    {(item as any).branches?.length > 0 && (
+                      <button onClick={() => setViewBranches(viewBranches === item.id ? null : item.id)} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Building2 className="w-3 h-3" /> Branches ({(item as any).branches.length})
+                      </button>
+                    )}
+                    {(item as any).visiting_card_front && (
+                      <button onClick={() => setViewCard(viewCard === item.id ? null : item.id)} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <CreditCard className="w-3 h-3" /> Visiting Card
+                      </button>
+                    )}
+                  </div>
+                )}
+                {viewBranches === item.id && (item as any).branches?.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {(item as any).branches.map((b: any, i: number) => (
+                      <div key={b.id || i} className="bg-surface rounded-lg p-2.5 text-xs">
+                        <p className="font-medium text-text-primary">{b.name}</p>
+                        <p className="text-text-secondary">{b.address}{b.city ? `, ${b.city}` : ''}{b.phone ? ` · ${b.phone}` : ''}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {viewCard === item.id && (
+                  <div className="mt-3 space-y-2">
+                    {(item as any).visiting_card_front && (
+                      <img src={(item as any).visiting_card_front} alt="Front" className="w-full rounded-lg border border-border" />
+                    )}
+                    {(item as any).visiting_card_back && (
+                      <img src={(item as any).visiting_card_back} alt="Back" className="w-full rounded-lg border border-border" />
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

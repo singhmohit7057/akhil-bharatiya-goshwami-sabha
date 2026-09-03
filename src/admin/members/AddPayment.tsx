@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { IndianRupee, Crown, User } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
@@ -12,6 +12,7 @@ import { Spinner } from '../../components/ui/Spinner'
 const MEMBERSHIP_FEE = 1100
 
 export function AddPayment() {
+  const { id: editId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [members, setMembers] = useState<Profile[]>([])
@@ -22,6 +23,7 @@ export function AddPayment() {
     user_id: '',
     amount: '',
     donation_date: new Date().toISOString().split('T')[0],
+    membership_start_date: new Date().toISOString().split('T')[0],
     purpose: '',
     payment_method: '',
     transaction_id: '',
@@ -33,11 +35,32 @@ export function AddPayment() {
       .select('*')
       .eq('account_status', 'active')
       .order('full_name')
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         setMembers((data as Profile[]) || [])
+        if (editId) {
+          const { data: payment } = await supabase.from('donations').select('*').eq('id', editId).single()
+          if (payment) {
+            const p = payment as any
+            let membershipStart = p.donation_date
+            if (p.purpose === 'Executive Membership') {
+              const { data: prof } = await supabase.from('profiles').select('membership_start_date').eq('id', p.user_id).single()
+              if (prof?.membership_start_date) membershipStart = prof.membership_start_date
+            }
+            setForm({
+              user_id: p.user_id,
+              amount: String(p.amount),
+              donation_date: p.donation_date,
+              membership_start_date: membershipStart,
+              purpose: p.purpose === 'Executive Membership' ? '' : (p.purpose || ''),
+              payment_method: p.payment_method || '',
+              transaction_id: p.transaction_id || '',
+            })
+            setPaymentType(p.purpose === 'Executive Membership' ? 'membership' : 'donation')
+          }
+        }
         setLoading(false)
       })
-  }, [])
+  }, [editId])
 
   const selected = members.find((m) => m.id === form.user_id)
 
@@ -48,7 +71,7 @@ export function AddPayment() {
     const purpose = paymentType === 'membership' ? 'Executive Membership' : (form.purpose || 'General Donation')
     const amount = paymentType === 'membership' ? MEMBERSHIP_FEE : parseFloat(form.amount)
 
-    const { error } = await supabase.from('donations').insert({
+    const payload = {
       user_id: form.user_id,
       amount,
       donation_date: form.donation_date,
@@ -56,12 +79,38 @@ export function AddPayment() {
       payment_method: form.payment_method || null,
       transaction_id: form.transaction_id || null,
       recorded_by: user?.id,
-    })
+    }
 
+    if (editId) {
+      const { error } = await supabase.from('donations').update(payload).eq('id', editId)
+      if (error) { toast.error('Failed to update'); setSaving(false); return }
+      if (paymentType === 'membership') {
+        const startDate = new Date(form.membership_start_date)
+        const endDate = new Date(startDate)
+        endDate.setFullYear(endDate.getFullYear() + 1)
+        await supabase.from('profiles').update({
+          is_executive_member: true,
+          membership_start_date: form.membership_start_date,
+          membership_end_date: endDate.toISOString().split('T')[0],
+        }).eq('id', form.user_id)
+      }
+      toast.success('Payment updated')
+      navigate('/admin/payments')
+      return
+    }
+
+    const { error } = await supabase.from('donations').insert(payload)
     if (error) { toast.error('Failed to record payment'); setSaving(false); return }
 
     if (paymentType === 'membership') {
-      await supabase.from('profiles').update({ is_executive_member: true }).eq('id', form.user_id)
+      const startDate = new Date(form.membership_start_date)
+      const endDate = new Date(startDate)
+      endDate.setFullYear(endDate.getFullYear() + 1)
+      await supabase.from('profiles').update({
+        is_executive_member: true,
+        membership_start_date: form.membership_start_date,
+        membership_end_date: endDate.toISOString().split('T')[0],
+      }).eq('id', form.user_id)
       toast.success('Membership payment recorded & executive status activated')
     } else {
       toast.success('Donation recorded')
@@ -76,7 +125,7 @@ export function AddPayment() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-text-primary mb-1">Add Payment</h1>
+      <h1 className="text-2xl font-bold text-text-primary mb-1">{editId ? 'Edit Payment' : 'Add Payment'}</h1>
       <p className="text-sm text-text-secondary mb-6">Record a donation or membership payment</p>
 
       <div className="bg-white rounded-xl border border-border p-5">
@@ -134,7 +183,7 @@ export function AddPayment() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${paymentType === 'membership' ? 'grid-cols-3' : 'grid-cols-2'}`}>
             {paymentType === 'donation' ? (
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Amount (₹) *</label>
@@ -150,6 +199,12 @@ export function AddPayment() {
               <label className="block text-xs font-medium text-text-primary mb-1">Payment Date *</label>
               <input type="text" required placeholder="YYYY-MM-DD" value={form.donation_date} onChange={(e) => setForm({ ...form, donation_date: e.target.value })} className={inputClass} />
             </div>
+            {paymentType === 'membership' && (
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Membership Start Date *</label>
+                <input type="text" required placeholder="YYYY-MM-DD" value={form.membership_start_date} onChange={(e) => setForm({ ...form, membership_start_date: e.target.value })} className={inputClass} />
+              </div>
+            )}
           </div>
 
           {paymentType === 'donation' && (
@@ -164,14 +219,12 @@ export function AddPayment() {
               <label className="block text-xs font-medium text-text-primary mb-1">Payment Method</label>
               <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className={`${inputClass} bg-white`}>
                 <option value="">Select</option>
-                <option value="UPI">UPI</option>
-                <option value="Cash">Cash</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Cheque">Cheque</option>
+                <option value="Online">Online</option>
+                <option value="Offline">Offline</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">Transaction ID</label>
+              <label className="block text-xs font-medium text-text-primary mb-1">Remark</label>
               <input type="text" placeholder="Optional" value={form.transaction_id} onChange={(e) => setForm({ ...form, transaction_id: e.target.value })} className={inputClass} />
             </div>
           </div>
@@ -179,12 +232,12 @@ export function AddPayment() {
           {paymentType === 'membership' && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
               <Crown className="w-3.5 h-3.5 inline mr-1" />
-              This will automatically activate <strong>Executive Member</strong> status. Membership valid for 1 year from payment date.
+              This will automatically activate <strong>Executive Member</strong> status. Membership valid for 1 year from membership start date.
             </div>
           )}
 
           <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
-            {saving ? '...' : paymentType === 'membership' ? 'Record & Activate Membership' : 'Record Donation'}
+            {saving ? '...' : editId ? 'Update Payment' : paymentType === 'membership' ? 'Record & Activate Membership' : 'Record Donation'}
           </button>
         </form>
       </div>

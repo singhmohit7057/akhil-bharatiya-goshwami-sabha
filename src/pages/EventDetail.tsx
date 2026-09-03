@@ -77,16 +77,17 @@ export function EventDetail() {
   return (
     <div>
       {/* Header */}
-      <div className="bg-surface border-b border-border py-6 px-4">
-        <div className="max-w-5xl mx-auto">
-          <Link to="/events" className="flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-3">
+      <section className="bg-surface py-12 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <Link to="/events" className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-4">
             <ArrowLeft className="w-4 h-4" /> Back to Events
           </Link>
-          <h1 className="text-2xl md:text-3xl font-bold text-text-primary">
+          <h1 className="text-5xl font-extrabold text-text-primary">
             {localized(event.title_en, event.title_hi, lang)}
           </h1>
         </div>
-      </div>
+      </section>
+      <div className="max-w-3xl mx-auto"><hr className="border-border" /></div>
 
       {/* Content */}
       <div className="max-w-5xl mx-auto px-4 py-8">
