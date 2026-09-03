@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, X, Images, Upload, Camera } from 'lucide-react'
+import { Plus, Trash2, X, Images, Upload, Camera, Home } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { localized } from '../../lib/utils'
@@ -28,6 +28,9 @@ export function ManageGallery() {
   const { user } = useAuth()
   const [albums, setAlbums] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
+  const [homeImages, setHomeImages] = useState<{ id: string; image_url: string; caption: string | null; sort_order: number }[]>([])
+  const [uploadingHome, setUploadingHome] = useState(false)
+  const homeFileRef = useRef<HTMLInputElement>(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ title_en: '', title_hi: '', description: '' })
@@ -39,7 +42,40 @@ export function ManageGallery() {
 
   useEffect(() => {
     fetchAlbums()
+    fetchHomeGallery()
   }, [])
+
+  async function fetchHomeGallery() {
+    const { data } = await supabase.from('homepage_gallery').select('*').order('sort_order')
+    setHomeImages((data as any[]) || [])
+  }
+
+  async function handleHomeUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files) return
+    setUploadingHome(true)
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (file.size > 3 * 1024 * 1024) { toast.error(`${file.name} over 3MB`); continue }
+      const ext = file.name.split('.').pop()
+      const path = `homepage/${crypto.randomUUID()}.${ext}`
+      const { error } = await supabase.storage.from('gallery').upload(path, file)
+      if (error) continue
+      const { data } = supabase.storage.from('gallery').getPublicUrl(path)
+      await supabase.from('homepage_gallery').insert({ image_url: data.publicUrl, sort_order: homeImages.length + i })
+    }
+    setUploadingHome(false)
+    toast.success('Images added')
+    fetchHomeGallery()
+    if (homeFileRef.current) homeFileRef.current.value = ''
+  }
+
+  async function handleHomeDelete(id: string) {
+    if (!confirm('Remove this image?')) return
+    await supabase.from('homepage_gallery').delete().eq('id', id)
+    toast.success('Removed')
+    fetchHomeGallery()
+  }
 
   async function fetchAlbums() {
     const { data } = await supabase
@@ -130,9 +166,39 @@ export function ManageGallery() {
 
   return (
     <div>
+      {/* Homepage Gallery Section */}
+      <div className="bg-white rounded-xl border border-border p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2"><Home className="w-4 h-4 text-primary" /> Homepage Gallery</h2>
+            <p className="text-xs text-text-secondary mt-0.5">These images show on the homepage in a 3×2 grid (max 6) · Max 3MB per image</p>
+          </div>
+          {homeImages.length < 6 && (
+            <label className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark cursor-pointer">
+              <Upload className="w-3.5 h-3.5" /> {uploadingHome ? 'Uploading...' : 'Add Images'}
+              <input ref={homeFileRef} type="file" accept="image/*" multiple onChange={handleHomeUpload} className="hidden" disabled={uploadingHome} />
+            </label>
+          )}
+        </div>
+        {homeImages.length === 0 ? (
+          <p className="text-xs text-text-secondary text-center py-6">No homepage gallery images. Upload landscape images to show on the homepage.</p>
+        ) : (
+          <div className="flex gap-2 flex-wrap">
+            {homeImages.map((img) => (
+              <div key={img.id} className="relative w-36 h-24 rounded-lg overflow-hidden group">
+                <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                <button onClick={() => handleHomeDelete(img.id)} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <Trash2 className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Gallery</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Gallery Albums</h1>
           <p className="text-sm text-text-secondary mt-1">Manage photo albums</p>
         </div>
         {!showForm && (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShieldCheck, Users, Award, Heart, Briefcase,
-  CalendarRange, Gift, IndianRupee, Images, Megaphone,
+  CalendarRange, Gift, IndianRupee, Images, Megaphone, FileText, Mail,
   ChevronDown, Menu,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -109,6 +109,8 @@ const sections: NavSection[] = [
       { to: '/admin/gallery', icon: Images, label: 'Gallery' },
       { to: '/admin/souvenir', icon: Gift, label: 'Souvenir' },
       { to: '/admin/promo-popups', icon: Megaphone, label: 'Promo Popups' },
+      { to: '/admin/forms', icon: FileText, label: 'Form Submissions' },
+      { to: '/admin/subscribers', icon: Mail, label: 'Subscribers' },
     ],
   },
 ]

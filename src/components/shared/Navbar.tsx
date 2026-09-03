@@ -22,6 +22,8 @@ export function Navbar() {
 
   navLinks.push({ to: '/matrimonial', label: t('nav.matrimonial') })
   navLinks.push({ to: '/gallery', label: 'Gallery' })
+  navLinks.push({ to: '/donate', label: 'Donate' })
+  navLinks.push({ to: '/contact', label: 'Contact' })
 
   function isActive(path: string) {
     if (path === '/') return location.pathname === '/'
@@ -49,7 +51,7 @@ export function Navbar() {
                   'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   isActive(link.to)
                     ? 'bg-primary/10 text-primary'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-gray-50',
+                    : 'text-text-primary hover:text-primary hover:bg-gray-50',
                 )}
               >
                 {link.label}
@@ -148,7 +150,7 @@ export function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   'block px-3 py-2 rounded-lg text-sm font-medium',
-                  isActive(link.to) ? 'bg-primary/10 text-primary' : 'text-text-secondary',
+                  isActive(link.to) ? 'bg-primary/10 text-primary' : 'text-text-primary',
                 )}
               >
                 {link.label}

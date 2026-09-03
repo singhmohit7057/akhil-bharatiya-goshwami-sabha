@@ -107,9 +107,9 @@ export function Souvenir() {
       const file = e.target.files?.[0]
       if (!file) return
       const ext = file.name.split('.').pop()
-      const coverPath = `covers/${item.id}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('souvenirs').upload(coverPath, file, { upsert: true })
-      if (uploadError) { toast.error('Failed to upload cover'); return }
+      const coverPath = `covers/${item.id}-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('souvenirs').upload(coverPath, file)
+      if (uploadError) { console.error('Cover upload error:', uploadError); toast.error('Failed to upload cover: ' + uploadError.message); return }
       const { data: coverUrl } = supabase.storage.from('souvenirs').getPublicUrl(coverPath)
       await supabase.from('souvenirs').update({ cover_url: coverUrl.publicUrl }).eq('id', item.id)
       toast.success('Cover uploaded')

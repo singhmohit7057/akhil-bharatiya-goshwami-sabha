@@ -30,6 +30,7 @@ export function Footer() {
               <li><Link to="/events" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.events')}</Link></li>
               <li><Link to="/businesses" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.directory')}</Link></li>
               <li><Link to="/matrimonial" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.matrimonial')}</Link></li>
+              <li><Link to="/contact" className="text-xs text-text-secondary hover:text-primary transition-colors">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -41,6 +42,7 @@ export function Footer() {
               <li><Link to="/gallery" className="text-xs text-text-secondary hover:text-primary transition-colors">Gallery</Link></li>
               <li><Link to="/souvenirs" className="text-xs text-text-secondary hover:text-primary transition-colors">Souvenirs</Link></li>
               <li><Link to="/verify" className="text-xs text-text-secondary hover:text-primary transition-colors">Verify Member</Link></li>
+              <li><Link to="/donate" className="text-xs text-text-secondary hover:text-primary transition-colors">Donate</Link></li>
             </ul>
           </div>
 

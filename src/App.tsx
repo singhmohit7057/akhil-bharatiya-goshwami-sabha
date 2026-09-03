@@ -25,6 +25,9 @@ import { Members } from './pages/Members'
 import { Gallery } from './pages/Gallery'
 import { GalleryAlbum } from './pages/GalleryAlbum'
 import { Souvenirs } from './pages/Souvenirs'
+import { Donate } from './pages/Donate'
+import { Contact } from './pages/Contact'
+import { Unsubscribe } from './pages/Unsubscribe'
 
 import { Login } from './auth/Login'
 import { Register } from './auth/Register'
@@ -61,6 +64,8 @@ import { YearlyPlanner } from './admin/yearly-planner/YearlyPlanner'
 import { Souvenir } from './admin/souvenir/Souvenir'
 import { ManageGallery } from './admin/gallery/ManageGallery'
 import { PromoPopups } from './admin/promo-popups/PromoPopups'
+import { FormSubmissions } from './admin/forms/FormSubmissions'
+import { Subscribers } from './admin/subscribers/Subscribers'
 
 export default function App() {
   return (
@@ -77,6 +82,9 @@ export default function App() {
           <Route path="gallery" element={<Gallery />} />
           <Route path="gallery/:id" element={<GalleryAlbum />} />
           <Route path="souvenirs" element={<Souvenirs />} />
+          <Route path="donate" element={<Donate />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="unsubscribe" element={<Unsubscribe />} />
           <Route path="events" element={<Events />} />
           <Route path="events/:id" element={<EventDetail />} />
           <Route path="businesses" element={<BusinessDirectory />} />
@@ -185,6 +193,8 @@ export default function App() {
           <Route path="souvenir" element={<Souvenir />} />
           <Route path="gallery" element={<ManageGallery />} />
           <Route path="promo-popups" element={<PromoPopups />} />
+          <Route path="forms" element={<FormSubmissions />} />
+          <Route path="subscribers" element={<Subscribers />} />
         </Route>
 
         {/* 404 */}
