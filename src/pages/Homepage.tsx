@@ -59,10 +59,13 @@ export function Homepage() {
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', true),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', false),
     ]).then(([govRes, execRes, memRes]) => {
-      const exec = execRes.count || 0
-      const mem = memRes.count || 0
+      if (govRes.error) console.error('Gov count error:', govRes.error)
+      if (execRes.error) console.error('Exec count error:', execRes.error)
+      if (memRes.error) console.error('Mem count error:', memRes.error)
+      const exec = execRes.count ?? 0
+      const mem = memRes.count ?? 0
       setMemberStats({
-        governing: govRes.count || 0,
+        governing: govRes.count ?? 0,
         executive: exec,
         members: mem,
         total: exec + mem,
