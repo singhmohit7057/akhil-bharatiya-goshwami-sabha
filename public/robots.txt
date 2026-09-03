@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /pending-approval
+
+Sitemap: https://akhilbharatiyagoswami.com/sitemap.xml

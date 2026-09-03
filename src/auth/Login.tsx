@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { LogIn, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 export function Login() {
@@ -38,12 +38,12 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface px-4">
+    <div className="flex items-center justify-center bg-surface py-12 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
-          <div className="mx-auto w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <LogIn className="w-7 h-7 text-primary" />
-          </div>
+          <img src="/logo.png" alt="ABGSPB" className="w-16 h-16 mx-auto mb-3 rounded-full object-cover" />
+          <p className="text-sm font-bold text-text-primary">Akhil Bharatiya Goswami Sabha</p>
+          <p className="text-xs text-text-secondary mb-4">Paschim Bangal</p>
           <h1 className="text-2xl font-bold text-text-primary">{t('login.title')}</h1>
           <p className="text-text-secondary mt-1">{t('login.subtitle')}</p>
         </div>

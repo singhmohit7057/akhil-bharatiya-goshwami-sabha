@@ -29,6 +29,7 @@ import { Souvenirs } from './pages/Souvenirs'
 import { Login } from './auth/Login'
 import { Register } from './auth/Register'
 import { ForgotPassword } from './auth/ForgotPassword'
+import { ResetPassword } from './auth/ResetPassword'
 
 import { MyProfile } from './profile/MyProfile'
 import { EditProfile } from './profile/EditProfile'
@@ -88,9 +89,18 @@ export default function App() {
         </Route>
 
         {/* Auth pages */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/login" element={<PublicLayout />}>
+          <Route index element={<Login />} />
+        </Route>
+        <Route path="/register" element={<PublicLayout />}>
+          <Route index element={<Register />} />
+        </Route>
+        <Route path="/forgot-password" element={<PublicLayout />}>
+          <Route index element={<ForgotPassword />} />
+        </Route>
+        <Route path="/reset-password" element={<PublicLayout />}>
+          <Route index element={<ResetPassword />} />
+        </Route>
 
         {/* Matrimonial — public page, visible to everyone */}
         <Route

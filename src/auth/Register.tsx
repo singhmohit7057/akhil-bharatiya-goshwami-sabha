@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { UserPlus, CheckCircle, Clock, Eye, EyeOff } from 'lucide-react'
+import { CheckCircle, Clock, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
@@ -79,7 +79,7 @@ export function Register() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface px-4 py-10">
+      <div className="flex items-center justify-center bg-surface py-12 px-4 py-10">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
           <div className="mx-auto w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
             <CheckCircle className="w-8 h-8 text-green-500" />
@@ -113,12 +113,12 @@ export function Register() {
   const inputClass = 'w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm'
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface px-4 py-6">
+    <div className="flex items-center justify-center bg-surface py-12 px-4 py-6">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center mb-5">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-            <UserPlus className="w-6 h-6 text-primary" />
-          </div>
+          <img src="/logo.png" alt="ABGSPB" className="w-14 h-14 mx-auto mb-2 rounded-full object-cover" />
+          <p className="text-sm font-bold text-text-primary">Akhil Bharatiya Goswami Sabha</p>
+          <p className="text-xs text-text-secondary mb-3">Paschim Bangal</p>
           <h1 className="text-xl font-bold text-text-primary">{t('register.title')}</h1>
           <p className="text-text-secondary text-sm mt-0.5">{t('register.subtitle')}</p>
         </div>

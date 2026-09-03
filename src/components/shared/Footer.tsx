@@ -9,7 +9,7 @@ export function Footer() {
   return (
     <footer className="bg-surface border-t border-border mt-auto">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
@@ -33,6 +33,17 @@ export function Footer() {
             </ul>
           </div>
 
+          {/* Community */}
+          <div>
+            <h3 className="text-sm font-semibold text-text-primary mb-3">Community</h3>
+            <ul className="space-y-2">
+              <li><Link to="/members" className="text-xs text-text-secondary hover:text-primary transition-colors">Members</Link></li>
+              <li><Link to="/gallery" className="text-xs text-text-secondary hover:text-primary transition-colors">Gallery</Link></li>
+              <li><Link to="/souvenirs" className="text-xs text-text-secondary hover:text-primary transition-colors">Souvenirs</Link></li>
+              <li><Link to="/verify" className="text-xs text-text-secondary hover:text-primary transition-colors">Verify Member</Link></li>
+            </ul>
+          </div>
+
           {/* Legal */}
           <div>
             <h3 className="text-sm font-semibold text-text-primary mb-3">{t('footer.legal')}</h3>
@@ -40,7 +51,6 @@ export function Footer() {
               <li><Link to="/privacy-policy" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('footer.privacyPolicy')}</Link></li>
               <li><Link to="/terms-of-service" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('footer.termsOfService')}</Link></li>
               <li><Link to="/cookie-policy" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('footer.cookiePolicy')}</Link></li>
-              <li><Link to="/verify" className="text-xs text-text-secondary hover:text-primary transition-colors">Verify Member</Link></li>
             </ul>
           </div>
 
