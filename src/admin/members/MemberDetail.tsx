@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { ArrowLeft, User, Shield, Camera, Plus, Edit2, Trash2, X, Users } from 'lucide-react'
+import { ArrowLeft, User, Shield, Camera, Plus, Edit2, Trash2, X, Users, Eye, EyeOff, KeyRound } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleLabel, formatDate } from '../../lib/utils'
@@ -24,6 +24,9 @@ export function MemberDetail() {
 
   // Profile edit
   const [saving, setSaving] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [savingPassword, setSavingPassword] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -45,15 +48,20 @@ export function MemberDetail() {
   useEffect(() => {
     if (!id) return
     fetchMember()
-    fetchFamilyMembers()
   }, [id])
 
   async function fetchMember() {
-    const { data } = await supabase.from('profiles').select('*').eq('id', id).single()
+    const memberId = id!.replace('-', '/')
+    let { data } = await supabase.from('profiles').select('*').eq('member_id', memberId).single()
+    if (!data) {
+      const res = await supabase.from('profiles').select('*').eq('id', id).single()
+      data = res.data
+    }
     if (data) {
       const m = data as Profile
       setMember(m)
       setSelectedRole(m.role)
+      fetchFamilyMembers(m.id)
       setForm({
         full_name: m.full_name || '',
         full_name_hi: m.full_name_hi || (m.full_name ? transliterateToHindi(m.full_name) : ''),
@@ -70,9 +78,10 @@ export function MemberDetail() {
     setLoading(false)
   }
 
-  async function fetchFamilyMembers() {
-    if (!id) return
-    const { data } = await supabase.from('family_members').select('*').eq('user_id', id).order('created_at')
+  async function fetchFamilyMembers(userId?: string) {
+    const uid = userId || member?.id
+    if (!uid) return
+    const { data } = await supabase.from('family_members').select('*').eq('user_id', uid).order('created_at')
     setFamilyMembers((data as FamilyMember[]) || [])
   }
 
@@ -305,6 +314,47 @@ export function MemberDetail() {
             </div>
             <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
               {saving ? '...' : 'Save Profile'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Reset Password */}
+      {superAdmin && (
+        <div className="bg-white rounded-xl border border-border p-6 mb-6">
+          <h2 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-primary" /> Reset Password
+          </h2>
+          <form onSubmit={async (e) => {
+            e.preventDefault()
+            if (newPassword.length < 6) { toast.error('Password must be at least 6 characters'); return }
+            setSavingPassword(true)
+            const { error } = await supabase.rpc('admin_reset_password', { target_user_id: member!.id, new_password: newPassword })
+            if (error) { toast.error('Failed: ' + error.message); setSavingPassword(false); return }
+            toast.success('Password updated successfully')
+            setNewPassword('')
+            setSavingPassword(false)
+          }} className="flex gap-3 items-end">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-text-primary mb-1">New Password</label>
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Min 6 characters"
+                  className={`${inputClass} pr-10`}
+                />
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <button type="submit" disabled={savingPassword} className="px-5 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 disabled:opacity-50 shrink-0">
+              {savingPassword ? '...' : 'Reset Password'}
             </button>
           </form>
         </div>

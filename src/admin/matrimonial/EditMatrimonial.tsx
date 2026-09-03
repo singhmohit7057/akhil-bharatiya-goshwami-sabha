@@ -26,12 +26,23 @@ export function EditMatrimonial() {
     about_en: '', preferences_en: '',
   })
 
+  const [realId, setRealId] = useState<string | null>(null)
+
   useEffect(() => {
     if (!id) return
-    Promise.all([
-      supabase.from('matrimonial_profiles').select('*').eq('id', id).single(),
-      supabase.from('matrimonial_photos').select('*').eq('matrimonial_id', id).order('created_at'),
-    ]).then(([mpRes, photoRes]) => {
+    const code = id.replace('-', '/')
+    const isCode = code.startsWith('MAT/')
+    const profileQuery = isCode
+      ? supabase.from('matrimonial_profiles').select('*').eq('profile_code', code).single()
+      : supabase.from('matrimonial_profiles').select('*').eq('id', id).single()
+
+    profileQuery.then(async ({ data: mpData }) => {
+      if (!mpData) { setLoading(false); return }
+      const rid = mpData.id
+      setRealId(rid)
+      const { data: photoData } = await supabase.from('matrimonial_photos').select('*').eq('matrimonial_id', rid).order('created_at')
+      const mpRes = { data: mpData }
+      const photoRes = { data: photoData };
       if (mpRes.data) {
         const d = mpRes.data as any
         setForm({
@@ -72,7 +83,7 @@ export function EditMatrimonial() {
       marital_status: form.marital_status,
       about_en: form.about_en || null,
       preferences_en: form.preferences_en || null,
-    }).eq('id', id!)
+    }).eq('id', realId!)
     if (error) { toast.error('Failed to update'); setSaving(false); return }
     toast.success('Profile updated')
     setSaving(false)
@@ -81,19 +92,19 @@ export function EditMatrimonial() {
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
-    if (!files || !id) return
+    if (!files || !realId) return
     setUploading(true)
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       if (file.size > 2 * 1024 * 1024) { toast.error(`${file.name} over 2MB`); continue }
       const ext = file.name.split('.').pop()
-      const path = `matrimonial/${id}/${crypto.randomUUID()}.${ext}`
+      const path = `matrimonial/${realId}/${crypto.randomUUID()}.${ext}`
       const { error } = await supabase.storage.from('matrimonial-photos').upload(path, file)
       if (error) continue
       const { data } = supabase.storage.from('matrimonial-photos').getPublicUrl(path)
-      await supabase.from('matrimonial_photos').insert({ matrimonial_id: id, photo_url: data.publicUrl })
+      await supabase.from('matrimonial_photos').insert({ matrimonial_id: realId, photo_url: data.publicUrl })
     }
-    const { data: updated } = await supabase.from('matrimonial_photos').select('*').eq('matrimonial_id', id).order('created_at')
+    const { data: updated } = await supabase.from('matrimonial_photos').select('*').eq('matrimonial_id', realId).order('created_at')
     setPhotos((updated as Photo[]) || [])
     setUploading(false)
     toast.success('Photos uploaded')

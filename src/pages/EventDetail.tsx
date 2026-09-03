@@ -17,15 +17,13 @@ export function EventDetail() {
 
   useEffect(() => {
     if (!id) return
-    supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single()
-      .then(({ data }) => {
-        setEvent(data as Event | null)
-        setLoading(false)
-      })
+    const isUUID = /^[0-9a-f-]{36}$/.test(id)
+    const query = supabase.from('events').select('*')
+    const lookup = isUUID ? query.eq('id', id) : query.eq('slug', id)
+    lookup.single().then(({ data }) => {
+      setEvent(data as Event | null)
+      setLoading(false)
+    })
   }, [id])
 
   useEffect(() => {
@@ -67,12 +65,17 @@ export function EventDetail() {
     )
   }
 
-  const eventDate = new Date(event.event_date)
-  const day = eventDate.getDate()
-  const month = eventDate.toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { month: 'long' })
-  const year = eventDate.getFullYear()
-  const time = eventDate.toLocaleTimeString(lang === 'hi' ? 'hi-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
-  const isPast = eventDate < new Date()
+  // Use date parts from the stored string to avoid timezone conversion
+  const dateStr = event.event_date.slice(0, 10) // YYYY-MM-DD
+  const [year, monthNum, day] = dateStr.split('-').map(Number)
+  const monthDate = new Date(year, monthNum - 1, day)
+  const month = monthDate.toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { month: 'long' })
+  const timeStr = event.event_date.slice(11, 16) // HH:MM
+  const [h, m] = timeStr.split(':').map(Number)
+  const ampm = h >= 12 ? 'pm' : 'am'
+  const h12 = h % 12 || 12
+  const time = `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`
+  const isPast = new Date(`${dateStr}T${timeStr}:00`) < new Date()
 
   return (
     <div>
@@ -147,9 +150,13 @@ export function EventDetail() {
                   <div>
                     <p className="text-xs text-text-secondary">Time</p>
                     <p className="text-sm font-medium text-text-primary">{time}</p>
-                    {event.end_date && (
-                      <p className="text-xs text-text-secondary mt-0.5">to {new Date(event.end_date).toLocaleTimeString(lang === 'hi' ? 'hi-IN' : 'en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
-                    )}
+                    {event.end_date && (() => {
+                      const et = event.end_date.slice(11, 16)
+                      const [eh, em] = et.split(':').map(Number)
+                      const eampm = eh >= 12 ? 'pm' : 'am'
+                      const eh12 = eh % 12 || 12
+                      return <p className="text-xs text-text-secondary mt-0.5">to {String(eh12).padStart(2,'0')}:{String(em).padStart(2,'0')} {eampm}</p>
+                    })()}
                   </div>
                 </div>
 

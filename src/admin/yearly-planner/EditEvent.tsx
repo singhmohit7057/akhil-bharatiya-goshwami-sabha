@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { ImagePlus, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { DateMaskInput } from '../../components/ui/DateMaskInput'
+import { TimeMaskInput } from '../../components/ui/TimeMaskInput'
 
 import type { Event } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
@@ -14,23 +16,29 @@ export function EditEvent() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [eventUUID, setEventUUID] = useState<string | null>(null)
   const [bannerPreview, setBannerPreview] = useState<string | null>(null)
   const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [form, setForm] = useState({
-    title_en: '', description_en: '',
+    title_en: '', description_en: '', slug: '',
     event_date: '', event_time: '', end_date: '', end_time: '', location: '',
   })
 
   useEffect(() => {
     if (!id) return
-    supabase.from('events').select('*').eq('id', id).single().then(({ data }) => {
+    const isUUID = /^[0-9a-f-]{36}$/.test(id)
+    const query = supabase.from('events').select('*')
+    const lookup = isUUID ? query.eq('id', id) : query.eq('slug', id)
+    lookup.single().then(({ data }) => {
       if (data) {
         const e = data as Event
+        setEventUUID(e.id)
         const ed = e.event_date ? e.event_date.slice(0, 10) : ''
         const et = e.event_date ? e.event_date.slice(11, 16) : ''
         setForm({
           title_en: e.title_en,
           description_en: e.description_en || '',
+          slug: (e as any).slug || '',
           event_date: ed,
           event_time: et !== '00:00' ? et : '',
           end_date: e.end_date ? e.end_date.slice(0, 10) : '',
@@ -71,6 +79,7 @@ export function EditEvent() {
     const endDateTime = form.end_date ? (form.end_time ? `${form.end_date}T${form.end_time}:00` : `${form.end_date}T23:59:00`) : null
     const updateData: Record<string, unknown> = {
       title_en: form.title_en,
+      slug: form.slug || null,
       description_en: form.description_en || null,
       event_date: eventDateTime,
       end_date: endDateTime,
@@ -78,7 +87,7 @@ export function EditEvent() {
     }
     if (image_url) updateData.image_url = image_url
 
-    const { error } = await supabase.from('events').update(updateData).eq('id', id!)
+    const { error } = await supabase.from('events').update(updateData).eq('id', eventUUID || id!)
     if (error) { toast.error('Failed'); setSaving(false); return }
     toast.success('Event updated')
     navigate('/admin/yearly-planner')
@@ -123,6 +132,13 @@ export function EditEvent() {
             <label className="block text-xs font-medium text-text-primary mb-1">Title *</label>
             <input type="text" required value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} className={inputClass} />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">URL Slug <span className="text-text-secondary font-normal">(editable)</span></label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-secondary shrink-0">/events/</span>
+              <input type="text" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })} placeholder="blood-donation-2026-09-15" className={inputClass} />
+            </div>
+          </div>
 
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">Description</label>
@@ -132,19 +148,19 @@ export function EditEvent() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Event Date *</label>
-              <input type="text" required placeholder="YYYY-MM-DD" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} className={inputClass} />
+              <DateMaskInput required value={form.event_date} onChange={(date) => setForm({ ...form, event_date: date })} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Event Time <span className="text-text-secondary font-normal">(optional)</span></label>
-              <input type="text" placeholder="HH:MM" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })} className={inputClass} />
+              <TimeMaskInput value={form.event_time} onChange={(t) => setForm({ ...form, event_time: t })} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">End Date <span className="text-text-secondary font-normal">(optional)</span></label>
-              <input type="text" placeholder="YYYY-MM-DD" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className={inputClass} />
+              <DateMaskInput value={form.end_date} onChange={(date) => setForm({ ...form, end_date: date })} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">End Time <span className="text-text-secondary font-normal">(optional)</span></label>
-              <input type="text" placeholder="HH:MM" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className={inputClass} />
+              <TimeMaskInput value={form.end_time} onChange={(t) => setForm({ ...form, end_time: t })} className={inputClass} />
             </div>
           </div>
           <div>

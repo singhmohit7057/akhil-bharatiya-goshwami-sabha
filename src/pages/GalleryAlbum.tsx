@@ -31,12 +31,16 @@ export function GalleryAlbum() {
 
   useEffect(() => {
     if (!id) return
-    Promise.all([
-      supabase.from('gallery_albums').select('*').eq('id', id).single(),
-      supabase.from('gallery_photos').select('*').eq('album_id', id).order('created_at', { ascending: false }),
-    ]).then(([albumRes, photosRes]) => {
-      if (albumRes.data) setAlbum(albumRes.data as Album)
-      setPhotos((photosRes.data as Photo[]) || [])
+    const isUUID = /^[0-9a-f-]{36}$/.test(id)
+    const albumQuery = isUUID
+      ? supabase.from('gallery_albums').select('*').eq('id', id).single()
+      : supabase.from('gallery_albums').select('*').eq('slug', id).single()
+    albumQuery.then(async ({ data: albumData }) => {
+      if (albumData) {
+        setAlbum(albumData as Album)
+        const { data: photoData } = await supabase.from('gallery_photos').select('*').eq('album_id', albumData.id).order('created_at', { ascending: false })
+        setPhotos((photoData as Photo[]) || [])
+      }
       setLoading(false)
     })
   }, [id])

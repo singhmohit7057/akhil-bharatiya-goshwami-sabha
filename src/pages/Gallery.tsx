@@ -59,7 +59,7 @@ export function Gallery() {
             {albums.map((album) => (
               <Link
                 key={album.id}
-                to={`/gallery/${album.id}`}
+                to={`/gallery/${(album as any).slug || album.id}`}
                 className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-lg transition-all group"
               >
                 <div className="h-44 w-full overflow-hidden bg-gray-100">

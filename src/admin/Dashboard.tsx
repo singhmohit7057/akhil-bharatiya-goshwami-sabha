@@ -6,6 +6,7 @@ import {
   UserCheck, Users, Calendar, IndianRupee, Crown, Briefcase, Heart,
   Plus, UserPlus, CalendarPlus, CreditCard, Store,
   Check, X, MapPin, Clock, User,
+  MessageSquare, Mail, MailX, Lightbulb,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
@@ -20,6 +21,7 @@ export function AdminDashboard() {
   const { t } = useTranslation('admin')
   const { user } = useAuth()
   const [stats, setStats] = useState({ pending: 0, total: 0, executive: 0, events: 0, donations: 0, businesses: 0, matrimonial: 0, newThisMonth: 0 })
+  const [formStats, setFormStats] = useState({ contacts: 0, donations: 0, suggestions: 0, subscribers: 0, unsubscribed: 0 })
   const [pendingMembers, setPendingMembers] = useState<Profile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
   const [recentPayments, setRecentPayments] = useState<DonationWithProfile[]>([])
@@ -57,6 +59,22 @@ export function AdminDashboard() {
       setUpcomingEvents((eventList.data as Event[]) || [])
       setRecentPayments((paymentList.data as DonationWithProfile[]) || [])
     })
+
+    Promise.all([
+      supabase.from('contact_submissions').select('id', { count: 'exact', head: true }),
+      supabase.from('donation_submissions').select('id', { count: 'exact', head: true }),
+      supabase.from('suggestion_submissions').select('id', { count: 'exact', head: true }),
+      supabase.from('email_subscribers').select('id', { count: 'exact', head: true }).eq('is_active', true),
+      supabase.from('email_subscribers').select('id', { count: 'exact', head: true }).eq('is_active', false),
+    ]).then(([cRes, dRes, sRes, subRes, unsubRes]) => {
+      setFormStats({
+        contacts: cRes.count || 0,
+        donations: dRes.count || 0,
+        suggestions: sRes.count || 0,
+        subscribers: subRes.count || 0,
+        unsubscribed: unsubRes.count || 0,
+      })
+    })
   }, [])
 
   async function handleApprove(member: Profile) {
@@ -87,37 +105,37 @@ export function AdminDashboard() {
   }
 
   const statCards = [
-    { icon: UserCheck, label: t('dashboard.pendingApprovals'), value: stats.pending, to: '/admin/members/pending', color: 'bg-amber-50 text-amber-600' },
-    { icon: Users, label: t('dashboard.totalMembers'), value: stats.total, to: '/admin/members', color: 'bg-blue-50 text-blue-600' },
-    { icon: Crown, label: 'Executive Members', value: stats.executive, to: '/admin/members', color: 'bg-orange-50 text-orange-600' },
-    { icon: Calendar, label: t('dashboard.totalEvents'), value: stats.events, to: '/admin/yearly-planner', color: 'bg-green-50 text-green-600' },
-    { icon: IndianRupee, label: t('dashboard.totalDonations'), value: `₹${stats.donations.toLocaleString()}`, to: '/admin/payments', color: 'bg-purple-50 text-purple-600' },
-    { icon: Briefcase, label: 'Business Listings', value: stats.businesses, to: '/admin/business', color: 'bg-cyan-50 text-cyan-600' },
-    { icon: Heart, label: 'Matrimonial Profiles', value: stats.matrimonial, to: '/admin/matrimonial', color: 'bg-pink-50 text-pink-600' },
-    { icon: Plus, label: 'New This Month', value: stats.newThisMonth, to: '/admin/members', color: 'bg-emerald-50 text-emerald-600' },
+    { icon: UserCheck, label: t('dashboard.pendingApprovals'), value: stats.pending, to: '/admin/members/pending', gradient: 'from-orange-500 to-red-500' },
+    { icon: Users, label: t('dashboard.totalMembers'), value: stats.total, to: '/admin/members', gradient: 'from-blue-500 to-indigo-600' },
+    { icon: Crown, label: 'Executive Members', value: stats.executive, to: '/admin/members', gradient: 'from-amber-400 to-orange-500' },
+    { icon: Calendar, label: t('dashboard.totalEvents'), value: stats.events, to: '/admin/yearly-planner', gradient: 'from-green-500 to-teal-600' },
+    { icon: IndianRupee, label: t('dashboard.totalDonations'), value: `₹${stats.donations.toLocaleString()}`, to: '/admin/payments', gradient: 'from-purple-500 to-violet-600' },
+    { icon: Briefcase, label: 'Business Listings', value: stats.businesses, to: '/admin/business', gradient: 'from-cyan-500 to-blue-600' },
+    { icon: Heart, label: 'Matrimonial Profiles', value: stats.matrimonial, to: '/admin/matrimonial', gradient: 'from-pink-500 to-rose-600' },
+    { icon: Plus, label: 'New This Month', value: stats.newThisMonth, to: '/admin/members', gradient: 'from-emerald-500 to-green-600' },
   ]
 
   const quickActions = [
-    { icon: UserPlus, label: 'Add Member', to: '/admin/members/add', color: 'text-blue-600' },
-    { icon: CalendarPlus, label: 'Add Event', to: '/admin/yearly-planner/add', color: 'text-green-600' },
-    { icon: CreditCard, label: 'Record Payment', to: '/admin/payments/add', color: 'text-purple-600' },
-    { icon: Store, label: 'Add Business', to: '/admin/business/add', color: 'text-cyan-600' },
-    { icon: Heart, label: 'Add Matrimonial', to: '/admin/matrimonial/add', color: 'text-pink-600' },
+    { icon: UserPlus, label: 'Add Member', to: '/admin/members/add', gradient: 'from-blue-500 to-indigo-600' },
+    { icon: CalendarPlus, label: 'Add Event', to: '/admin/yearly-planner/add', gradient: 'from-green-500 to-teal-600' },
+    { icon: CreditCard, label: 'Record Payment', to: '/admin/payments/add', gradient: 'from-purple-500 to-violet-600' },
+    { icon: Store, label: 'Add Business', to: '/admin/business/add', gradient: 'from-cyan-500 to-blue-600' },
+    { icon: Heart, label: 'Add Matrimonial', to: '/admin/matrimonial/add', gradient: 'from-pink-500 to-rose-600' },
   ]
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-text-primary mb-6">{t('title')}</h1>
+      <h1 className="text-3xl font-extrabold text-text-primary mb-4">{t('title')}</h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
         {statCards.map((card) => (
-          <Link key={card.label} to={card.to} className="bg-white rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-            <div className={`w-9 h-9 rounded-lg ${card.color} flex items-center justify-center mb-2`}>
-              <card.icon className="w-4.5 h-4.5" />
+          <Link key={card.label} to={card.to} className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 hover:shadow-lg hover:scale-[1.02] transition-all flex flex-col items-center justify-center gap-2 text-center`}>
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <card.icon className="w-5 h-5 text-white" />
             </div>
-            <p className="text-xl font-bold text-text-primary">{card.value}</p>
-            <p className="text-xs text-text-secondary">{card.label}</p>
+            <p className="text-2xl font-bold text-white leading-none">{card.value}</p>
+            <p className="text-sm font-semibold text-white/90 leading-tight">{card.label}</p>
           </Link>
         ))}
       </div>
@@ -125,11 +143,33 @@ export function AdminDashboard() {
       {/* Quick Actions */}
       <div className="bg-white rounded-xl border border-border p-4 mb-6">
         <h2 className="text-sm font-semibold text-text-primary mb-3">Quick Actions</h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-3">
           {quickActions.map((action) => (
-            <Link key={action.label} to={action.to} className="flex items-center gap-2 px-4 py-2.5 border border-border rounded-lg text-sm font-medium text-text-primary hover:border-primary/30 hover:bg-primary/5 transition-colors">
-              <action.icon className={`w-4 h-4 ${action.color}`} />
-              {action.label}
+            <Link key={action.label} to={action.to} className="flex flex-col items-center gap-3 py-5 bg-white border border-border rounded-xl hover:shadow-md hover:scale-[1.02] transition-all">
+              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-sm`}>
+                <action.icon className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xs font-bold text-gray-700">{action.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Forms & Subscribers */}
+      <div className="bg-white rounded-xl border border-border p-4 mb-6">
+        <h2 className="text-sm font-semibold text-text-primary mb-3">Forms & Subscribers</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[
+            { to: '/admin/forms', gradient: 'from-sky-500 to-blue-600', icon: MessageSquare, value: formStats.contacts, label: 'Contact Forms' },
+            { to: '/admin/forms', gradient: 'from-violet-500 to-purple-600', icon: IndianRupee, value: formStats.donations, label: 'Donation Forms' },
+            { to: '/admin/forms', gradient: 'from-amber-400 to-orange-500', icon: Lightbulb, value: formStats.suggestions, label: 'Suggestions' },
+            { to: '/admin/subscribers', gradient: 'from-emerald-500 to-green-600', icon: Mail, value: formStats.subscribers, label: 'Subscribers' },
+            { to: '/admin/subscribers', gradient: 'from-rose-500 to-red-600', icon: MailX, value: formStats.unsubscribed, label: 'Unsubscribed' },
+          ].map((item) => (
+            <Link key={item.label} to={item.to} className={`bg-gradient-to-br ${item.gradient} rounded-xl p-4 hover:opacity-90 hover:scale-[1.02] transition-all text-center flex flex-col items-center gap-1`}>
+              <item.icon className="w-5 h-5 text-white/80 mb-1" />
+              <p className="text-xl font-bold text-white">{item.value}</p>
+              <p className="text-xs font-semibold text-white/80">{item.label}</p>
             </Link>
           ))}
         </div>
@@ -249,6 +289,7 @@ export function AdminDashboard() {
           )}
         </div>
       </div>
+
     </div>
   )
 }

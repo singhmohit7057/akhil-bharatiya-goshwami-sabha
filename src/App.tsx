@@ -187,7 +187,7 @@ export default function App() {
           <Route path="yearly-planner/add" element={<AddEvent />} />
 
           {/* Events */}
-          <Route path="events/:id/edit" element={<EditEvent />} />
+          <Route path="yearly-planner/edit/:id" element={<EditEvent />} />
 
           {/* Finance & Promotions */}
           <Route path="souvenir" element={<Souvenir />} />

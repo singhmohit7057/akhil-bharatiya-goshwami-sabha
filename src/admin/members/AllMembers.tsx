@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, Shield, Edit2 } from 'lucide-react'
+import { Search, Shield, Edit2, User } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
@@ -71,9 +71,10 @@ export function AllMembers() {
             <thead>
               <tr className="border-b border-border bg-gray-50 text-left">
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.name')}</th>
-                <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.email')}</th>
+                <th className="px-4 py-3 font-medium text-text-secondary">Member ID</th>
+                <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.phone')}</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.role')}</th>
-                <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.city')}</th>
+                <th className="px-4 py-3 font-medium text-text-secondary">Membership Valid Till</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.actions')}</th>
               </tr>
             </thead>
@@ -81,18 +82,26 @@ export function AllMembers() {
               {filtered.map((m) => (
                 <tr key={m.id} className="border-b border-border/50 hover:bg-gray-50">
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                        {m.profile_photo_url ? (
+                          <img src={m.profile_photo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          <User className="w-4 h-4 text-primary" />
+                        )}
+                      </div>
                       <span className="font-medium text-text-primary">{m.full_name}</span>
                       {m.is_executive_member && <Shield className="w-3.5 h-3.5 text-amber-500" />}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-text-secondary">{m.email}</td>
+                  <td className="px-4 py-3 text-xs text-text-secondary">{m.member_id || '—'}</td>
+                  <td className="px-4 py-3 text-text-secondary">{m.phone || '—'}</td>
                   <td className="px-4 py-3">
                     <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{getRoleLabel(m.role)}</span>
                   </td>
-                  <td className="px-4 py-3 text-text-secondary">{m.city || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-text-secondary">{(m as any).membership_end_date || (m.is_executive_member ? 'Active' : '—')}</td>
                   <td className="px-4 py-3">
-                    <Link to={`/admin/members/${m.id}`} className="text-primary hover:underline flex items-center gap-1 text-xs">
+                    <Link to={`/admin/members/${m.member_id ? m.member_id.replace('/', '-') : m.id}`} className="text-primary hover:underline flex items-center gap-1 text-xs">
                       <Edit2 className="w-3.5 h-3.5" /> Edit
                     </Link>
                   </td>

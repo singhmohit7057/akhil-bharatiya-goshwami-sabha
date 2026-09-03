@@ -5,6 +5,8 @@ Disallow: /profile
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /pending-approval
+Disallow: /unsubscribe
 
 Sitemap: https://akhilbharatiyagoswami.com/sitemap.xml

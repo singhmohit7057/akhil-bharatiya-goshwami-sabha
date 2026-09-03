@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, X, Images, Upload, Camera, Home } from 'lucide-react'
+import { Plus, Trash2, X, Images, Upload, Camera, Home, Edit2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { localized } from '../../lib/utils'
@@ -12,6 +12,7 @@ interface Album {
   title_en: string
   title_hi: string | null
   cover_url: string | null
+  slug: string | null
   created_at: string
   photo_count: number
 }
@@ -33,8 +34,14 @@ export function ManageGallery() {
   const homeFileRef = useRef<HTMLInputElement>(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ title_en: '', title_hi: '', description: '' })
+  const [form, setForm] = useState({ title_en: '', title_hi: '', description: '', slug: '' })
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false)
 
+  function generateSlug(title: string) {
+    return title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
+  }
+
+  const [editingAlbum, setEditingAlbum] = useState<Album | null>(null)
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null)
   const [photos, setPhotos] = useState<Photo[]>([])
   const [uploading, setUploading] = useState(false)
@@ -90,18 +97,38 @@ export function ManageGallery() {
     setLoading(false)
   }
 
+  function startEditAlbum(album: Album, e: React.MouseEvent) {
+    e.stopPropagation()
+    setForm({ title_en: album.title_en, title_hi: album.title_hi || '', description: (album as any).description || '', slug: album.slug || '' })
+    setSlugManuallyEdited(true)
+    setEditingAlbum(album)
+    setShowForm(true)
+  }
+
   async function handleCreateAlbum(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const { error } = await supabase.from('gallery_albums').insert({
-      title_en: form.title_en,
-      title_hi: form.title_hi || null,
-      description: form.description || null,
-      created_by: user?.id,
-    })
-    if (error) { toast.error('Failed to create album'); setSaving(false); return }
-    toast.success('Album created')
-    setForm({ title_en: '', title_hi: '', description: '' })
+    const slug = form.slug || generateSlug(form.title_en)
+
+    if (editingAlbum) {
+      const { error } = await supabase.from('gallery_albums').update({
+        title_en: form.title_en, title_hi: form.title_hi || null,
+        description: form.description || null, slug: slug || null,
+      }).eq('id', editingAlbum.id)
+      if (error) { toast.error('Failed to update'); setSaving(false); return }
+      toast.success('Album updated')
+    } else {
+      const { error } = await supabase.from('gallery_albums').insert({
+        title_en: form.title_en, title_hi: form.title_hi || null,
+        description: form.description || null, slug: slug || null, created_by: user?.id,
+      })
+      if (error) { toast.error('Failed to create album'); setSaving(false); return }
+      toast.success('Album created')
+    }
+
+    setForm({ title_en: '', title_hi: '', description: '', slug: '' })
+    setSlugManuallyEdited(false)
+    setEditingAlbum(null)
     setShowForm(false)
     setSaving(false)
     fetchAlbums()
@@ -211,20 +238,30 @@ export function ManageGallery() {
       {showForm && (
         <div className="bg-white rounded-xl border border-border p-5 mb-6">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-semibold text-text-primary">Create Album</h3>
+            <h3 className="text-sm font-semibold text-text-primary">{editingAlbum ? 'Edit Album' : 'Create Album'}</h3>
             <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-text-secondary" /></button>
           </div>
           <form onSubmit={handleCreateAlbum} className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Title *</label>
-              <input type="text" required value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} className={inputClass} />
+              <input type="text" required value={form.title_en} onChange={(e) => {
+                const val = e.target.value
+                setForm((prev) => ({ ...prev, title_en: val, ...(slugManuallyEdited ? {} : { slug: generateSlug(val) }) }))
+              }} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Description</label>
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} placeholder="Brief description about this album..." className={inputClass} />
             </div>
+            <div>
+              <label className="block text-xs font-medium text-text-primary mb-1">URL Slug <span className="text-text-secondary font-normal">(auto-generated, editable)</span></label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-text-secondary shrink-0">/gallery/</span>
+                <input type="text" value={form.slug} onChange={(e) => { setSlugManuallyEdited(true); setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }) }} placeholder="annual-meet-2026" className={inputClass} />
+              </div>
+            </div>
             <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark disabled:opacity-50">
-              {saving ? '...' : 'Create Album'}
+              {saving ? '...' : editingAlbum ? 'Update Album' : 'Create Album'}
             </button>
           </form>
         </div>
@@ -258,6 +295,9 @@ export function ManageGallery() {
                   <p className="text-sm font-medium text-text-primary truncate">{localized(album.title_en, album.title_hi, lang)}</p>
                   <p className="text-xs text-text-secondary">{album.photo_count} photos</p>
                 </div>
+                <button onClick={(e) => startEditAlbum(album, e)} className="p-1.5 text-text-secondary hover:text-primary shrink-0">
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
                 <button onClick={(e) => { e.stopPropagation(); handleDeleteAlbum(album.id) }} className="p-1.5 text-text-secondary hover:text-red-500 shrink-0">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

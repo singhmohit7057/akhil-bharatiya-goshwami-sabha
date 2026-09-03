@@ -156,12 +156,12 @@ export function ManageMatrimonial() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Link to={`/matrimonial/${mp.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Link to={`/matrimonial/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
                           <Eye className="w-3.5 h-3.5" /> View
                         </Link>
                         {superAdmin && (
                           <>
-                            <Link to={`/admin/matrimonial/edit/${mp.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
+                            <Link to={`/admin/matrimonial/edit/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
                               <Edit2 className="w-3.5 h-3.5" /> Edit
                             </Link>
                             <button onClick={() => handleToggleActive(mp.id, mp.is_active)}

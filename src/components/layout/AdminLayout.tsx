@@ -24,18 +24,26 @@ interface NavItem {
 
 interface NavSection {
   title: string
+  titleColor?: string
+  iconColor?: string
+  hoverBg?: string
   items: NavItem[]
 }
 
 const sections: NavSection[] = [
   {
     title: '',
+    iconColor: 'text-primary',
+    hoverBg: 'hover:bg-primary/5',
     items: [
       { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     ],
   },
   {
     title: 'ADMINISTRATION',
+    titleColor: 'text-violet-600',
+    iconColor: 'text-violet-500',
+    hoverBg: 'hover:bg-violet-50',
     items: [
       {
         to: '/admin/sub-admins', icon: ShieldCheck, label: 'Sub-Admins',
@@ -48,6 +56,9 @@ const sections: NavSection[] = [
   },
   {
     title: 'MEMBERS',
+    titleColor: 'text-blue-600',
+    iconColor: 'text-blue-500',
+    hoverBg: 'hover:bg-blue-50',
     items: [
       {
         to: '/admin/members', icon: Users, label: 'Manage Members',
@@ -67,6 +78,9 @@ const sections: NavSection[] = [
   },
   {
     title: 'PAYMENTS',
+    titleColor: 'text-emerald-600',
+    iconColor: 'text-emerald-500',
+    hoverBg: 'hover:bg-emerald-50',
     items: [
       {
         to: '/admin/payments', icon: IndianRupee, label: 'Payments',
@@ -79,6 +93,9 @@ const sections: NavSection[] = [
   },
   {
     title: 'COMMUNITY',
+    titleColor: 'text-orange-600',
+    iconColor: 'text-orange-500',
+    hoverBg: 'hover:bg-orange-50',
     items: [
       {
         to: '/admin/matrimonial', icon: Heart, label: 'Matrimonials',
@@ -105,6 +122,9 @@ const sections: NavSection[] = [
   },
   {
     title: 'MEDIA & PROMOTIONS',
+    titleColor: 'text-rose-600',
+    iconColor: 'text-rose-500',
+    hoverBg: 'hover:bg-rose-50',
     items: [
       { to: '/admin/gallery', icon: Images, label: 'Gallery' },
       { to: '/admin/souvenir', icon: Gift, label: 'Souvenir' },
@@ -170,7 +190,7 @@ export function AdminLayout() {
         {filteredSections.map((section) => (
           <div key={section.title || 'main'}>
             {section.title && (
-              <p className="px-2 mb-2 text-[10px] font-semibold tracking-widest text-text-secondary/60 uppercase">
+              <p className={cn('px-2 mb-2 text-[10px] font-bold tracking-widest uppercase', section.titleColor || 'text-text-secondary/60')}>
                 {section.title}
               </p>
             )}
@@ -186,14 +206,14 @@ export function AdminLayout() {
                       <button
                         onClick={() => toggleExpand(item.to)}
                         className={cn(
-                          'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors',
+                          'w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-colors',
                           active
                             ? 'bg-primary/10 text-primary'
-                            : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary',
+                            : cn('text-gray-700', section.hoverBg || 'hover:bg-gray-50'),
                         )}
                       >
                         <span className="flex items-center gap-2.5">
-                          <item.icon className="w-[18px] h-[18px]" />
+                          <item.icon className={cn('w-[18px] h-[18px]', active ? 'text-primary' : (section.iconColor || 'text-gray-500'))} />
                           {item.label}
                         </span>
                         <ChevronDown className={cn('w-3.5 h-3.5 opacity-50 transition-transform', open && 'rotate-180')} />
@@ -203,14 +223,14 @@ export function AdminLayout() {
                         to={item.to}
                         onClick={() => setSidebarOpen(false)}
                         className={cn(
-                          'flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors',
+                          'flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-colors',
                           active
                             ? 'bg-primary/10 text-primary'
-                            : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary',
+                            : cn('text-gray-700', section.hoverBg || 'hover:bg-gray-50'),
                         )}
                       >
                         <span className="flex items-center gap-2.5">
-                          <item.icon className="w-[18px] h-[18px]" />
+                          <item.icon className={cn('w-[18px] h-[18px]', active ? 'text-primary' : (section.iconColor || 'text-gray-500'))} />
                           {item.label}
                         </span>
                         <ChevronDown className="w-3.5 h-3.5 opacity-30" />
@@ -282,7 +302,7 @@ export function AdminLayout() {
           <p className="text-sm font-bold text-text-primary">Admin Panel</p>
         </div>
 
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="p-4 sm:p-5 lg:p-6">
           <Outlet />
         </main>
       </div>

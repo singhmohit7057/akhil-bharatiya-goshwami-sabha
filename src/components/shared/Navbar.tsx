@@ -94,14 +94,16 @@ export function Navbar() {
                         {t('nav.profile')}
                       </Link>
                       {isAdmin() && (
-                        <Link
-                          to="/admin"
+                        <a
+                          href="/admin"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-primary hover:bg-gray-50"
                         >
                           <Shield className="w-4 h-4" />
                           {t('nav.admin')}
-                        </Link>
+                        </a>
                       )}
                       <hr className="my-1 border-border" />
                       <button

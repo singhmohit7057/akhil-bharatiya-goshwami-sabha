@@ -86,7 +86,7 @@ export function Events() {
             {events.map((event) => (
               <Link
                 key={event.id}
-                to={`/events/${event.id}`}
+                to={`/events/${(event as any).slug || event.id}`}
                 className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-lg transition-all group flex flex-col"
               >
                 <div className="h-44 w-full overflow-hidden">

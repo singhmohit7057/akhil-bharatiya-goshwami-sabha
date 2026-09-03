@@ -21,11 +21,11 @@ export function MatrimonialDetail() {
   useEffect(() => {
     if (!id) return
 
-    supabase
-      .from('matrimonial_profiles')
-      .select('*, matrimonial_photos(*)')
-      .eq('id', id)
-      .single()
+    const code = id!.replace('-', '/')
+    const isCode = code.startsWith('MAT/')
+    let query = supabase.from('matrimonial_profiles').select('*, matrimonial_photos(*)')
+    query = isCode ? query.eq('profile_code', code) : query.eq('id', id)
+    query.single()
       .then(async ({ data }) => {
         if (!data) { setLoading(false); return }
         setMp(data)

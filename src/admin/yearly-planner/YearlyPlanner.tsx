@@ -148,7 +148,7 @@ export function YearlyPlanner() {
                   )}
                 </div>
                 <div className="flex items-center gap-3 pt-2 border-t border-border">
-                  <Link to={`/admin/events/${event.id}/edit`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
+                  <Link to={`/admin/yearly-planner/edit/${(event as any).slug || event.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
                     <Edit2 className="w-3.5 h-3.5" /> Edit
                   </Link>
                   <button onClick={() => handleDelete(event.id)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-red-500">

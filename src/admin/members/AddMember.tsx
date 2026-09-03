@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { UserPlus } from 'lucide-react'
+import { UserPlus, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { transliterateToHindi } from '../../lib/transliterate'
 import { useAuth } from '../../hooks/useAuth'
 import { ALL_ROLES } from '../../types'
 import type { MemberRole } from '../../types'
@@ -11,6 +12,8 @@ export function AddMember() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [hiManuallyEdited, setHiManuallyEdited] = useState(false)
   const [form, setForm] = useState({
     full_name: '',
     full_name_hi: '',
@@ -77,22 +80,30 @@ export function AddMember() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Full Name (English) *</label>
-              <input type="text" required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className={inputClass} />
+              <input type="text" required value={form.full_name} onChange={(e) => {
+                const val = e.target.value
+                setForm((prev) => ({ ...prev, full_name: val, ...(hiManuallyEdited ? {} : { full_name_hi: transliterateToHindi(val) }) }))
+              }} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Full Name (Hindi)</label>
-              <input type="text" value={form.full_name_hi} onChange={(e) => setForm({ ...form, full_name_hi: e.target.value })} className={inputClass} />
+              <input type="text" value={form.full_name_hi} onChange={(e) => { setHiManuallyEdited(true); setForm({ ...form, full_name_hi: e.target.value }) }} className={inputClass} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Email *</label>
-              <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
+              <input type="email" required autoComplete="new-email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Password *</label>
-              <input type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className={inputClass} />
+              <div className="relative">
+                <input type={showPassword ? 'text' : 'password'} required minLength={6} autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className={`${inputClass} pr-10`} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
 

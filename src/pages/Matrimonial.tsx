@@ -69,7 +69,7 @@ export function Matrimonial() {
             {filtered.map((mp) => (
               <Link
                 key={mp.id}
-                to={`/matrimonial/${mp.id}`}
+                to={`/matrimonial/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`}
                 className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="p-5">
