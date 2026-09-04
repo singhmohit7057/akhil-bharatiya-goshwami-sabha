@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, X, BookOpen, Upload, FileText, Check, Edit2 } from 'lucide-react'
+import { Plus, Trash2, X, BookOpen, Upload, FileText, Check, Edit2, Pencil } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
@@ -26,6 +26,7 @@ interface Sponsor {
   ad_size: 'half_page' | 'full_page'
   amount: number
   is_paid: boolean
+  payment_mode: string | null
   notes: string | null
 }
 
@@ -41,17 +42,31 @@ export function Souvenir() {
   const pdfRef = useRef<HTMLInputElement>(null)
   const coverRef = useRef<HTMLInputElement>(null)
 
+  const [sponsorStats, setSponsorStats] = useState<Record<string, { count: number; collected: number; pending: number }>>({})
   const [selectedSouvenir, setSelectedSouvenir] = useState<SouvenirItem | null>(null)
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [showSponsorForm, setShowSponsorForm] = useState(false)
   const [savingSponsor, setSavingSponsor] = useState(false)
-  const [sponsorForm, setSponsorForm] = useState({ sponsor_name: '', company_name: '', phone: '', ad_size: 'half_page' as 'half_page' | 'full_page', amount: '700', is_paid: false, notes: '' })
+  const [editingSponsorId, setEditingSponsorId] = useState<string | null>(null)
+  const [sponsorForm, setSponsorForm] = useState({ sponsor_name: '', company_name: '', phone: '', ad_size: 'half_page' as 'half_page' | 'full_page', amount: '700', is_paid: false, payment_mode: '', notes: '' })
 
   useEffect(() => { fetchItems() }, [])
 
   async function fetchItems() {
     const { data } = await supabase.from('souvenirs').select('*').order('year', { ascending: false })
     setItems((data as SouvenirItem[]) || [])
+    // Fetch sponsor stats per souvenir
+    const { data: allSponsors } = await supabase.from('souvenir_sponsors').select('souvenir_id, amount, is_paid')
+    if (allSponsors) {
+      const stats: Record<string, { count: number; collected: number; pending: number }> = {}
+      for (const s of allSponsors as any[]) {
+        if (!stats[s.souvenir_id]) stats[s.souvenir_id] = { count: 0, collected: 0, pending: 0 }
+        stats[s.souvenir_id].count++
+        if (s.is_paid) stats[s.souvenir_id].collected += Number(s.amount)
+        else stats[s.souvenir_id].pending += Number(s.amount)
+      }
+      setSponsorStats(stats)
+    }
     setLoading(false)
   }
 
@@ -132,27 +147,50 @@ export function Souvenir() {
   }
 
   function resetSponsorForm() {
-    setSponsorForm({ sponsor_name: '', company_name: '', phone: '', ad_size: 'half_page', amount: '700', is_paid: false, notes: '' })
+    setSponsorForm({ sponsor_name: '', company_name: '', phone: '', ad_size: 'half_page', amount: '700', is_paid: false, payment_mode: '', notes: '' })
+    setEditingSponsorId(null)
     setShowSponsorForm(false)
+  }
+
+  function startEditSponsor(s: Sponsor) {
+    setSponsorForm({
+      sponsor_name: s.sponsor_name,
+      company_name: s.company_name || '',
+      phone: s.phone || '',
+      ad_size: s.ad_size,
+      amount: s.amount.toString(),
+      is_paid: s.is_paid,
+      payment_mode: s.payment_mode || '',
+      notes: s.notes || '',
+    })
+    setEditingSponsorId(s.id)
+    setShowSponsorForm(true)
   }
 
   async function handleAddSponsor(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedSouvenir) return
     setSavingSponsor(true)
-    const { error } = await supabase.from('souvenir_sponsors').insert({
-      souvenir_id: selectedSouvenir.id,
+    const payload = {
       sponsor_name: sponsorForm.sponsor_name,
       company_name: sponsorForm.company_name || null,
       phone: sponsorForm.phone || null,
       ad_size: sponsorForm.ad_size,
       amount: parseFloat(sponsorForm.amount),
       is_paid: sponsorForm.is_paid,
+      payment_mode: sponsorForm.payment_mode || null,
       notes: sponsorForm.notes || null,
-    })
+    }
+    let error
+    if (editingSponsorId) {
+      ({ error } = await supabase.from('souvenir_sponsors').update(payload).eq('id', editingSponsorId))
+      if (!error) toast.success('Sponsor updated')
+    } else {
+      ({ error } = await supabase.from('souvenir_sponsors').insert({ ...payload, souvenir_id: selectedSouvenir.id }))
+      if (!error) toast.success('Sponsor added')
+    }
     if (error) { toast.error('Failed'); setSavingSponsor(false); return }
-    toast.success('Sponsor added')
-    resetSponsorForm(); setSavingSponsor(false); openSponsors(selectedSouvenir)
+    resetSponsorForm(); setSavingSponsor(false); openSponsors(selectedSouvenir); fetchItems()
   }
 
   async function togglePaid(sponsor: Sponsor) {
@@ -164,7 +202,7 @@ export function Souvenir() {
     if (!confirm('Remove this sponsor?')) return
     await supabase.from('souvenir_sponsors').delete().eq('id', id)
     toast.success('Removed')
-    if (selectedSouvenir) openSponsors(selectedSouvenir)
+    if (selectedSouvenir) openSponsors(selectedSouvenir); fetchItems()
   }
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
@@ -247,6 +285,23 @@ export function Souvenir() {
                 <h3 className="text-sm font-semibold text-text-primary">{item.title}</h3>
                 {item.event_name && <p className="text-xs text-text-secondary">{item.event_name}</p>}
                 <span className="text-xs text-primary font-medium">{item.year}</span>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-1.5 mt-2.5 mb-2">
+                  <div className="bg-surface rounded-lg px-2 py-1.5 text-center">
+                    <p className="text-[9px] text-text-secondary font-medium">Sponsors</p>
+                    <p className="text-sm font-bold text-text-primary">{sponsorStats[item.id]?.count ?? 0}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg px-2 py-1.5 text-center">
+                    <p className="text-[9px] text-green-600 font-medium">Collected</p>
+                    <p className="text-sm font-bold text-green-700">₹{(sponsorStats[item.id]?.collected ?? 0).toLocaleString()}</p>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg px-2 py-1.5 text-center">
+                    <p className="text-[9px] text-amber-600 font-medium">Pending</p>
+                    <p className="text-sm font-bold text-amber-700">₹{(sponsorStats[item.id]?.pending ?? 0).toLocaleString()}</p>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-1.5 mt-2">
                   {item.pdf_url ? (
                     <a href={item.pdf_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex-1 text-center px-2 py-1.5 bg-primary/10 text-primary rounded-lg text-[10px] font-medium hover:bg-primary/20">View PDF</a>
@@ -298,7 +353,7 @@ export function Souvenir() {
           {showSponsorForm && (
             <div className="bg-surface rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="text-xs font-semibold text-text-primary">Add Sponsor</h4>
+                <h4 className="text-xs font-semibold text-text-primary">{editingSponsorId ? 'Edit Sponsor' : 'Add Sponsor'}</h4>
                 <button onClick={resetSponsorForm}><X className="w-3.5 h-3.5 text-text-secondary" /></button>
               </div>
               <form onSubmit={handleAddSponsor} className="space-y-3">
@@ -331,15 +386,20 @@ export function Souvenir() {
                     <input type="number" required min="1" value={sponsorForm.amount} onChange={(e) => setSponsorForm({ ...sponsorForm, amount: e.target.value })} className={inputClass} />
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <label className="flex items-center gap-2 text-xs cursor-pointer">
                     <input type="checkbox" checked={sponsorForm.is_paid} onChange={(e) => setSponsorForm({ ...sponsorForm, is_paid: e.target.checked })} className="rounded border-border" />
                     <span className="text-text-primary">Paid</span>
                   </label>
+                  <select value={sponsorForm.payment_mode} onChange={(e) => setSponsorForm({ ...sponsorForm, payment_mode: e.target.value })} className={`${inputClass} w-40 bg-white`}>
+                    <option value="">Payment Mode</option>
+                    <option value="Online">Online</option>
+                    <option value="Offline">Offline</option>
+                  </select>
                   <input type="text" placeholder="Notes (optional)" value={sponsorForm.notes} onChange={(e) => setSponsorForm({ ...sponsorForm, notes: e.target.value })} className={`${inputClass} flex-1`} />
                 </div>
                 <button type="submit" disabled={savingSponsor} className="px-4 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark disabled:opacity-50">
-                  {savingSponsor ? '...' : 'Add Sponsor'}
+                  {savingSponsor ? '...' : editingSponsorId ? 'Update Sponsor' : 'Add Sponsor'}
                 </button>
               </form>
             </div>
@@ -358,7 +418,8 @@ export function Souvenir() {
                     <th className="pb-2 font-medium">Phone</th>
                     <th className="pb-2 font-medium">Ad Size</th>
                     <th className="pb-2 font-medium">Amount</th>
-                    <th className="pb-2 font-medium">Mark Paid</th>
+                    <th className="pb-2 font-medium">Mode</th>
+                    <th className="pb-2 font-medium">Status</th>
                     <th className="pb-2 font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -374,6 +435,7 @@ export function Souvenir() {
                         </span>
                       </td>
                       <td className="py-2.5 font-semibold text-text-primary">₹{Number(s.amount).toLocaleString()}</td>
+                      <td className="py-2.5 text-text-secondary">{s.payment_mode || '—'}</td>
                       <td className="py-2.5">
                         {s.is_paid ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700 flex items-center gap-0.5 w-fit">
@@ -386,7 +448,10 @@ export function Souvenir() {
                         )}
                       </td>
                       <td className="py-2.5">
-                        <button onClick={() => deleteSponsor(s.id)} className="p-1 text-text-secondary hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <div className="flex gap-1">
+                          <button onClick={() => startEditSponsor(s)} className="p-1 text-text-secondary hover:text-primary"><Pencil className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => deleteSponsor(s.id)} className="p-1 text-text-secondary hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
                       </td>
                     </tr>
                   ))}

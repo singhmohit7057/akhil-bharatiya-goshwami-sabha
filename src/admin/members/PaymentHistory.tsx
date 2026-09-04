@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { IndianRupee, Crown, Search, Plus, X, Edit2, Trash2 } from 'lucide-react'
+import { IndianRupee, Crown, Search, Plus, X, Edit2, Trash2, BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
@@ -20,6 +20,7 @@ export function PaymentHistory() {
   const [payments, setPayments] = useState<PaymentWithProfile[]>([])
   const [members, setMembers] = useState<Pick<Profile, 'id' | 'full_name'>[]>([])
   const [loading, setLoading] = useState(true)
+  const [souvenirCollected, setSouvenirCollected] = useState(0)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -39,9 +40,12 @@ export function PaymentHistory() {
     Promise.all([
       supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email)').order('donation_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name').eq('account_status', 'active').order('full_name'),
-    ]).then(([payRes, memRes]) => {
+      supabase.from('souvenir_sponsors').select('amount').eq('is_paid', true),
+    ]).then(([payRes, memRes, souvenirRes]) => {
       setPayments((payRes.data as PaymentWithProfile[]) || [])
       setMembers(memRes.data || [])
+      const souvenirTotal = (souvenirRes.data || []).reduce((sum: number, s: any) => sum + Number(s.amount), 0)
+      setSouvenirCollected(souvenirTotal)
       setLoading(false)
     })
   }, [])
@@ -106,8 +110,8 @@ export function PaymentHistory() {
   })
 
   const totalAmount = filtered.reduce((sum, d) => sum + Number(d.amount), 0)
-  const membershipPayments = payments.filter((p) => p.purpose === 'Executive Membership')
-  const donationPayments = payments.filter((p) => p.purpose !== 'Executive Membership')
+  const membershipTotal = payments.filter((p) => p.purpose === 'Executive Membership').reduce((sum, p) => sum + Number(p.amount), 0)
+  const donationTotal = payments.filter((p) => p.purpose !== 'Executive Membership').reduce((sum, p) => sum + Number(p.amount), 0)
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
@@ -223,27 +227,34 @@ export function PaymentHistory() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <IndianRupee className="w-4 h-4 text-primary" />
             <p className="text-xs text-text-secondary">Total Collections</p>
           </div>
-          <p className="text-xl font-bold text-text-primary">&#8377;{totalAmount.toLocaleString()}</p>
+          <p className="text-xl font-bold text-text-primary">₹{totalAmount.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <IndianRupee className="w-4 h-4 text-green-600" />
             <p className="text-xs text-text-secondary">Donations</p>
           </div>
-          <p className="text-xl font-bold text-text-primary">{donationPayments.length}</p>
+          <p className="text-xl font-bold text-green-700">₹{donationTotal.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Crown className="w-4 h-4 text-amber-500" />
-            <p className="text-xs text-text-secondary">Membership Payments</p>
+            <p className="text-xs text-text-secondary">Membership</p>
           </div>
-          <p className="text-xl font-bold text-text-primary">{membershipPayments.length}</p>
+          <p className="text-xl font-bold text-amber-600">₹{membershipTotal.toLocaleString()}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-border p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <BookOpen className="w-4 h-4 text-violet-500" />
+            <p className="text-xs text-text-secondary">Souvenir Collected</p>
+          </div>
+          <p className="text-xl font-bold text-violet-600">₹{souvenirCollected.toLocaleString()}</p>
         </div>
       </div>
 

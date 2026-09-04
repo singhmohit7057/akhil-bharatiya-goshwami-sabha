@@ -46,6 +46,8 @@ import { AdminDashboard } from './admin/Dashboard'
 import { PendingApprovals } from './admin/members/PendingApprovals'
 import { PaymentHistory } from './admin/members/PaymentHistory'
 import { AddPayment } from './admin/members/AddPayment'
+import { AddExpense } from './admin/members/AddExpense'
+import { ExpenseHistory } from './admin/members/ExpenseHistory'
 import { AllMembers } from './admin/members/AllMembers'
 import { AddMember } from './admin/members/AddMember'
 import { MemberDetail } from './admin/members/MemberDetail'
@@ -167,6 +169,11 @@ export default function App() {
           <Route path="payments" element={<PaymentHistory />} />
           <Route path="payments/add" element={<AddPayment />} />
           <Route path="payments/edit/:id" element={<AddPayment />} />
+
+          {/* Expenses */}
+          <Route path="expenses" element={<ExpenseHistory />} />
+          <Route path="expenses/add" element={<AddExpense />} />
+          <Route path="expenses/edit/:id" element={<AddExpense />} />
           <Route path="members/:id" element={<MemberDetail />} />
 
           {/* Designations */}
