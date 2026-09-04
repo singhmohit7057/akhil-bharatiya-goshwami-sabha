@@ -15,9 +15,9 @@ export function ProfileLayout() {
     { to: '/profile', icon: User, label: t('tabs.profile'), exact: true },
     { to: '/profile/edit', icon: Edit, label: t('tabs.edit') },
     { to: '/profile/family', icon: Users, label: t('tabs.family') },
-    { to: '/profile/business', icon: Briefcase, label: t('tabs.business') },
     { to: '/profile/donations', icon: IndianRupee, label: t('tabs.donations') },
     { to: '/profile/membership', icon: Crown, label: 'Membership' },
+    { to: '/profile/business', icon: Briefcase, label: t('tabs.business') },
     { to: '/profile/matrimonial', icon: Heart, label: t('tabs.matrimonial') },
   ]
 
@@ -42,7 +42,7 @@ export function ProfileLayout() {
                       'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                       isActive(tab.to, tab.exact)
                         ? 'bg-primary/10 text-primary'
-                        : 'text-text-secondary hover:bg-gray-50',
+                        : 'text-text-primary font-medium hover:bg-gray-50',
                     )}
                   >
                     <tab.icon className="w-4 h-4" />

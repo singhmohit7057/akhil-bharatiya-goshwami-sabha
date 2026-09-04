@@ -97,7 +97,8 @@ export function MyDonations() {
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
-  const totalDonations = donations.reduce((sum, d) => sum + Number(d.amount), 0)
+  const membershipTotal = membershipPayments.reduce((sum, m) => sum + Number(m.amount), 0)
+  const totalDonations = donations.reduce((sum, d) => sum + Number(d.amount), 0) + membershipTotal
 
   return (
     <div className="space-y-6">
@@ -106,21 +107,21 @@ export function MyDonations() {
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <IndianRupee className="w-4 h-4 text-primary" />
-            <p className="text-xs text-text-secondary">Total Donations</p>
+            <p className="text-xs text-text-secondary">Total Contribution</p>
           </div>
           <p className="text-xl font-bold text-text-primary">&#8377;{totalDonations.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Calendar className="w-4 h-4 text-primary" />
-            <p className="text-xs text-text-secondary">Contributions</p>
+            <p className="text-xs text-text-secondary">Donation</p>
           </div>
           <p className="text-xl font-bold text-text-primary">{donations.length}</p>
         </div>
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Crown className="w-4 h-4 text-amber-500" />
-            <p className="text-xs text-text-secondary">Membership Payments</p>
+            <p className="text-xs text-text-secondary">Membership Payment</p>
           </div>
           <p className="text-xl font-bold text-text-primary">{membershipPayments.length}</p>
         </div>
@@ -217,7 +218,9 @@ export function MyDonations() {
                             )}
                           </div>
                           <p className="text-xs text-text-secondary mt-0.5">
-                            {formatDate(mp.donation_date, lang)} → {formatDate(mp.valid_until, lang)}
+                            {(profile as any).membership_start_date
+                              ? `${formatDate((profile as any).membership_start_date, lang)} → ${formatDate((profile as any).membership_end_date, lang)}`
+                              : `${formatDate(mp.donation_date, lang)} → ${formatDate(mp.valid_until, lang)}`}
                           </p>
                           <p className="text-xs text-text-secondary">
                             {mp.payment_method || 'Payment'} {mp.transaction_id ? `· ${mp.transaction_id}` : ''}

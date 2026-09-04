@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, GraduationCap, Briefcase, MapPin } from 'lucide-react'
+import { User, GraduationCap, Briefcase, MapPin, LogIn } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import { localized, calculateAge } from '../lib/utils'
 import type { MatrimonialProfile, Profile } from '../types'
 
@@ -13,6 +14,7 @@ interface MatrimonialWithProfile extends MatrimonialProfile {
 export function Matrimonial() {
   const { t, i18n } = useTranslation('matrimonial')
   const lang = i18n.language
+  const { user, loading: authLoading } = useAuth()
   const [profiles, setProfiles] = useState<MatrimonialWithProfile[]>([])
   const [genderFilter, setGenderFilter] = useState('')
   const [loading, setLoading] = useState(true)
@@ -47,7 +49,27 @@ export function Matrimonial() {
       </section>
       <div className="max-w-3xl mx-auto"><hr className="border-border" /></div>
 
-      <section className="max-w-6xl mx-auto px-4 py-10">
+      {!authLoading && !user && (
+        <div className="max-w-md mx-auto px-4 py-16 text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogIn className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Login to View Profiles</h2>
+          <p className="text-sm text-text-secondary mb-6">
+            Please login to your account to browse and connect with matrimonial profiles from the Goswami community.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/login" className="px-6 py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark transition-colors">
+              Login
+            </Link>
+            <Link to="/register" className="px-6 py-2.5 border border-border text-text-secondary rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors">
+              Register
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {(authLoading || user) && <section className="max-w-6xl mx-auto px-4 py-10">
         <div className="flex gap-3 mb-8">
           <select
             value={genderFilter}
@@ -107,7 +129,7 @@ export function Matrimonial() {
             ))}
           </div>
         )}
-      </section>
+      </section>}
     </div>
   )
 }

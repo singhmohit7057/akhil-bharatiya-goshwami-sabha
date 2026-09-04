@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, MapPin, Phone, Globe, Mail, Building2, CreditCard } from 'lucide-react'
+import { Search, MapPin, Phone, Globe, Mail, Building2, CreditCard, LogIn } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-
+import { useAuth } from '../hooks/useAuth'
 import { localized } from '../lib/utils'
 import type { BusinessListing } from '../types'
 
 export function BusinessDirectory() {
   const { t, i18n } = useTranslation('directory')
   const lang = i18n.language
+  const { user, loading: authLoading } = useAuth()
   const [listings, setListings] = useState<BusinessListing[]>([])
   const [ownerNames, setOwnerNames] = useState<Record<string, string>>({})
   const [search, setSearch] = useState('')
@@ -59,7 +61,27 @@ export function BusinessDirectory() {
       </section>
       <div className="max-w-3xl mx-auto"><hr className="border-border" /></div>
 
-      <section className="max-w-6xl mx-auto px-4 py-10">
+      {!authLoading && !user && (
+        <div className="max-w-md mx-auto px-4 py-16 text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <LogIn className="w-8 h-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Login to View Business Directory</h2>
+          <p className="text-sm text-text-secondary mb-6">
+            Please login to explore businesses and professionals from the Goswami community.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/login" className="px-6 py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark transition-colors">
+              Login
+            </Link>
+            <Link to="/register" className="px-6 py-2.5 border border-border text-text-secondary rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors">
+              Register
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {(authLoading || user) && <section className="max-w-6xl mx-auto px-4 py-10">
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
@@ -164,7 +186,7 @@ export function BusinessDirectory() {
             ))}
           </div>
         )}
-      </section>
+      </section>}
     </div>
   )
 }

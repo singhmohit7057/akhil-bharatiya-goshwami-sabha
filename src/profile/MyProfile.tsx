@@ -95,14 +95,13 @@ export function MyProfile() {
           <div id="id-card" className="w-[420px] rounded-2xl overflow-hidden shadow-xl" style={{ aspectRatio: '85.6/54' }}>
             <div className="h-full flex flex-col relative bg-white">
               {/* Saffron top band */}
-              <div className="h-[52px] bg-gradient-to-r from-[#FF9933] to-[#e8702a] px-5 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <img src="/logo.png" alt="" className="w-9 h-9 rounded-full object-contain bg-white/20 p-0.5" />
-                  <div>
-                    <p className="text-[10px] font-bold text-white tracking-wide leading-tight">AKHIL BHARATIYA GOSWAMI SABHA</p>
-                    <p className="text-[8px] text-white/80 tracking-wider">PASCHIM BANGAL</p>
-                  </div>
+              <div className="h-[56px] bg-gradient-to-r from-[#FF9933] to-[#e8702a] shrink-0 relative flex items-center">
+                <img src="/logo.png" alt="" className="w-11 h-11 object-contain absolute left-3" />
+                <div className="w-full flex flex-col items-center justify-center">
+                  <p className="text-[12px] font-bold text-white tracking-wide leading-tight">AKHIL BHARATIYA GOSWAMI SABHA</p>
+                  <p className="text-[9px] text-white/80 tracking-wider">PASCHIM BANGAL</p>
                 </div>
+                <img src="/preserver-tilak.png" alt="" className="w-11 h-11 object-contain absolute right-3" />
               </div>
 
               {/* White body */}
@@ -119,45 +118,48 @@ export function MyProfile() {
                 {/* Details */}
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
-                    <p className="text-[14px] font-bold text-gray-900 leading-tight truncate">{profile.full_name}</p>
-                    {profile.full_name_hi && (
-                      <p className="text-[11px] text-gray-500 truncate">{profile.full_name_hi}</p>
-                    )}
-                    <p className="text-[10px] font-semibold text-[#FF9933] mt-0.5">{getRoleLabel(profile.role)}</p>
-                    <div className="mt-1 flex gap-4">
-                      <div>
-                        <p className="text-[7px] text-gray-400 uppercase tracking-wide">Membership ID</p>
-                        <p className="text-[10px] font-mono font-bold text-gray-700">{profile.member_id || 'PENDING'}</p>
+                    <p className="text-[16px] font-bold text-gray-900 leading-tight truncate">{profile.full_name}</p>
+                    <p className="text-[11px] font-semibold text-[#FF9933] mt-0.5">{getRoleLabel(profile.role)}</p>
+                    <div className="mt-1 space-y-0.5 text-[11px]">
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 font-semibold uppercase tracking-wide">ID:</span>
+                        <span className="font-mono font-bold text-gray-800">{profile.member_id || 'PENDING'}</span>
                       </div>
-                      <div>
-                        <p className="text-[7px] text-gray-400 uppercase tracking-wide">Member Since</p>
-                        <p className="text-[10px] font-semibold text-gray-700">{profile.created_at ? formatDate(profile.created_at, lang) : ''}</p>
+                      {(profile as any).membership_end_date && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-500 font-semibold uppercase tracking-wide">Valid Till:</span>
+                          <span className="font-semibold text-gray-800">{formatDate((profile as any).membership_end_date, lang)}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 font-semibold uppercase tracking-wide">Member Since:</span>
+                        <span className="font-semibold text-gray-800">{profile.created_at ? formatDate(profile.created_at, lang) : ''}</span>
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1">
                     {profile.gotra && (
                       <div>
-                        <p className="text-[7px] text-gray-400 uppercase">Gotra</p>
-                        <p className="text-[9px] font-semibold text-gray-700">{profile.gotra}</p>
+                        <p className="text-[8px] text-gray-400 uppercase">Gotra</p>
+                        <p className="text-[10px] font-semibold text-gray-700">{profile.gotra}</p>
                       </div>
                     )}
                     {profile.city && (
                       <div>
-                        <p className="text-[7px] text-gray-400 uppercase">City</p>
-                        <p className="text-[9px] font-semibold text-gray-700">{profile.city}</p>
+                        <p className="text-[8px] text-gray-400 uppercase">City</p>
+                        <p className="text-[10px] font-semibold text-gray-700">{profile.city}</p>
                       </div>
                     )}
                     {profile.phone && (
                       <div>
-                        <p className="text-[7px] text-gray-400 uppercase">Phone</p>
-                        <p className="text-[9px] font-semibold text-gray-700">{profile.phone}</p>
+                        <p className="text-[8px] text-gray-400 uppercase">Phone</p>
+                        <p className="text-[10px] font-semibold text-gray-700">{profile.phone}</p>
                       </div>
                     )}
                     {profile.date_of_birth && (
                       <div>
-                        <p className="text-[7px] text-gray-400 uppercase">DOB</p>
-                        <p className="text-[9px] font-semibold text-gray-700">{formatDate(profile.date_of_birth, lang)}</p>
+                        <p className="text-[8px] text-gray-400 uppercase">DOB</p>
+                        <p className="text-[10px] font-semibold text-gray-700">{formatDate(profile.date_of_birth, lang)}</p>
                       </div>
                     )}
                   </div>

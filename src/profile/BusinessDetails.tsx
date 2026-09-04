@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Plus, Trash2, X, Globe, GlobeOff, Upload, Image } from 'lucide-react'
+import { Plus, Trash2, X, Globe, GlobeOff, Upload, Image, Crown } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
@@ -10,7 +10,7 @@ import { Spinner } from '../components/ui/Spinner'
 
 export function BusinessDetails() {
   const { t } = useTranslation('profile')
-  const { profile } = useAuth()
+  const { profile, isExecutiveMember } = useAuth()
   const [detail, setDetail] = useState<BusinessDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -199,6 +199,28 @@ export function BusinessDetails() {
   }
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+
+  if (!isExecutiveMember()) {
+    return (
+      <div className="bg-white rounded-xl border border-border p-8">
+        <div className="text-center max-w-md mx-auto">
+          <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Crown className="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Executive Members Only</h2>
+          <p className="text-sm text-text-secondary mb-2">
+            Adding business details to the community directory is an exclusive feature for Executive Members.
+          </p>
+          <p className="text-sm text-text-secondary mb-6">
+            Pay a one-time fee of <strong className="text-text-primary">₹1,100</strong> to become an Executive Member and unlock this feature.
+          </p>
+          <a href="/profile/membership" className="inline-flex items-center justify-center px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors text-sm">
+            View Membership Details
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   const inputClass = 'w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm'
 
