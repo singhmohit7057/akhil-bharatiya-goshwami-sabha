@@ -41,7 +41,7 @@ export function Events() {
     <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">Community Gatherings</p>
+          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">{t('tagline')}</p>
           <h1 className="text-5xl font-extrabold text-text-primary">{t('title')}</h1>
         </div>
       </section>
@@ -55,7 +55,7 @@ export function Events() {
               tab === 'all' ? 'bg-primary text-white' : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
             }`}
           >
-            All
+            {t('all')}
           </button>
           <button
             onClick={() => setTab('upcoming')}

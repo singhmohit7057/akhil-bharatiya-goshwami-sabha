@@ -90,6 +90,8 @@ export function MatrimonialDetail() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-6">
           {candidateGotra && <div className="bg-surface rounded-lg p-3"><p className="text-text-secondary">Gotra</p><p className="text-sm font-medium text-text-primary">{candidateGotra}</p></div>}
           {candidateDob && <div className="bg-surface rounded-lg p-3"><p className="text-text-secondary">Date of Birth</p><p className="text-sm font-medium text-text-primary">{new Date(candidateDob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>}
+          {mp.caste && <div className="bg-surface rounded-lg p-3"><p className="text-text-secondary">Caste</p><p className="text-sm font-medium text-text-primary">{mp.caste}</p></div>}
+          {mp.manglik && <div className="bg-surface rounded-lg p-3"><p className="text-text-secondary">Manglik</p><p className="text-sm font-medium text-text-primary capitalize">{mp.manglik}</p></div>}
           {mp.height && <div className="bg-surface rounded-lg p-3"><p className="text-text-secondary">Height</p><p className="text-sm font-medium text-text-primary">{mp.height}</p></div>}
           <div className="bg-surface rounded-lg p-3"><p className="text-text-secondary">Status</p><p className="text-sm font-medium text-text-primary capitalize">{mp.marital_status}</p></div>
           {mp.education && <div className="bg-surface rounded-lg p-3"><p className="text-text-secondary">Education</p><p className="text-sm font-medium text-text-primary">{mp.education}</p></div>}

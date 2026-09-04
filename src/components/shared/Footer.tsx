@@ -30,19 +30,19 @@ export function Footer() {
               <li><Link to="/events" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.events')}</Link></li>
               <li><Link to="/businesses" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.directory')}</Link></li>
               <li><Link to="/matrimonial" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.matrimonial')}</Link></li>
-              <li><Link to="/contact" className="text-xs text-text-secondary hover:text-primary transition-colors">Contact Us</Link></li>
+              <li><Link to="/contact" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.contact')}</Link></li>
             </ul>
           </div>
 
           {/* Community */}
           <div>
-            <h3 className="text-sm font-semibold text-text-primary mb-3">Community</h3>
+            <h3 className="text-sm font-semibold text-text-primary mb-3">{t('footer.community')}</h3>
             <ul className="space-y-2">
-              <li><Link to="/members" className="text-xs text-text-secondary hover:text-primary transition-colors">Members</Link></li>
-              <li><Link to="/gallery" className="text-xs text-text-secondary hover:text-primary transition-colors">Gallery</Link></li>
-              <li><Link to="/souvenirs" className="text-xs text-text-secondary hover:text-primary transition-colors">Souvenirs</Link></li>
-              <li><Link to="/verify" className="text-xs text-text-secondary hover:text-primary transition-colors">Verify Member</Link></li>
-              <li><Link to="/donate" className="text-xs text-text-secondary hover:text-primary transition-colors">Donate</Link></li>
+              <li><Link to="/members" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.members')}</Link></li>
+              <li><Link to="/gallery" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.gallery')}</Link></li>
+              <li><Link to="/souvenirs" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.souvenirs')}</Link></li>
+              <li><Link to="/verify" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.verify')}</Link></li>
+              <li><Link to="/donate" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.donate')}</Link></li>
             </ul>
           </div>
 

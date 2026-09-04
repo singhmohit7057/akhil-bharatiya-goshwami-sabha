@@ -83,7 +83,7 @@ export function EventDetail() {
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <Link to="/events" className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-4">
-            <ArrowLeft className="w-4 h-4" /> Back to Events
+            <ArrowLeft className="w-4 h-4" /> {t('backToEvents')}
           </Link>
           <h1 className="text-5xl font-extrabold text-text-primary">
             {localized(event.title_en, event.title_hi, lang)}

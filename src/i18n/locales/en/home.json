@@ -7,6 +7,7 @@
     "learnMore": "Learn More"
   },
   "about": {
+    "tagline": "About Us",
     "title": "About Our Community",
     "description": "The Akhil Bharatiya Goswami Sabha Paschim Bangal is a community organization committed to preserving our cultural heritage, promoting education, and fostering unity among members of the Goswami community across West Bengal.",
     "readMore": "Read More About Us"
@@ -21,6 +22,61 @@
     "cities": "Cities",
     "events": "Events Organized",
     "years": "Years of Service"
+  },
+  "stats": {
+    "governingMembers": "Governing Members",
+    "executiveMembers": "Executive Members",
+    "members": "Members",
+    "totalMembers": "Total Members"
+  },
+  "inspiration": {
+    "tagline": "Our Inspiration",
+    "name": "Swami Tribhuwan Puri",
+    "desc1": "Swami Tribhuwan Puri Ji is a revered spiritual leader and the guiding force behind the Akhil Bharatiya Goswami Sabha. His teachings on community service, cultural preservation, and spiritual growth have inspired thousands of members across West Bengal.",
+    "desc2": "Under his guidance, the Sabha has grown into a strong community organization committed to the welfare, education, and unity of the Goswami community."
+  },
+  "leadership": {
+    "tagline": "Our Leadership",
+    "title": "Governing Members",
+    "viewAll": "View All Members →"
+  },
+  "gallery": {
+    "tagline": "Memories",
+    "title": "Photo Gallery",
+    "viewAll": "View All Photos →"
+  },
+  "eventsSection": {
+    "tagline": "What's Happening"
+  },
+  "cta": {
+    "title": "Join Our Growing Community",
+    "subtitle": "Become a member of Akhil Bharatiya Goswami Sabha and connect with the community across West Bengal.",
+    "registerNow": "Register Now",
+    "donateNow": "Donate Now"
+  },
+  "subscribe": {
+    "title": "Get Community Updates",
+    "subtitle": "Be the first to know about events, news & announcements",
+    "placeholder": "Enter your email",
+    "button": "Subscribe",
+    "success": "✓ Subscribed successfully!",
+    "unsubscribe": "Unsubscribe"
+  },
+  "suggestion": {
+    "tagline": "We Value Your Voice",
+    "title": "Share Your Suggestion",
+    "subtitle": "Help us improve and grow. Your feedback matters to us.",
+    "yourName": "Your Name",
+    "phoneNumber": "Phone Number",
+    "namePlaceholder": "Full name",
+    "phonePlaceholder": "Optional",
+    "yourSuggestion": "Your Suggestion",
+    "suggestionPlaceholder": "Share your ideas, feedback, or suggestions...",
+    "submit": "Submit Suggestion",
+    "submitting": "Submitting...",
+    "thankYou": "Thank You!",
+    "thankYouDesc": "Your suggestion has been submitted. We appreciate your feedback.",
+    "submitAnother": "Submit Another"
   },
   "features": {
     "title": "What We Offer",

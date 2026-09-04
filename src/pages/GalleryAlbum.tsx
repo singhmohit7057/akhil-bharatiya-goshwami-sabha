@@ -22,7 +22,7 @@ interface Photo {
 
 export function GalleryAlbum() {
   const { id } = useParams()
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation('gallery')
   const lang = i18n.language
   const [album, setAlbum] = useState<Album | null>(null)
   const [photos, setPhotos] = useState<Photo[]>([])
@@ -53,20 +53,20 @@ export function GalleryAlbum() {
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <Link to="/gallery" className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-primary mb-4">
-            <ArrowLeft className="w-4 h-4" /> Back to Gallery
+            <ArrowLeft className="w-4 h-4" /> {t('backToGallery')}
           </Link>
           <h1 className="text-5xl font-extrabold text-text-primary mb-2">{localized(album.title_en, album.title_hi, lang)}</h1>
           {album.description && (
             <p className="text-sm text-text-secondary mb-2">{album.description}</p>
           )}
-          <p className="text-xs text-text-secondary">{photos.length} photos</p>
+          <p className="text-xs text-text-secondary">{photos.length} {t('photos')}</p>
         </div>
       </section>
       <div className="max-w-3xl mx-auto"><hr className="border-border" /></div>
 
       <section className="max-w-6xl mx-auto px-4 py-10">
         {photos.length === 0 ? (
-          <p className="text-center py-16 text-sm text-text-secondary">No photos in this album yet.</p>
+          <p className="text-center py-16 text-sm text-text-secondary">{t('noPhotos')}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {photos.map((photo, i) => (

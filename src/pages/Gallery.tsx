@@ -16,7 +16,7 @@ interface Album {
 }
 
 export function Gallery() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation('gallery')
   const lang = i18n.language
   const [albums, setAlbums] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,8 +42,8 @@ export function Gallery() {
     <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">Memories</p>
-          <h1 className="text-5xl font-extrabold text-text-primary">Photo Gallery</h1>
+          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('tagline')}</p>
+          <h1 className="text-5xl font-extrabold text-text-primary">{t('title')}</h1>
         </div>
       </section>
       <div className="max-w-3xl mx-auto"><hr className="border-border" /></div>
@@ -52,7 +52,7 @@ export function Gallery() {
         {albums.length === 0 ? (
           <div className="text-center py-16">
             <Images className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-text-secondary">No albums yet.</p>
+            <p className="text-sm text-text-secondary">{t('noAlbums')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

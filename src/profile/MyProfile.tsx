@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { User, Mail, Phone, MapPin, Calendar, Shield, Gem, UserCircle, Download } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, Shield, Gem, UserCircle, Download, Tag } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toPng } from 'html-to-image'
 import { useAuth } from '../hooks/useAuth'
@@ -125,16 +125,16 @@ export function MyProfile() {
                         <span className="text-gray-500 font-semibold uppercase tracking-wide">ID:</span>
                         <span className="font-mono font-bold text-gray-800">{profile.member_id || 'PENDING'}</span>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-gray-500 font-semibold uppercase tracking-wide">Member Since:</span>
+                        <span className="font-semibold text-gray-800">{profile.created_at ? formatDate(profile.created_at, lang) : ''}</span>
+                      </div>
                       {(profile as any).membership_end_date && (
                         <div className="flex items-center gap-1">
                           <span className="text-gray-500 font-semibold uppercase tracking-wide">Valid Till:</span>
                           <span className="font-semibold text-gray-800">{formatDate((profile as any).membership_end_date, lang)}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-1">
-                        <span className="text-gray-500 font-semibold uppercase tracking-wide">Member Since:</span>
-                        <span className="font-semibold text-gray-800">{profile.created_at ? formatDate(profile.created_at, lang) : ''}</span>
-                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1">
@@ -202,14 +202,21 @@ export function MyProfile() {
       <div className="bg-white rounded-xl border border-border p-5">
         <h2 className="font-semibold text-text-primary mb-4">{t('personalInfo')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <InfoRow icon={Mail} label={t('common:labels.email')} value={profile.email} />
-          <InfoRow icon={Phone} label={t('common:labels.phone')} value={profile.phone} />
-          <InfoRow icon={MapPin} label={t('common:labels.city')} value={[profile.city, profile.state].filter(Boolean).join(', ')} />
+          <InfoRow icon={User} label={t('common:labels.name')} value={profile.full_name} />
           <InfoRow icon={Calendar} label={t('common:labels.dateOfBirth')} value={profile.date_of_birth ? formatDate(profile.date_of_birth, lang) : null} />
-          <InfoRow icon={Gem} label={t('common:labels.gotra')} value={profile.gotra} />
           <InfoRow icon={UserCircle} label={t('common:labels.gender')} value={profile.gender ? t(`common:labels.${profile.gender}`) : null} />
-          {profile.address && <InfoRow icon={MapPin} label={t('common:labels.address')} value={`${profile.address}${profile.pincode ? ` - ${profile.pincode}` : ''}`} />}
+          <InfoRow icon={MapPin} label={t('common:labels.city')} value={profile.city} />
+          <InfoRow icon={Tag} label="Caste" value={(profile as any).caste || '—'} />
+          <InfoRow icon={Gem} label={t('common:labels.gotra')} value={profile.gotra} />
+          <InfoRow icon={Phone} label={t('common:labels.phone')} value={profile.phone} />
+          <InfoRow icon={Mail} label={t('common:labels.email')} value={profile.email} />
         </div>
+        {(profile.address || (profile as any).village_address) && (
+          <div className="grid grid-cols-1 gap-3 text-sm mt-3 pt-3 border-t border-border">
+            {profile.address && <InfoRow icon={MapPin} label="Local Address" value={profile.address} />}
+            {(profile as any).village_address && <InfoRow icon={MapPin} label="Village Address" value={(profile as any).village_address} />}
+          </div>
+        )}
       </div>
 
       {/* Family */}
@@ -248,14 +255,20 @@ export function MyProfile() {
               <>
                 <InfoRow label={t('businessDetails.employerName')} value={business.employer_name} />
                 <InfoRow label={t('businessDetails.designation')} value={business.designation} />
+                <InfoRow label={t('businessDetails.sector')} value={business.sector} />
               </>
             ) : (
               <>
                 <InfoRow label={t('businessDetails.businessName')} value={business.business_name} />
                 <InfoRow label={t('businessDetails.sector')} value={business.sector} />
+                <InfoRow label={t('businessDetails.designation')} value={business.designation} />
+                <InfoRow label="GST Number" value={business.gst_number} />
               </>
             )}
             <InfoRow label={t('businessDetails.location')} value={business.location} />
+            <InfoRow label="Phone" value={business.phone} />
+            {(business as any).email && <InfoRow label="Email" value={(business as any).email} />}
+            {business.website && <InfoRow label="Website" value={business.website} />}
           </div>
         </div>
       )}

@@ -63,7 +63,7 @@ export function ManageGallery() {
     setUploadingHome(true)
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      if (file.size > 3 * 1024 * 1024) { toast.error(`${file.name} over 3MB`); continue }
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} over 10MB`); continue }
       const ext = file.name.split('.').pop()
       const path = `homepage/${crypto.randomUUID()}.${ext}`
       const { error } = await supabase.storage.from('gallery').upload(path, file)
@@ -155,7 +155,7 @@ export function ManageGallery() {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} is over 5MB, skipped`); continue }
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is over 10MB, skipped`); continue }
       const ext = file.name.split('.').pop()
       const path = `${selectedAlbum.id}/${crypto.randomUUID()}.${ext}`
       const { error: uploadError } = await supabase.storage.from('gallery').upload(path, file)
@@ -198,7 +198,7 @@ export function ManageGallery() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2"><Home className="w-4 h-4 text-primary" /> Homepage Gallery</h2>
-            <p className="text-xs text-text-secondary mt-0.5">These images show on the homepage in a 3×2 grid (max 6) · Max 3MB per image</p>
+            <p className="text-xs text-text-secondary mt-0.5">These images show on the homepage in a 3×2 grid (max 6) · Max 10MB per image</p>
           </div>
           {homeImages.length < 6 && (
             <label className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary-dark cursor-pointer">

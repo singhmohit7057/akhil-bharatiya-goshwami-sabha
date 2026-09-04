@@ -25,6 +25,8 @@ interface MatrimonialEntry {
   preferences_en: string
   gotra: string
   city: string
+  caste: string
+  manglik: string
   is_active: boolean
   is_approved: boolean
 }
@@ -69,6 +71,8 @@ export function MyMatrimonial() {
     preferences_en: '',
     gotra: '',
     city: '',
+    caste: '',
+    manglik: '',
   })
 
   useEffect(() => {
@@ -98,7 +102,7 @@ export function MyMatrimonial() {
   }, [profile])
 
   function resetForm() {
-    setForm({ candidate_name: '', candidate_relation: '', candidate_gender: '', date_of_birth: '', height: '', education: '', occupation: '', income_range: '', marital_status: 'unmarried', about_en: '', preferences_en: '', gotra: '', city: '' })
+    setForm({ candidate_name: '', candidate_relation: '', candidate_gender: '', date_of_birth: '', height: '', education: '', occupation: '', income_range: '', marital_status: 'unmarried', about_en: '', preferences_en: '', gotra: '', city: '', caste: '', manglik: '' })
     setProfilePhotoFile(null)
     setProfilePhotoPreview(null)
     setAdditionalPhotoFiles([])
@@ -138,6 +142,8 @@ export function MyMatrimonial() {
       preferences_en: entry.preferences_en || '',
       gotra: entry.gotra || '',
       city: entry.city || '',
+      caste: (entry as any).caste || '',
+      manglik: (entry as any).manglik || '',
     })
     const photos = entryPhotos[entry.id] || []
     const primary = photos.find((p) => p.is_primary)
@@ -174,6 +180,8 @@ export function MyMatrimonial() {
       marital_status: form.marital_status,
       about_en: form.about_en || null,
       preferences_en: form.preferences_en || null,
+      caste: form.caste || null,
+      manglik: form.manglik || null,
     }
 
     let entryId: string
@@ -414,8 +422,9 @@ export function MyMatrimonial() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="col-span-2">
+              {/* Row 1: Full Name | Relation | Gender */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
                   <label className="block text-xs font-medium text-text-primary mb-1">Full Name *</label>
                   <input type="text" required value={form.candidate_name} onChange={(e) => setForm({ ...form, candidate_name: e.target.value })} className={inputClass} />
                 </div>
@@ -438,14 +447,26 @@ export function MyMatrimonial() {
                     <option value="female">Female</option>
                   </select>
                 </div>
+              </div>
 
+              {/* Row 2: Caste | Gotra | Manglik | Marital Status */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-text-primary mb-1">Caste</label>
+                  <input type="text" value={form.caste} onChange={(e) => setForm({ ...form, caste: e.target.value })} placeholder="e.g. Goswami" className={inputClass} />
+                </div>
                 <div>
                   <label className="block text-xs font-medium text-text-primary mb-1">Gotra</label>
                   <input type="text" value={form.gotra} onChange={(e) => setForm({ ...form, gotra: e.target.value })} className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Height</label>
-                  <input type="text" placeholder="e.g. 5'6&quot;" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} className={inputClass} />
+                  <label className="block text-xs font-medium text-text-primary mb-1">Manglik</label>
+                  <select value={form.manglik} onChange={(e) => setForm({ ...form, manglik: e.target.value })} className={`${inputClass} bg-white`}>
+                    <option value="">Select</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                    <option value="partial">Partial</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-primary mb-1">Marital Status</label>
@@ -455,19 +476,27 @@ export function MyMatrimonial() {
                     <option value="widowed">Widowed</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Row 3: DOB | Height | City */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth *</label>
+                  <DateInput value={form.date_of_birth} onChange={(v) => setForm({ ...form, date_of_birth: v })} required />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-primary mb-1">Height</label>
+                  <input type="text" placeholder="e.g. 5'6&quot;" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} className={inputClass} />
+                </div>
                 <div>
                   <label className="block text-xs font-medium text-text-primary mb-1">City</label>
                   <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputClass} />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth *</label>
-                <DateInput value={form.date_of_birth} onChange={(v) => setForm({ ...form, date_of_birth: v })} required />
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="col-span-2">
+              {/* Row 4: Education | Occupation | Income Range */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
                   <label className="block text-xs font-medium text-text-primary mb-1">Education *</label>
                   <input type="text" required placeholder="e.g. B.Tech, MBA" value={form.education} onChange={(e) => setForm({ ...form, education: e.target.value })} className={inputClass} />
                 </div>
@@ -481,11 +510,13 @@ export function MyMatrimonial() {
                 </div>
               </div>
 
+              {/* Row 5: About */}
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">About</label>
                 <textarea placeholder="Brief description about the person..." value={form.about_en} onChange={(e) => setForm({ ...form, about_en: e.target.value })} rows={3} className={inputClass} />
               </div>
 
+              {/* Row 6: Partner Preferences */}
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Partner Preferences</label>
                 <textarea placeholder="What kind of match are you looking for..." value={form.preferences_en} onChange={(e) => setForm({ ...form, preferences_en: e.target.value })} rows={3} className={inputClass} />
@@ -538,6 +569,8 @@ export function MyMatrimonial() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-3">
                     {entry.gotra && <div className="bg-surface rounded-lg p-2"><p className="text-text-secondary">Gotra</p><p className="font-medium text-text-primary">{entry.gotra}</p></div>}
                     {entry.date_of_birth && <div className="bg-surface rounded-lg p-2"><p className="text-text-secondary">Date of Birth</p><p className="font-medium text-text-primary">{new Date(entry.date_of_birth).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>}
+                    {entry.caste && <div className="bg-surface rounded-lg p-2"><p className="text-text-secondary">Caste</p><p className="font-medium text-text-primary">{entry.caste}</p></div>}
+                    {entry.manglik && <div className="bg-surface rounded-lg p-2"><p className="text-text-secondary">Manglik</p><p className="font-medium text-text-primary capitalize">{entry.manglik}</p></div>}
                     {entry.height && <div className="bg-surface rounded-lg p-2"><p className="text-text-secondary">Height</p><p className="font-medium text-text-primary">{entry.height}</p></div>}
                     <div className="bg-surface rounded-lg p-2"><p className="text-text-secondary">Status</p><p className="font-medium text-text-primary capitalize">{entry.marital_status}</p></div>
                     {entry.education && <div className="bg-surface rounded-lg p-2"><p className="text-text-secondary">Education</p><p className="font-medium text-text-primary">{entry.education}</p></div>}

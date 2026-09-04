@@ -1,5 +1,8 @@
 {
+  "tagline": "Community Gatherings",
   "title": "Events",
+  "all": "All",
+  "backToEvents": "Back to Events",
   "upcoming": "Upcoming Events",
   "past": "Past Events",
   "noUpcoming": "No upcoming events scheduled.",

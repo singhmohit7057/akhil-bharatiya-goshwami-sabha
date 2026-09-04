@@ -42,7 +42,7 @@ export function Matrimonial() {
     <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">Find Your Match</p>
+          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">{t('tagline')}</p>
           <h1 className="text-5xl font-extrabold text-text-primary mb-2">{t('title')}</h1>
           <p className="text-text-secondary">{t('subtitle')}</p>
         </div>
@@ -54,16 +54,14 @@ export function Matrimonial() {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <LogIn className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-xl font-bold text-text-primary mb-2">Login to View Profiles</h2>
-          <p className="text-sm text-text-secondary mb-6">
-            Please login to your account to browse and connect with matrimonial profiles from the Goswami community.
-          </p>
+          <h2 className="text-xl font-bold text-text-primary mb-2">{t('loginGate.title')}</h2>
+          <p className="text-sm text-text-secondary mb-6">{t('loginGate.subtitle')}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/login" className="px-6 py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:bg-primary-dark transition-colors">
-              Login
+              {t('loginGate.login')}
             </Link>
             <Link to="/register" className="px-6 py-2.5 border border-border text-text-secondary rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors">
-              Register
+              {t('loginGate.register')}
             </Link>
           </div>
         </div>

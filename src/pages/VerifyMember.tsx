@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, XCircle, User, Shield, Calendar, MapPin, Gem, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getRoleLabel, formatDate } from '../lib/utils'
@@ -7,6 +8,8 @@ import type { Profile } from '../types'
 import { Spinner } from '../components/ui/Spinner'
 
 export function VerifyMember() {
+  const { t, i18n } = useTranslation('verify')
+  const lang = i18n.language
   const { memberId } = useParams()
   const navigate = useNavigate()
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -50,10 +53,8 @@ export function VerifyMember() {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Verify Member</h1>
-          <p className="text-sm text-text-secondary mb-6">
-            Enter a membership ID to verify if someone is a registered member of Akhil Bharatiya Goswami Sabha.
-          </p>
+          <h1 className="text-2xl font-bold text-text-primary mb-2">{t('title')}</h1>
+          <p className="text-sm text-text-secondary mb-6">{t('subtitle')}</p>
           <form onSubmit={handleSearch} className="flex gap-2 mb-4">
             <input
               type="text"
@@ -66,12 +67,10 @@ export function VerifyMember() {
               type="submit"
               className="px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors"
             >
-              Verify
+              {t('verify')}
             </button>
           </form>
-          <p className="text-xs text-text-secondary">
-            You can find the membership ID on the member's ID card or profile page.
-          </p>
+          <p className="text-xs text-text-secondary">{t('hint')}</p>
         </div>
       </div>
     )
@@ -91,15 +90,13 @@ export function VerifyMember() {
         <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4">
           <XCircle className="w-10 h-10 text-red-400" />
         </div>
-        <h1 className="text-2xl font-bold text-text-primary mb-2">Member Not Found</h1>
+        <h1 className="text-2xl font-bold text-text-primary mb-2">{t('notFound')}</h1>
         <p className="text-text-secondary max-w-md mb-2">
-          No member found with ID <strong className="font-mono">{decodeURIComponent(memberId || '')}</strong>
+          {t('notFoundDesc')} <strong className="font-mono">{decodeURIComponent(memberId || '')}</strong>
         </p>
-        <p className="text-sm text-text-secondary mb-6">
-          The member ID may be incorrect or the membership may have been revoked.
-        </p>
+        <p className="text-sm text-text-secondary mb-6">{t('notFoundNote')}</p>
         <Link to="/" className="px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors">
-          Go to Homepage
+          {t('goHome')}
         </Link>
       </div>
     )
@@ -120,11 +117,9 @@ export function VerifyMember() {
             )}
           </div>
           <h1 className="text-xl font-bold text-text-primary">
-            {isActive ? 'Verified Member' : 'Inactive Member'}
+            {isActive ? t('verifiedMember') : t('inactiveMember')}
           </h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Akhil Bharatiya Goswami Sabha, Paschim Bangal
-          </p>
+          <p className="text-sm text-text-secondary mt-1">{t('orgName')}</p>
         </div>
 
         {/* Member card */}
@@ -148,51 +143,49 @@ export function VerifyMember() {
           {/* Details */}
           <div className="px-6 py-5 space-y-3">
             <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
-              <span className="text-xs text-text-secondary">Member ID</span>
+              <span className="text-xs text-text-secondary">{t('memberId')}</span>
               <span className="text-sm font-mono font-bold text-text-primary">{profile.member_id}</span>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
-              <span className="text-xs text-text-secondary flex items-center gap-1"><Shield className="w-3 h-3" /> Status</span>
+              <span className="text-xs text-text-secondary flex items-center gap-1"><Shield className="w-3 h-3" /> {t('status')}</span>
               <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
-                {isActive ? 'Active' : 'Inactive'}
+                {isActive ? t('active') : t('inactive')}
               </span>
             </div>
 
             {profile.is_executive_member && (
               <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <span className="text-xs text-amber-700 flex items-center gap-1"><Shield className="w-3 h-3" /> Executive Member</span>
+                <span className="text-xs text-amber-700 flex items-center gap-1"><Shield className="w-3 h-3" /> {t('executiveMember')}</span>
                 <span className="text-xs font-bold text-amber-700">★ Yes</span>
               </div>
             )}
 
             {profile.gotra && (
               <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
-                <span className="text-xs text-text-secondary flex items-center gap-1"><Gem className="w-3 h-3" /> Gotra</span>
+                <span className="text-xs text-text-secondary flex items-center gap-1"><Gem className="w-3 h-3" /> {t('gotra')}</span>
                 <span className="text-sm font-medium text-text-primary">{profile.gotra}</span>
               </div>
             )}
 
             {profile.city && (
               <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
-                <span className="text-xs text-text-secondary flex items-center gap-1"><MapPin className="w-3 h-3" /> City</span>
+                <span className="text-xs text-text-secondary flex items-center gap-1"><MapPin className="w-3 h-3" /> {t('city')}</span>
                 <span className="text-sm font-medium text-text-primary">{profile.city}{profile.state ? `, ${profile.state}` : ''}</span>
               </div>
             )}
 
             {profile.created_at && (
               <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
-                <span className="text-xs text-text-secondary flex items-center gap-1"><Calendar className="w-3 h-3" /> Member Since</span>
-                <span className="text-sm font-medium text-text-primary">{formatDate(profile.created_at, 'en')}</span>
+                <span className="text-xs text-text-secondary flex items-center gap-1"><Calendar className="w-3 h-3" /> {t('memberSince')}</span>
+                <span className="text-sm font-medium text-text-primary">{formatDate(profile.created_at, lang)}</span>
               </div>
             )}
           </div>
 
           {/* Green footer */}
           <div className="bg-gradient-to-r from-[#1a6b3c] to-[#138808] px-6 py-3 text-center">
-            <p className="text-[10px] text-white/80">
-              Verified by Akhil Bharatiya Goswami Sabha, Paschim Bangal
-            </p>
+            <p className="text-[10px] text-white/80">{t('verifiedBy')}</p>
             <p className="text-[9px] text-white/60 mt-0.5">akhilbharatiyagoswami.com</p>
           </div>
         </div>

@@ -1,0 +1,22 @@
+{
+  "title": "Verify Member",
+  "subtitle": "Enter a membership ID to verify if someone is a registered member of Akhil Bharatiya Goswami Sabha.",
+  "verify": "Verify",
+  "hint": "You can find the membership ID on the member's ID card or profile page.",
+  "notFound": "Member Not Found",
+  "notFoundDesc": "No member found with ID",
+  "notFoundNote": "The member ID may be incorrect or the membership may have been revoked.",
+  "goHome": "Go to Homepage",
+  "verifiedMember": "Verified Member",
+  "inactiveMember": "Inactive Member",
+  "orgName": "Akhil Bharatiya Goswami Sabha, Paschim Bangal",
+  "memberId": "Member ID",
+  "status": "Status",
+  "active": "Active",
+  "inactive": "Inactive",
+  "executiveMember": "Executive Member",
+  "gotra": "Gotra",
+  "city": "City",
+  "memberSince": "Member Since",
+  "verifiedBy": "Verified by Akhil Bharatiya Goswami Sabha, Paschim Bangal"
+}

@@ -54,7 +54,7 @@ export function BusinessDirectory() {
     <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">Community Directory</p>
+          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">{t('tagline')}</p>
           <h1 className="text-5xl font-extrabold text-text-primary mb-2">{t('title')}</h1>
           <p className="text-text-secondary">{t('subtitle')}</p>
         </div>

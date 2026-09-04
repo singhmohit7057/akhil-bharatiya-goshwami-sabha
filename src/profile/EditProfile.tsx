@@ -24,9 +24,11 @@ export function EditProfile() {
     date_of_birth: '',
     gotra: '',
     address: '',
+    village_address: '',
     city: '',
     state: '',
     pincode: '',
+    caste: '',
   })
 
   useEffect(() => {
@@ -39,6 +41,8 @@ export function EditProfile() {
         date_of_birth: profile.date_of_birth || '',
         gotra: profile.gotra || '',
         address: profile.address || '',
+        village_address: (profile as any).village_address || '',
+        caste: (profile as any).caste || '',
         city: profile.city || '',
         state: profile.state || '',
         pincode: profile.pincode || '',
@@ -67,6 +71,8 @@ export function EditProfile() {
         date_of_birth: form.date_of_birth || null,
         gotra: form.gotra || null,
         address: form.address || null,
+        village_address: form.village_address || null,
+        caste: (form as any).caste || null,
         city: form.city || null,
         state: form.state || null,
         pincode: form.pincode || null,
@@ -173,10 +179,11 @@ export function EditProfile() {
           </div>
         </div>
 
+        {/* Row 2: DOB | Gender */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.phone')}</label>
-            <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} />
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.dateOfBirth')}</label>
+            <DateInput value={form.date_of_birth} onChange={(v) => updateField('date_of_birth', v)} />
           </div>
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.gender')}</label>
@@ -189,10 +196,23 @@ export function EditProfile() {
           </div>
         </div>
 
+        {/* Row 3: Email | Phone */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.dateOfBirth')}</label>
-            <DateInput value={form.date_of_birth} onChange={(v) => updateField('date_of_birth', v)} />
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.email')}</label>
+            <input type="email" disabled value={profile?.email || ''} className={`${inputClass} bg-gray-50 text-text-secondary cursor-not-allowed`} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.phone')}</label>
+            <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} />
+          </div>
+        </div>
+
+        {/* Row 4: Caste | Gotra */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">Caste</label>
+            <input type="text" value={(form as any).caste || ''} onChange={(e) => updateField('caste', e.target.value)} placeholder="e.g. Goswami" className={inputClass} />
           </div>
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.gotra')}</label>
@@ -200,25 +220,24 @@ export function EditProfile() {
           </div>
         </div>
 
+        {/* Row 5: City */}
         <div>
-          <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.address')}</label>
+          <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.city')} <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+          <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
+        </div>
+
+        {/* Row 6: Local Address */}
+        <div>
+          <label className="block text-xs font-medium text-text-primary mb-1">Local Address</label>
           <textarea value={form.address} onChange={(e) => updateField('address', e.target.value)} rows={2} className={inputClass} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.city')}</label>
-            <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.state')}</label>
-            <input type="text" value={form.state} onChange={(e) => updateField('state', e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.pincode')}</label>
-            <input type="text" value={form.pincode} onChange={(e) => updateField('pincode', e.target.value)} className={inputClass} />
-          </div>
+        {/* Row 7: Village Address */}
+        <div>
+          <label className="block text-xs font-medium text-text-primary mb-1">Village Address</label>
+          <textarea value={form.village_address} onChange={(e) => updateField('village_address', e.target.value)} rows={2} placeholder="Village, Post Office, District..." className={inputClass} />
         </div>
+
 
         <button
           type="submit"

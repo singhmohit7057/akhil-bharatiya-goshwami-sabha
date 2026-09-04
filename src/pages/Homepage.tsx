@@ -91,10 +91,10 @@ export function Homepage() {
   }, [])
 
   const stats = [
-    { icon: Shield, value: memberStats.governing, label: 'Governing Members', color: 'bg-orange-100 text-orange-700' },
-    { icon: Crown, value: memberStats.executive, label: 'Executive Members', color: 'bg-amber-100 text-amber-700' },
-    { icon: UserCheck, value: memberStats.members, label: 'Members', color: 'bg-blue-100 text-blue-700' },
-    { icon: Users, value: memberStats.total, label: 'Total Members', color: 'bg-green-100 text-green-700' },
+    { icon: Shield, value: memberStats.governing, label: t('stats.governingMembers'), color: 'bg-orange-100 text-orange-700' },
+    { icon: Crown, value: memberStats.executive, label: t('stats.executiveMembers'), color: 'bg-amber-100 text-amber-700' },
+    { icon: UserCheck, value: memberStats.members, label: t('stats.members'), color: 'bg-blue-100 text-blue-700' },
+    { icon: Users, value: memberStats.total, label: t('stats.totalMembers'), color: 'bg-green-100 text-green-700' },
   ]
 
   const features = [
@@ -115,11 +115,11 @@ export function Homepage() {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/herosection.mp4" type="video/mp4" />
+          <source src="/hero.mp4" type="video/mp4" />
         </video>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/30" />
 
         {/* Content */}
         <div className="absolute inset-0 flex items-center justify-center">
@@ -169,7 +169,7 @@ export function Homepage() {
       {/* About + Features combined */}
       <section className="min-h-[80vh] flex flex-col justify-center py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center mb-12">
-          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">About Us</p>
+          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">{t('about.tagline', 'About Us')}</p>
           <h2 className="text-3xl font-bold text-text-primary mb-5">{t('about.title')}</h2>
           <p className="text-base text-text-secondary leading-relaxed">{t('about.description')}</p>
         </div>
@@ -201,14 +201,10 @@ export function Homepage() {
             <img src="/swami.jpeg" alt="Swami Tribhuwan Puri" className="w-full max-w-sm mx-auto rounded-2xl shadow-lg" />
           </div>
           <div className="md:w-3/5 text-center md:text-left">
-            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">Our Inspiration</p>
-            <h2 className="text-3xl font-bold text-text-primary mb-4">Swami Tribhuwan Puri</h2>
-            <p className="text-base text-text-secondary leading-relaxed mb-4">
-              Swami Tribhuwan Puri Ji is a revered spiritual leader and the guiding force behind the Akhil Bharatiya Goswami Sabha. His teachings on community service, cultural preservation, and spiritual growth have inspired thousands of members across West Bengal.
-            </p>
-            <p className="text-base text-text-secondary leading-relaxed">
-              Under his guidance, the Sabha has grown into a strong community organization committed to the welfare, education, and unity of the Goswami community.
-            </p>
+            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('inspiration.tagline')}</p>
+            <h2 className="text-3xl font-bold text-text-primary mb-4">{t('inspiration.name')}</h2>
+            <p className="text-base text-text-secondary leading-relaxed mb-4">{t('inspiration.desc1')}</p>
+            <p className="text-base text-text-secondary leading-relaxed">{t('inspiration.desc2')}</p>
           </div>
         </div>
       </section>
@@ -217,8 +213,8 @@ export function Homepage() {
       <section className="min-h-[80vh] flex flex-col justify-center py-16 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
-            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">Our Leadership</p>
-            <h2 className="text-2xl font-bold text-text-primary">Governing Members</h2>
+            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('leadership.tagline')}</p>
+            <h2 className="text-2xl font-bold text-text-primary">{t('leadership.title')}</h2>
           </div>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
             {boardMembers.length > 0 ? (
@@ -270,7 +266,7 @@ export function Homepage() {
           </div>
           <div className="text-center mt-6">
             <Link to="/members" className="text-sm font-medium text-primary hover:underline">
-              View All Members →
+              {t('leadership.viewAll')}
             </Link>
           </div>
         </div>
@@ -281,8 +277,8 @@ export function Homepage() {
         <section className="min-h-[80vh] flex flex-col justify-center py-16 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8">
-              <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">Memories</p>
-              <h2 className="text-2xl font-bold text-text-primary">Photo Gallery</h2>
+              <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('gallery.tagline')}</p>
+              <h2 className="text-2xl font-bold text-text-primary">{t('gallery.title')}</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {galleryImages.map((img) => (
@@ -293,7 +289,7 @@ export function Homepage() {
             </div>
             <div className="text-center mt-8">
               <Link to="/gallery" className="text-sm font-medium text-primary hover:underline">
-                View All Photos →
+                {t('gallery.viewAll')}
               </Link>
             </div>
           </div>
@@ -304,7 +300,7 @@ export function Homepage() {
       <section className="min-h-[80vh] flex flex-col justify-center py-16 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
-            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">What's Happening</p>
+            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('eventsSection.tagline')}</p>
             <h2 className="text-2xl font-bold text-text-primary">{t('events.title')}</h2>
           </div>
 
@@ -363,9 +359,9 @@ export function Homepage() {
       <section className="py-16 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
-            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">We Value Your Voice</p>
-            <h2 className="text-2xl font-bold text-text-primary">Share Your Suggestion</h2>
-            <p className="text-sm text-text-secondary mt-2">Help us improve and grow. Your feedback matters to us.</p>
+            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('suggestion.tagline')}</p>
+            <h2 className="text-2xl font-bold text-text-primary">{t('suggestion.title')}</h2>
+            <p className="text-sm text-text-secondary mt-2">{t('suggestion.subtitle')}</p>
           </div>
 
           {suggestionSubmitted ? (
@@ -373,10 +369,10 @@ export function Homepage() {
               <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageSquare className="w-8 h-8 text-green-500" />
               </div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">Thank You!</h3>
-              <p className="text-sm text-text-secondary mb-4">Your suggestion has been submitted. We appreciate your feedback.</p>
+              <h3 className="text-xl font-bold text-text-primary mb-2">{t('suggestion.thankYou')}</h3>
+              <p className="text-sm text-text-secondary mb-4">{t('suggestion.thankYouDesc')}</p>
               <button onClick={() => setSuggestionSubmitted(false)} className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
-                Submit Another
+                {t('suggestion.submitAnother')}
               </button>
             </div>
           ) : (
@@ -397,25 +393,25 @@ export function Homepage() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Your Name *</label>
+                  <label className="block text-sm font-medium text-text-primary mb-1">{t('suggestion.yourName')} *</label>
                   <input type="text" required value={suggestionForm.name} onChange={(e) => setSuggestionForm({ ...suggestionForm, name: e.target.value })}
-                    placeholder="Full name" className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                    placeholder={t('suggestion.namePlaceholder')} className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Phone Number</label>
+                  <label className="block text-sm font-medium text-text-primary mb-1">{t('suggestion.phoneNumber')}</label>
                   <input type="tel" maxLength={10} value={suggestionForm.phone}
                     onChange={(e) => setSuggestionForm({ ...suggestionForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                    placeholder="Optional" className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                    placeholder={t('suggestion.phonePlaceholder')} className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Your Suggestion *</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">{t('suggestion.yourSuggestion')} *</label>
                 <textarea required rows={4} value={suggestionForm.suggestion} onChange={(e) => setSuggestionForm({ ...suggestionForm, suggestion: e.target.value })}
-                  placeholder="Share your ideas, feedback, or suggestions..." className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  placeholder={t('suggestion.suggestionPlaceholder')} className="w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <div className="text-center">
                 <button type="submit" disabled={suggestionSaving} className="px-8 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors flex items-center gap-2 mx-auto disabled:opacity-50">
-                  <Send className="w-4 h-4" /> {suggestionSaving ? 'Submitting...' : 'Submit Suggestion'}
+                  <Send className="w-4 h-4" /> {suggestionSaving ? t('suggestion.submitting') : t('suggestion.submit')}
                 </button>
               </div>
             </form>
@@ -426,14 +422,14 @@ export function Homepage() {
       {/* CTA */}
       <section className="py-12 px-4 bg-surface">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-text-primary mb-3">Join Our Growing Community</h2>
-          <p className="text-sm text-text-secondary mb-6">Become a member of Akhil Bharatiya Goswami Sabha and connect with the community across West Bengal.</p>
+          <h2 className="text-2xl font-bold text-text-primary mb-3">{t('cta.title')}</h2>
+          <p className="text-sm text-text-secondary mb-6">{t('cta.subtitle')}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/register" className="px-8 py-2.5 bg-primary text-white font-medium text-sm rounded-lg hover:bg-primary-dark transition-colors">
-              Register Now
+              {t('cta.registerNow')}
             </Link>
             <Link to="/donate" className="px-8 py-2.5 border border-border text-text-secondary font-medium text-sm rounded-lg hover:bg-white transition-colors">
-              Donate Now
+              {t('cta.donateNow')}
             </Link>
           </div>
         </div>
@@ -443,30 +439,30 @@ export function Homepage() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-4">
           {subscribeSuccess ? (
             <div className="flex items-center gap-2 mx-auto">
-              <span className="text-green-600 text-sm font-medium">✓ Subscribed successfully!</span>
-              <Link to="/unsubscribe" className="text-[10px] text-text-secondary underline">Unsubscribe</Link>
+              <span className="text-green-600 text-sm font-medium">{t('subscribe.success')}</span>
+              <Link to="/unsubscribe" className="text-[10px] text-text-secondary underline">{t('subscribe.unsubscribe')}</Link>
             </div>
           ) : (
             <>
               <div className="flex-1">
-                <p className="text-sm font-bold text-text-primary">Get Community Updates</p>
-                <p className="text-xs text-text-secondary">Be the first to know about events, news & announcements</p>
+                <p className="text-sm font-bold text-text-primary">{t('subscribe.title')}</p>
+                <p className="text-xs text-text-secondary">{t('subscribe.subtitle')}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <form onSubmit={handleSubscribe} className="flex gap-2">
                   <input
                     type="email"
                     required
-                    placeholder="Enter your email"
+                    placeholder={t('subscribe.placeholder')}
                     value={subscribeEmail}
                     onChange={(e) => setSubscribeEmail(e.target.value)}
                     className="w-52 px-3 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
                   <button type="submit" disabled={subscribing} className="px-5 py-2 bg-primary text-white font-medium text-xs rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 shrink-0">
-                    {subscribing ? '...' : 'Subscribe'}
+                    {subscribing ? '...' : t('subscribe.button')}
                   </button>
                 </form>
-                <Link to="/unsubscribe" className="text-[10px] text-text-secondary underline shrink-0 hidden sm:block">Unsubscribe</Link>
+                <Link to="/unsubscribe" className="text-[10px] text-text-secondary underline shrink-0 hidden sm:block">{t('subscribe.unsubscribe')}</Link>
               </div>
             </>
           )}

@@ -36,7 +36,7 @@ export function About() {
       {/* Hero */}
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">Know Our Community</p>
+          <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">{t('tagline')}</p>
           <h1 className="text-5xl font-extrabold text-text-primary">{t('title')}</h1>
         </div>
       </section>

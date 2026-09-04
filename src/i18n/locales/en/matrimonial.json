@@ -1,5 +1,12 @@
 {
+  "tagline": "Find Your Match",
   "title": "Matrimonial",
+  "loginGate": {
+    "title": "Login to View Profiles",
+    "subtitle": "Please login to your account to browse and connect with matrimonial profiles from the Goswami community.",
+    "login": "Login",
+    "register": "Register"
+  },
   "subtitle": "Find suitable matches within the Goswami community",
   "filters": {
     "gender": "Gender",
