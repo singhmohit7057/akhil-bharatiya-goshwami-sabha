@@ -2,25 +2,7 @@ export type AccountStatus = 'pending_approval' | 'approved' | 'active' | 'reject
 
 export type AdminLevel = 'none' | 'admin' | 'super_admin'
 
-export type MemberRole =
-  | 'member'
-  | 'president'
-  | 'vice_president'
-  | 'secretary'
-  | 'joint_secretary'
-  | 'treasurer'
-  | 'joint_treasurer'
-  | 'coordinator'
-  | 'mentor'
-  | 'deputy_chairman'
-  | 'chairman'
-  | 'vice_chairman'
-  | 'working_president'
-  | 'joint_working_president'
-  | 'public_relation_officer'
-  | 'legal_advisor'
-  | 'media_spoke_person'
-  | 'executive_member'
+export type MemberRole = string
 
 export type Gender = 'male' | 'female' | 'other'
 

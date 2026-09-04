@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { IndianRupee, Crown, User } from 'lucide-react'
+import { DateInput } from '../../components/ui/DateInput'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
@@ -9,7 +10,6 @@ import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
 
-const MEMBERSHIP_FEE = 1100
 
 export function AddPayment() {
   const { id: editId } = useParams()
@@ -69,7 +69,7 @@ export function AddPayment() {
     setSaving(true)
 
     const purpose = paymentType === 'membership' ? 'Executive Membership' : (form.purpose || 'General Donation')
-    const amount = paymentType === 'membership' ? MEMBERSHIP_FEE : parseFloat(form.amount)
+    const amount = parseFloat(form.amount)
 
     const payload = {
       user_id: form.user_id,
@@ -151,7 +151,7 @@ export function AddPayment() {
           >
             <Crown className={`w-5 h-5 mx-auto mb-1 ${paymentType === 'membership' ? 'text-amber-600' : 'text-text-secondary'}`} />
             <p className={`text-sm font-semibold ${paymentType === 'membership' ? 'text-amber-700' : 'text-text-secondary'}`}>Membership</p>
-            <p className="text-xs text-text-secondary mt-0.5">Fixed ₹{MEMBERSHIP_FEE}</p>
+            <p className="text-xs text-text-secondary mt-0.5">Custom amount</p>
           </button>
         </div>
 
@@ -183,26 +183,19 @@ export function AddPayment() {
             </div>
           )}
 
-          <div className={`grid gap-3 ${paymentType === 'membership' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-            {paymentType === 'donation' ? (
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Amount (₹) *</label>
-                <input type="number" required min="1" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={inputClass} />
-              </div>
-            ) : (
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Amount</label>
-                <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm font-semibold text-amber-700">₹{MEMBERSHIP_FEE} (Fixed)</div>
-              </div>
-            )}
-            <div>
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="w-36 shrink-0">
+              <label className="block text-xs font-medium text-text-primary mb-1">Amount (₹) *</label>
+              <input type="number" required min="1" step="0.01" placeholder="e.g. 1100" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={inputClass} />
+            </div>
+            <div className="flex-1 min-w-0">
               <label className="block text-xs font-medium text-text-primary mb-1">Payment Date *</label>
-              <input type="text" required placeholder="YYYY-MM-DD" value={form.donation_date} onChange={(e) => setForm({ ...form, donation_date: e.target.value })} className={inputClass} />
+              <DateInput value={form.donation_date} onChange={(v) => setForm({ ...form, donation_date: v })} required />
             </div>
             {paymentType === 'membership' && (
-              <div>
+              <div className="flex-1 min-w-0">
                 <label className="block text-xs font-medium text-text-primary mb-1">Membership Start Date *</label>
-                <input type="text" required placeholder="YYYY-MM-DD" value={form.membership_start_date} onChange={(e) => setForm({ ...form, membership_start_date: e.target.value })} className={inputClass} />
+                <DateInput value={form.membership_start_date} onChange={(v) => setForm({ ...form, membership_start_date: v })} required />
               </div>
             )}
           </div>

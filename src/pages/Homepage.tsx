@@ -7,7 +7,6 @@ import { supabase } from '../lib/supabase'
 
 import { localized, formatDate, getRoleLabel } from '../lib/utils'
 import type { Event, Profile } from '../types'
-import { ADMIN_ROLES } from '../types'
 
 export function Homepage() {
   const { t, i18n } = useTranslation('home')
@@ -40,6 +39,26 @@ export function Homepage() {
   }
 
   useEffect(() => {
+    // Fetch governing role slugs dynamically from designations table
+    async function loadGoverningMembers() {
+      const { data: desigData } = await supabase.from('designations').select('slug').eq('is_admin_role', true)
+      const governingSlugs = (desigData || []).map((d: any) => d.slug).filter(Boolean)
+      if (governingSlugs.length > 0) {
+        supabase.from('profiles').select('*').in('role', governingSlugs).eq('account_status', 'active').order('role').limit(16)
+          .then(({ data }) => { if (data) setBoardMembers(data as Profile[]) })
+        Promise.all([
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').in('role', governingSlugs),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', true),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', false),
+        ]).then(([govRes, execRes, memRes]) => {
+          const exec = execRes.count ?? 0
+          const mem = memRes.count ?? 0
+          setMemberStats({ governing: govRes.count ?? 0, executive: exec, members: mem, total: exec + mem })
+        })
+      }
+    }
+    loadGoverningMembers()
+
     supabase
       .from('events')
       .select('*')
@@ -51,34 +70,6 @@ export function Homepage() {
         if (data) setEvents(data as Event[])
       })
 
-    supabase
-      .from('profiles')
-      .select('*')
-      .in('role', ADMIN_ROLES)
-      .eq('account_status', 'active')
-      .order('role')
-      .limit(16)
-      .then(({ data }) => {
-        if (data) setBoardMembers(data as Profile[])
-      })
-
-    Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').in('role', ADMIN_ROLES),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', true),
-      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', false),
-    ]).then(([govRes, execRes, memRes]) => {
-      if (govRes.error) console.error('Gov count error:', govRes.error)
-      if (execRes.error) console.error('Exec count error:', execRes.error)
-      if (memRes.error) console.error('Mem count error:', memRes.error)
-      const exec = execRes.count ?? 0
-      const mem = memRes.count ?? 0
-      setMemberStats({
-        governing: govRes.count ?? 0,
-        executive: exec,
-        members: mem,
-        total: exec + mem,
-      })
-    })
 
     supabase
       .from('homepage_gallery')

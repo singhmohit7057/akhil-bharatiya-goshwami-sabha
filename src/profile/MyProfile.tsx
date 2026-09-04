@@ -58,7 +58,7 @@ export function MyProfile() {
               )}
             </div>
             <p className="text-xs text-text-secondary mt-1.5 flex items-center gap-1">
-              <Calendar className="w-3 h-3" /> Member since {formatDate(profile.created_at, lang)}
+              <Calendar className="w-3 h-3" /> Member since {formatDate((profile as any).member_since || profile.created_at, lang)}
             </p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function MyProfile() {
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-gray-500 font-semibold uppercase tracking-wide">Member Since:</span>
-                        <span className="font-semibold text-gray-800">{profile.created_at ? formatDate(profile.created_at, lang) : ''}</span>
+                        <span className="font-semibold text-gray-800">{((profile as any).member_since || profile.created_at) ? formatDate((profile as any).member_since || profile.created_at, lang) : ''}</span>
                       </div>
                       {(profile as any).membership_end_date && (
                         <div className="flex items-center gap-1">
@@ -188,7 +188,7 @@ export function MyProfile() {
                 )}
                 {!profile.is_executive_member && (
                   <span className="text-[7px] text-white/70">
-                    Member Since {profile.created_at ? formatDate(profile.created_at, lang).split(' ').slice(0, 3).join(' ') : ''}
+                    Member Since {((profile as any).member_since || profile.created_at) ? formatDate((profile as any).member_since || profile.created_at, lang).split(' ').slice(0, 3).join(' ') : ''}
                   </span>
                 )}
                 <p className="text-[7px] text-white/70 font-medium">akhilbharatiyagoswami.com</p>

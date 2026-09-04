@@ -1,27 +1,8 @@
-import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Target, Eye, BookOpen, User, Landmark, Users, Home, ScrollText, Sparkles, MapPin } from 'lucide-react'
-import { supabase } from '../lib/supabase'
-
-import { getRoleLabel } from '../lib/utils'
-import type { Profile } from '../types'
-import { ADMIN_ROLES } from '../types'
+import { Target, Eye, BookOpen, Landmark, Users, Home, ScrollText, Sparkles, MapPin } from 'lucide-react'
 
 export function About() {
-  const { t, i18n } = useTranslation('about')
-  const lang = i18n.language
-  const [leaders, setLeaders] = useState<Profile[]>([])
-
-  useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('*')
-      .in('role', ADMIN_ROLES)
-      .eq('account_status', 'active')
-      .then(({ data }) => {
-        if (data) setLeaders(data as Profile[])
-      })
-  }, [])
+  const { t } = useTranslation('about')
 
   const sections = [
     { icon: BookOpen, title: t('history.title'), desc: t('history.description'), color: 'bg-amber-50 text-amber-600' },
@@ -190,33 +171,6 @@ export function About() {
         </div>
       </section>
 
-      {/* Leadership */}
-      {leaders.length > 0 && (
-        <section className="py-16 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-text-primary text-center mb-3">{t('leadership.title')}</h2>
-            <p className="text-text-secondary text-center mb-10">{t('leadership.description')}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {leaders.map((leader) => (
-                <div key={leader.id} className="text-center">
-                  <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3 overflow-hidden">
-                    {leader.profile_photo_url ? (
-                      <img src={leader.profile_photo_url} alt="" className="w-24 h-24 rounded-full object-cover" />
-                    ) : (
-                      <User className="w-10 h-10 text-primary" />
-                    )}
-                  </div>
-                  <p className="font-semibold text-text-primary">
-                    {lang === 'hi' && leader.full_name_hi ? leader.full_name_hi : leader.full_name}
-                  </p>
-                  <p className="text-sm text-primary font-medium">{getRoleLabel(leader.role)}</p>
-                  {leader.city && <p className="text-xs text-text-secondary mt-1">{leader.city}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   )
 }

@@ -8,7 +8,8 @@ import { useAuth } from '../../hooks/useAuth'
 import { getRoleLabel, formatDate } from '../../lib/utils'
 import { transliterateToHindi } from '../../lib/transliterate'
 import type { Profile, MemberRole, FamilyMember, FamilyRelation, Gender } from '../../types'
-import { ALL_ROLES, FAMILY_RELATIONS } from '../../types'
+import { FAMILY_RELATIONS } from '../../types'
+import { useDesignations } from '../../hooks/useDesignations'
 import { Spinner } from '../../components/ui/Spinner'
 import { DateInput } from '../../components/ui/DateInput'
 
@@ -18,6 +19,7 @@ export function MemberDetail() {
   const lang = i18n.language
   const { isSuperAdmin } = useAuth()
   const superAdmin = isSuperAdmin()
+  const { designations } = useDesignations()
   const [member, setMember] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedRole, setSelectedRole] = useState<MemberRole>('member')
@@ -33,7 +35,8 @@ export function MemberDetail() {
   const hiManuallyEdited = useRef(false)
   const [form, setForm] = useState({
     full_name: '', full_name_hi: '', phone: '', gender: '', date_of_birth: '',
-    gotra: '', address: '', city: '', state: '', pincode: '',
+    gotra: '', caste: '', address: '', village_address: '', city: '', state: '', pincode: '',
+    member_since: '',
   })
 
   // Family members
@@ -69,10 +72,13 @@ export function MemberDetail() {
         gender: m.gender || '',
         date_of_birth: m.date_of_birth || '',
         gotra: m.gotra || '',
+        caste: (m as any).caste || '',
         address: m.address || '',
+        village_address: (m as any).village_address || '',
         city: m.city || '',
         state: m.state || '',
         pincode: m.pincode || '',
+        member_since: (m as any).member_since || m.created_at?.split('T')[0] || '',
       })
     }
     setLoading(false)
@@ -100,15 +106,19 @@ export function MemberDetail() {
       gender: form.gender || null,
       date_of_birth: form.date_of_birth || null,
       gotra: form.gotra || null,
+      caste: form.caste || null,
       address: form.address || null,
+      village_address: form.village_address || null,
       city: form.city || null,
       state: form.state || null,
       pincode: form.pincode || null,
+      member_since: form.member_since || null,
+      role: selectedRole,
     }).eq('id', member.id)
 
     if (error) { toast.error('Failed to update profile'); setSaving(false); return }
     toast.success('Profile updated')
-    setMember({ ...member, ...form } as Profile)
+    setMember({ ...member, ...form, role: selectedRole } as Profile)
     setSaving(false)
   }
 
@@ -129,13 +139,6 @@ export function MemberDetail() {
     setUploadingPhoto(false)
   }
 
-  async function handleRoleChange() {
-    if (!member) return
-    const { error } = await supabase.from('profiles').update({ role: selectedRole }).eq('id', member.id)
-    if (error) { toast.error('Failed'); return }
-    toast.success('Role updated')
-    setMember({ ...member, role: selectedRole })
-  }
 
   // Family member CRUD
   function resetFamilyForm() {
@@ -252,7 +255,14 @@ export function MemberDetail() {
       {superAdmin && (
         <div className="bg-white rounded-xl border border-border p-6 mb-6">
           <h2 className="font-semibold text-text-primary mb-4">Edit Profile</h2>
+          {/* Member Since */}
+          <div className="mb-4 w-fit">
+            <label className="block text-xs font-medium text-text-primary mb-1">Member Since</label>
+            <DateInput value={form.member_since} onChange={(v) => updateField('member_since', v)} />
+          </div>
+
           <form onSubmit={handleProfileSave} className="space-y-3">
+            {/* Row 1: Name EN | Name Hindi */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Name (English) *</label>
@@ -269,10 +279,11 @@ export function MemberDetail() {
                 }} className={inputClass} />
               </div>
             </div>
+            {/* Row 2: DOB | Gender */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Phone</label>
-                <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} />
+                <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth</label>
+                <DateInput value={form.date_of_birth} onChange={(v) => updateField('date_of_birth', v)} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Gender</label>
@@ -284,33 +295,44 @@ export function MemberDetail() {
                 </select>
               </div>
             </div>
+            {/* Row 3: Phone | Designation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth</label>
-                <DateInput value={form.date_of_birth} onChange={(v) => updateField('date_of_birth', v)} />
+                <label className="block text-xs font-medium text-text-primary mb-1">Phone</label>
+                <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Designation</label>
+                <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value as MemberRole)} className={`${inputClass} bg-white`}>
+                  {designations.map((d) => <option key={d.slug} value={d.slug}>{d.name_en}</option>)}
+                </select>
+              </div>
+            </div>
+            {/* Row 4: Caste | Gotra */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Caste</label>
+                <input type="text" placeholder="e.g. Goswami" value={form.caste} onChange={(e) => updateField('caste', e.target.value)} className={inputClass} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Gotra</label>
                 <input type="text" value={form.gotra} onChange={(e) => updateField('gotra', e.target.value)} className={inputClass} />
               </div>
             </div>
+            {/* Row 5: City */}
             <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">Address</label>
+              <label className="block text-xs font-medium text-text-primary mb-1">City <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+              <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
+            </div>
+            {/* Row 6: Local Address */}
+            <div>
+              <label className="block text-xs font-medium text-text-primary mb-1">Local Address</label>
               <textarea value={form.address} onChange={(e) => updateField('address', e.target.value)} rows={2} className={inputClass} />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">City</label>
-                <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">State</label>
-                <input type="text" value={form.state} onChange={(e) => updateField('state', e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Pincode</label>
-                <input type="text" value={form.pincode} onChange={(e) => updateField('pincode', e.target.value)} className={inputClass} />
-              </div>
+            {/* Row 7: Village Address */}
+            <div>
+              <label className="block text-xs font-medium text-text-primary mb-1">Village Address</label>
+              <textarea value={form.village_address} onChange={(e) => updateField('village_address', e.target.value)} rows={2} placeholder="Village, Post Office, District..." className={inputClass} />
             </div>
             <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
               {saving ? '...' : 'Save Profile'}
@@ -360,24 +382,6 @@ export function MemberDetail() {
         </div>
       )}
 
-      {/* Role Assignment */}
-      {superAdmin && (
-        <div className="bg-white rounded-xl border border-border p-6 mb-6">
-          <h2 className="font-semibold text-text-primary mb-4">{t('members.assignRole')}</h2>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
-              className="flex-1 px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
-              {ALL_ROLES.map((r) => (
-                <option key={r.value} value={r.value}>{lang === 'hi' ? r.label_hi : r.label_en}</option>
-              ))}
-            </select>
-            <button onClick={handleRoleChange} disabled={selectedRole === member.role}
-              className="px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors disabled:opacity-50">
-              {t('common:buttons.save')}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Family Members */}
       <div className="bg-white rounded-xl border border-border p-6">

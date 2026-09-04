@@ -5,17 +5,19 @@ import { Search, Shield, Edit2, User } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
-import { ALL_ROLES } from '../../types'
+import { useDesignations } from '../../hooks/useDesignations'
 import { Spinner } from '../../components/ui/Spinner'
 
 export function AllMembers() {
   const { t, i18n } = useTranslation('admin')
+  const { designations } = useDesignations()
   const lang = i18n.language
   const [members, setMembers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [memberType, setMemberType] = useState('')
+  const [idSort, setIdSort] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
     fetchMembers()
@@ -31,12 +33,18 @@ export function AllMembers() {
     setLoading(false)
   }
 
-  const filtered = members.filter((m) => {
-    const matchSearch = !search || m.full_name.toLowerCase().includes(search.toLowerCase()) || m.email?.toLowerCase().includes(search.toLowerCase())
-    const matchRole = !roleFilter || m.role === roleFilter
-    const matchType = !memberType || (memberType === 'executive' ? m.is_executive_member : !m.is_executive_member)
-    return matchSearch && matchRole && matchType
-  })
+  const filtered = members
+    .filter((m) => {
+      const matchSearch = !search || m.full_name.toLowerCase().includes(search.toLowerCase()) || m.email?.toLowerCase().includes(search.toLowerCase())
+      const matchRole = !roleFilter || m.role === roleFilter
+      const matchType = !memberType || (memberType === 'executive' ? m.is_executive_member : !m.is_executive_member)
+      return matchSearch && matchRole && matchType
+    })
+    .sort((a, b) => {
+      const aNum = parseInt(a.member_id?.split('/')?.[1] || '9999')
+      const bNum = parseInt(b.member_id?.split('/')?.[1] || '9999')
+      return idSort === 'asc' ? aNum - bNum : bNum - aNum
+    })
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
@@ -54,13 +62,13 @@ export function AllMembers() {
           className="px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">All Members</option>
           <option value="executive">Executive Members</option>
-          <option value="regular">Regular Members</option>
+          <option value="regular">Members</option>
         </select>
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
           className="px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">All Roles</option>
-          {ALL_ROLES.map((r) => (
-            <option key={r.value} value={r.value}>{lang === 'hi' ? r.label_hi : r.label_en}</option>
+          {designations.map((d) => (
+            <option key={d.slug} value={d.slug}>{lang === 'hi' && d.name_hi ? d.name_hi : d.name_en}</option>
           ))}
         </select>
       </div>
@@ -71,7 +79,15 @@ export function AllMembers() {
             <thead>
               <tr className="border-b border-border bg-gray-50 text-left">
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.name')}</th>
-                <th className="px-4 py-3 font-medium text-text-secondary">Member ID</th>
+                <th className="px-4 py-3 font-medium text-text-secondary">
+                  <button
+                    onClick={() => setIdSort(s => s === 'asc' ? 'desc' : 'asc')}
+                    className="flex items-center gap-1 hover:text-primary transition-colors"
+                  >
+                    Member ID
+                    <span className="text-primary text-sm">{idSort === 'asc' ? '↑' : '↓'}</span>
+                  </button>
+                </th>
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.phone')}</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.role')}</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">Membership Valid Till</th>

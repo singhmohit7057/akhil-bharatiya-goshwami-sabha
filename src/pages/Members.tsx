@@ -4,10 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { getRoleLabel } from '../lib/utils'
 import type { Profile } from '../types'
-import { ADMIN_ROLES } from '../types'
+import { useDesignations } from '../hooks/useDesignations'
 import { Spinner } from '../components/ui/Spinner'
 
 export function Members() {
+  const { designations } = useDesignations()
+  function isGoverning(role: string) {
+    const d = designations.find((x) => x.slug === role)
+    return d?.is_admin_role ?? false
+  }
   const { t } = useTranslation('members')
   const [members, setMembers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,9 +36,9 @@ export function Members() {
     const matchSearch = !search || m.full_name.toLowerCase().includes(search.toLowerCase()) || m.city?.toLowerCase().includes(search.toLowerCase())
     const matchFilter =
       filter === 'all' ||
-      (filter === 'governing' && ADMIN_ROLES.includes(m.role)) ||
+      (filter === 'governing' && isGoverning(m.role)) ||
       (filter === 'executive' && m.is_executive_member) ||
-      (filter === 'member' && !ADMIN_ROLES.includes(m.role) && !m.is_executive_member)
+      (filter === 'member' && !isGoverning(m.role) && !m.is_executive_member)
     return matchSearch && matchFilter
   })
 
@@ -78,19 +83,29 @@ export function Members() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {filtered.map((m) => (
-              <div key={m.id} className="bg-white rounded-xl border border-border p-4 text-center hover:shadow-md transition-shadow">
-                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 border-2 border-border overflow-hidden flex items-center justify-center mb-3">
+              <div key={m.id} className={`bg-white rounded-xl p-4 text-center hover:shadow-md transition-shadow border-2 ${
+                isGoverning(m.role) ? 'border-orange-400' : m.is_executive_member ? 'border-amber-400' : 'border-gray-200'
+              }`}>
+                {/* Colored top stripe */}
+                <div className={`h-1 rounded-full mb-3 mx-auto w-10 ${
+                  isGoverning(m.role) ? 'bg-orange-400' : m.is_executive_member ? 'bg-amber-400' : 'bg-gray-200'
+                }`} />
+                <div className={`w-20 h-20 mx-auto rounded-full overflow-hidden flex items-center justify-center mb-3 ring-4 ${
+                  isGoverning(m.role) ? 'ring-orange-300 bg-orange-50' : m.is_executive_member ? 'ring-amber-300 bg-amber-50' : 'ring-gray-200 bg-gray-50'
+                }`}>
                   {m.profile_photo_url ? (
-                    <img src={m.profile_photo_url} alt="" className="w-16 h-16 rounded-full object-cover" />
+                    <img src={m.profile_photo_url} alt="" className="w-20 h-20 rounded-full object-cover" />
                   ) : (
-                    <User className="w-7 h-7 text-gray-300" />
+                    <User className={`w-9 h-9 ${isGoverning(m.role) ? 'text-orange-300' : m.is_executive_member ? 'text-amber-300' : 'text-gray-300'}`} />
                   )}
                 </div>
                 <p className="text-xs font-semibold text-text-primary truncate">{m.full_name}</p>
-                <p className="text-[10px] text-primary font-medium truncate">{getRoleLabel(m.role)}</p>
+                <p className={`text-[10px] font-medium truncate mt-0.5 ${isGoverning(m.role) ? 'text-orange-600' : m.is_executive_member ? 'text-amber-600' : 'text-primary'}`}>
+                  {getRoleLabel(m.role)}
+                </p>
                 {m.city && <p className="text-[10px] text-text-secondary truncate mt-0.5">{m.city}</p>}
                 <div className="flex items-center justify-center gap-1 mt-2">
-                  {ADMIN_ROLES.includes(m.role) && (
+                  {isGoverning(m.role) && (
                     <span className="text-[9px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                       <Shield className="w-2.5 h-2.5" /> {t('governing')}
                     </span>
