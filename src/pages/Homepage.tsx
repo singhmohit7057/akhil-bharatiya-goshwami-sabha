@@ -13,6 +13,9 @@ export function Homepage() {
   const lang = i18n.language
   const [events, setEvents] = useState<Event[]>([])
   const [boardMembers, setBoardMembers] = useState<Profile[]>([])
+  const [executiveMembers, setExecutiveMembers] = useState<Profile[]>([])
+  const [regularMembers, setRegularMembers] = useState<Profile[]>([])
+  const [memberSlide, setMemberSlide] = useState(0)
 
   const [memberStats, setMemberStats] = useState({ governing: 0, executive: 0, members: 0, total: 0 })
   const [galleryImages, setGalleryImages] = useState<{ id: string; image_url: string; caption: string | null }[]>([])
@@ -44,8 +47,12 @@ export function Homepage() {
       const { data: desigData } = await supabase.from('designations').select('slug').eq('is_admin_role', true)
       const governingSlugs = (desigData || []).map((d: any) => d.slug).filter(Boolean)
       if (governingSlugs.length > 0) {
-        supabase.from('profiles').select('*').in('role', governingSlugs).eq('account_status', 'active').order('role').limit(16)
+        supabase.from('profiles').select('*').in('role', governingSlugs).eq('account_status', 'active').order('role').limit(32)
           .then(({ data }) => { if (data) setBoardMembers(data as Profile[]) })
+        supabase.from('profiles').select('*').eq('account_status', 'active').eq('is_executive_member', true).not('role', 'in', `(${governingSlugs.map(s => `"${s}"`).join(',')})`).order('full_name').limit(32)
+          .then(({ data }) => { if (data) setExecutiveMembers(data as Profile[]) })
+        supabase.from('profiles').select('*').eq('account_status', 'active').eq('is_executive_member', false).not('role', 'in', `(${governingSlugs.map(s => `"${s}"`).join(',')})`).order('full_name').limit(32)
+          .then(({ data }) => { if (data) setRegularMembers(data as Profile[]) })
         Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').in('role', governingSlugs),
           supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', true),
@@ -200,68 +207,48 @@ export function Homepage() {
         </div>
       </section>
 
-      {/* Governing Members */}
-      <section className="min-h-[80vh] flex flex-col justify-center py-16 px-4 bg-surface">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('leadership.tagline')}</p>
-            <h2 className="text-2xl font-bold text-text-primary">{t('leadership.title')}</h2>
-          </div>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
-            {boardMembers.length > 0 ? (
-              boardMembers.map((member) => (
-                <div key={member.id} className="text-center group">
-                  <div className="w-24 h-24 mx-auto rounded-full bg-white border-2 border-border group-hover:border-primary transition-colors overflow-hidden flex items-center justify-center mb-3">
-                    {member.profile_photo_url ? (
-                      <img src={member.profile_photo_url} alt="" className="w-24 h-24 rounded-full object-cover" />
-                    ) : (
-                      <User className="w-7 h-7 text-gray-300" />
-                    )}
-                  </div>
-                  <p className="text-xs font-semibold text-text-primary leading-tight truncate">{member.full_name.split(' ')[0]}</p>
-                  <p className="text-[10px] text-primary font-medium truncate">{getRoleLabel(member.role)}</p>
+      {/* Members Auto-Slide — all members, 4×4 grid */}
+      {(() => {
+        const allMembers = [...boardMembers, ...executiveMembers, ...regularMembers]
+        const PER_SLIDE = 16 // 4 columns × 4 rows
+        const totalSlides = Math.ceil(allMembers.length / PER_SLIDE) || 1
+        const currentItems = allMembers.slice(memberSlide * PER_SLIDE, (memberSlide + 1) * PER_SLIDE)
+        return (
+          <section className="py-16 px-4 bg-surface">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-8">
+                <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('leadership.tagline')}</p>
+                <h2 className="text-2xl font-bold text-text-primary">{t('leadership.title')}</h2>
+              </div>
+
+              <AutoMemberSlide
+                items={allMembers}
+                perSlide={PER_SLIDE}
+                slide={memberSlide}
+                setSlide={setMemberSlide}
+                totalSlides={totalSlides}
+                currentItems={currentItems}
+                boardSlugs={boardMembers.map(m => m.id)}
+                executiveSlugs={executiveMembers.map(m => m.id)}
+                lang={lang}
+              />
+
+              {totalSlides > 1 && (
+                <div className="flex justify-center gap-1.5 mt-6">
+                  {Array.from({ length: totalSlides }).map((_, i) => (
+                    <button key={i} onClick={() => setMemberSlide(i)}
+                      className={`w-2 h-2 rounded-full transition-colors ${i === memberSlide ? 'bg-primary' : 'bg-gray-300'}`} />
+                  ))}
                 </div>
-              ))
-            ) : (
-              Array.from({ length: 16 }).map((_, i) => {
-                const placeholders = [
-                  { name: 'President', role: 'President' },
-                  { name: 'Vice President', role: 'Vice President' },
-                  { name: 'Chairman', role: 'Chairman' },
-                  { name: 'Vice Chairman', role: 'Vice Chairman' },
-                  { name: 'Secretary', role: 'Secretary' },
-                  { name: 'Jt. Secretary', role: 'Joint Secretary' },
-                  { name: 'Treasurer', role: 'Treasurer' },
-                  { name: 'Jt. Treasurer', role: 'Joint Treasurer' },
-                  { name: 'Working Pres.', role: 'Working President' },
-                  { name: 'Jt. Working Pres.', role: 'Jt. Working Pres.' },
-                  { name: 'Coordinator', role: 'Coordinator' },
-                  { name: 'Deputy Chair', role: 'Deputy Chairman' },
-                  { name: 'Mentor', role: 'Mentor' },
-                  { name: 'PRO', role: 'PR Officer' },
-                  { name: 'Legal Advisor', role: 'Legal Advisor' },
-                  { name: 'Media', role: 'Media & Spoke' },
-                ]
-                const p = placeholders[i]
-                return (
-                  <div key={i} className="text-center group">
-                    <div className="w-24 h-24 mx-auto rounded-full bg-white border-2 border-border group-hover:border-primary transition-colors flex items-center justify-center mb-3">
-                      <User className="w-7 h-7 text-gray-300" />
-                    </div>
-                    <p className="text-xs font-semibold text-text-primary leading-tight truncate">{p.name}</p>
-                    <p className="text-[10px] text-primary font-medium truncate">{p.role}</p>
-                  </div>
-                )
-              })
-            )}
-          </div>
-          <div className="text-center mt-6">
-            <Link to="/members" className="text-sm font-medium text-primary hover:underline">
-              {t('leadership.viewAll')}
-            </Link>
-          </div>
-        </div>
-      </section>
+              )}
+
+              <div className="text-center mt-6">
+                <Link to="/members" className="text-sm font-medium text-primary hover:underline">{t('leadership.viewAll')}</Link>
+              </div>
+            </div>
+          </section>
+        )
+      })()}
 
       {/* Gallery */}
       {galleryImages.length > 0 && (
@@ -459,6 +446,51 @@ export function Homepage() {
           )}
         </div>
       </section>
+    </div>
+  )
+}
+
+function AutoMemberSlide({ items, perSlide, slide, setSlide, totalSlides, currentItems, boardSlugs, executiveSlugs, lang }: {
+  items: Profile[]; perSlide: number; slide: number; setSlide: (n: number) => void
+  totalSlides: number; currentItems: Profile[]; boardSlugs: string[]; executiveSlugs: string[]; lang: string
+}) {
+  useEffect(() => {
+    if (items.length <= perSlide) return
+    const timer = setInterval(() => {
+      setSlide((slide + 1) % totalSlides)
+    }, 3500)
+    return () => clearInterval(timer)
+  }, [items.length, totalSlides, perSlide, slide])
+
+  if (currentItems.length === 0) return <p className="text-center text-sm text-text-secondary py-8">No members yet.</p>
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {currentItems.map((member) => {
+        const ring = boardSlugs.includes(member.id)
+          ? 'ring-orange-300'
+          : executiveSlugs.includes(member.id)
+          ? 'ring-amber-300'
+          : 'ring-gray-200'
+        return (
+          <div key={member.id} className="flex items-center gap-3 bg-white rounded-xl p-3 border border-border hover:shadow-sm transition-shadow">
+            <div className={`w-14 h-14 shrink-0 rounded-full overflow-hidden flex items-center justify-center ring-2 ${ring}`}>
+              {member.profile_photo_url ? (
+                <img src={member.profile_photo_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+              ) : (
+                <User className="w-6 h-6 text-gray-300" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-text-primary leading-tight truncate">
+                {lang === 'hi' && member.full_name_hi ? member.full_name_hi : member.full_name}
+              </p>
+              <p className="text-[11px] text-primary font-medium mt-0.5 truncate">{getRoleLabel(member.role)}</p>
+              {member.city && <p className="text-[10px] text-text-secondary truncate">{member.city}</p>}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
