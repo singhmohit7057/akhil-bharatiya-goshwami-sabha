@@ -87,6 +87,7 @@ const sections: NavSection[] = [
         children: [
           { to: '/admin/payments/add', label: 'Add Payment' },
           { to: '/admin/payments', label: 'Payment History' },
+          { to: '/admin/payments/bulk', label: 'Bulk Payment Upload' },
           { to: '/admin/expenses/add', label: 'Add Expense' },
           { to: '/admin/expenses', label: 'Expense History' },
         ],

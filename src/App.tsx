@@ -48,6 +48,7 @@ import { PaymentHistory } from './admin/members/PaymentHistory'
 import { AddPayment } from './admin/members/AddPayment'
 import { AddExpense } from './admin/members/AddExpense'
 import { ExpenseHistory } from './admin/members/ExpenseHistory'
+import { BulkPayment } from './admin/members/BulkPayment'
 import { AllMembers } from './admin/members/AllMembers'
 import { AddMember } from './admin/members/AddMember'
 import { MemberDetail } from './admin/members/MemberDetail'
@@ -174,6 +175,7 @@ export default function App() {
           <Route path="expenses" element={<ExpenseHistory />} />
           <Route path="expenses/add" element={<AddExpense />} />
           <Route path="expenses/edit/:id" element={<AddExpense />} />
+          <Route path="payments/bulk" element={<BulkPayment />} />
           <Route path="members/:id" element={<MemberDetail />} />
 
           {/* Designations */}
