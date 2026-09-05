@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShieldCheck, Users, Award, Heart, Briefcase,
   CalendarRange, Gift, IndianRupee, Images, Megaphone, FileText, Mail,
-  ChevronDown, Menu,
+  ChevronDown, Menu, BarChart3,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { cn } from '../../lib/utils'
@@ -87,11 +87,20 @@ const sections: NavSection[] = [
         children: [
           { to: '/admin/payments/add', label: 'Add Payment' },
           { to: '/admin/payments', label: 'Payment History' },
-          { to: '/admin/payments/bulk', label: 'Bulk Payment Upload' },
           { to: '/admin/expenses/add', label: 'Add Expense' },
           { to: '/admin/expenses', label: 'Expense History' },
+          { to: '/admin/payments/bulk', label: 'Bulk Payment Upload' },
         ],
       },
+    ],
+  },
+  {
+    title: 'REPORTS',
+    titleColor: 'text-teal-600',
+    iconColor: 'text-teal-500',
+    hoverBg: 'hover:bg-teal-50',
+    items: [
+      { to: '/admin/reports', icon: BarChart3, label: 'Financial Report' },
     ],
   },
   {

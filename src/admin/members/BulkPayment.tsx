@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { Download, Upload, CheckCircle, XCircle, Loader2, FileSpreadsheet } from 'lucide-react'
+import { Download, Upload, CheckCircle, XCircle, Loader2, FileSpreadsheet, Receipt } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import { supabase, supabaseAdmin } from '../../lib/supabase'
@@ -62,6 +62,17 @@ const DONATION_COLUMNS = [
 ]
 const DONATION_SAMPLE = (year: string) => ['ABGSPB/0001', 'Shashi Kumar Giri', 'shashi@gmail.com', '9331038940', '500', `27-10-${year}`, 'Annual Fund', 'Cash', 'Donation for event']
 
+const EXPENSE_COLUMNS = [
+  { key: 'title',        label: 'Title',               required: true  },
+  { key: 'category',     label: 'Category',            required: false },
+  { key: 'amount',       label: 'Amount (₹)',          required: true  },
+  { key: 'date',         label: 'Date (DD-MM-YYYY)',   required: true  },
+  { key: 'mode',         label: 'Payment Mode',        required: true  },
+  { key: 'paid_to',      label: 'Paid To',             required: false },
+  { key: 'notes',        label: 'Notes',               required: false },
+]
+const EXPENSE_SAMPLE = ['Stage Decoration', 'Event Expense', '5000', '15-11-2025', 'Cash', 'Ramu Decorator', 'Annual Meet decoration']
+
 const getSample = (year: string) => [
   'ABGSPB/0001',
   'Shashi Kumar Giri',
@@ -93,6 +104,13 @@ export function BulkPayment() {
   const [donResults, setDonResults] = useState<PaymentResult[]>([])
   const [donLoading, setDonLoading] = useState(false)
   const [donDone, setDonDone] = useState(false)
+
+  // Expense
+  const expFileRef = useRef<HTMLInputElement>(null)
+  const [expRows, setExpRows] = useState<{title:string;category:string;amount:number;date:string;mode:string;paid_to:string;notes:string}[]>([])
+  const [expResults, setExpResults] = useState<{idx:number;title:string;status:'success'|'error';message:string}[]>([])
+  const [expLoading, setExpLoading] = useState(false)
+  const [expDone, setExpDone] = useState(false)
 
   async function downloadTemplate() {
     const wb = new ExcelJS.Workbook()
@@ -357,13 +375,93 @@ export function BulkPayment() {
   const donSuccess = donResults.filter((r) => r.status === 'success').length
   const donFailed = donResults.filter((r) => r.status === 'error').length
 
+  async function downloadExpenseTemplate() {
+    const wb = new ExcelJS.Workbook()
+    const ws = wb.addWorksheet('Expenses')
+    ws.columns = EXPENSE_COLUMNS.map((c) => ({ header: c.label, key: c.key, width: 24 }))
+    ws.getRow(1).eachCell((cell, col) => {
+      const c = EXPENSE_COLUMNS[col - 1]
+      cell.font = { bold: true, size: 11 }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: c?.required ? 'FFFFFF00' : 'FFD6E4F0' } }
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+      cell.alignment = { horizontal: 'center' }
+    })
+    const noteRow = ws.addRow(EXPENSE_COLUMNS.map((c) => c.required ? '★ REQUIRED' : 'optional'))
+    noteRow.eachCell((cell, col) => {
+      cell.font = { italic: true, size: 9, color: { argb: EXPENSE_COLUMNS[col - 1]?.required ? 'FFC00000' : 'FF888888' } }
+    })
+    const sampleRow = ws.addRow(EXPENSE_SAMPLE)
+    sampleRow.eachCell((cell) => { cell.font = { size: 10 }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } } })
+    ws.views = [{ state: 'frozen', ySplit: 1 }]
+    const buffer = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bulk_expense_template.xlsx'; a.click(); URL.revokeObjectURL(a.href)
+  }
+
+  function handleExpFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target?.result, { type: 'binary' })
+        const ws = wb.Sheets[wb.SheetNames[0]]
+        const raw = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' })
+        function toISO(s: string) {
+          const v = String(s).trim()
+          if (/^\d{2}-\d{2}-\d{4}$/.test(v)) { const [dd,mm,yyyy]=v.split('-'); return `${yyyy}-${mm}-${dd}` }
+          if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v
+          if (!isNaN(Number(v)) && Number(v)>0) return new Date((Number(v)-25569)*86400*1000).toISOString().split('T')[0]
+          return v
+        }
+        const parsed = raw
+          .filter((r) => !String(Object.values(r)[0]).includes('REQUIRED') && !String(Object.values(r)[0]).includes('optional'))
+          .map((r) => ({
+            title:    String(r['Title']    || r['title']    || '').trim(),
+            category: String(r['Category'] || r['category'] || '').trim(),
+            amount:   parseFloat(String(r['Amount (₹)'] || r['amount'] || '0').replace(/[₹,]/g,'')) || 0,
+            date:     toISO(r['Date (DD-MM-YYYY)'] || r['date'] || ''),
+            mode:     String(r['Payment Mode'] || r['mode'] || 'Cash').trim(),
+            paid_to:  String(r['Paid To']  || r['paid_to'] || '').trim(),
+            notes:    String(r['Notes']    || r['notes']   || '').trim(),
+          }))
+          .filter((r) => r.title && r.amount > 0 && r.date)
+        setExpRows(parsed); setExpResults([]); setExpDone(false)
+        if (parsed.length === 0) toast.error('No valid rows found')
+        else toast.success(`${parsed.length} expenses ready to import`)
+      } catch { toast.error('Failed to read file') }
+    }
+    reader.readAsBinaryString(file); e.target.value = ''
+  }
+
+  async function handleExpImport() {
+    if (!expRows.length) return
+    setExpLoading(true)
+    const res: {idx:number;title:string;status:'success'|'error';message:string}[] = []
+    for (let i = 0; i < expRows.length; i++) {
+      const r = expRows[i]
+      const { error } = await supabase.from('expenses').insert({
+        title: r.title, category: r.category || null, amount: r.amount,
+        expense_date: r.date, payment_mode: r.mode || null,
+        paid_to: r.paid_to || null, notes: r.notes || null, recorded_by: user?.id,
+      })
+      res.push({ idx: i, title: r.title, status: error ? 'error' : 'success', message: error ? error.message : `₹${r.amount.toLocaleString()} recorded` })
+    }
+    setExpResults(res); setExpLoading(false); setExpDone(true)
+    const s = res.filter((r) => r.status === 'success').length
+    const f = res.filter((r) => r.status === 'error').length
+    toast.success(`${s} expenses recorded${f ? ` · ${f} failed` : ''}`)
+  }
+
+  const expSuccess = expResults.filter((r) => r.status === 'success').length
+  const expFailed = expResults.filter((r) => r.status === 'error').length
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-text-primary mb-1">Bulk Membership Payment</h1>
-      <p className="text-sm text-text-secondary mb-6">Upload Excel to record multiple membership payments at once</p>
+      <h1 className="text-2xl font-bold text-text-primary mb-1">Bulk Payment Upload</h1>
+      <p className="text-sm text-text-secondary mb-6">Upload Excel to record multiple payments at once</p>
 
       {/* Tab switcher */}
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-5 flex-wrap">
         <button onClick={() => setActiveTab('membership')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'membership' ? 'bg-primary text-white' : 'bg-white border border-border text-text-secondary hover:bg-gray-50'}`}>
           <CheckCircle className="w-4 h-4" /> Membership Payment
@@ -371,6 +469,10 @@ export function BulkPayment() {
         <button onClick={() => setActiveTab('donation')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'donation' ? 'bg-green-600 text-white' : 'bg-white border border-border text-text-secondary hover:bg-gray-50'}`}>
           <Upload className="w-4 h-4" /> Donation
+        </button>
+        <button onClick={() => setActiveTab('expense' as any)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === ('expense' as any) ? 'bg-red-600 text-white' : 'bg-white border border-border text-text-secondary hover:bg-gray-50'}`}>
+          <Receipt className="w-4 h-4" /> Expense
         </button>
       </div>
 
@@ -611,6 +713,121 @@ export function BulkPayment() {
                   <div key={i} className="flex items-center gap-3 p-2.5 bg-red-50 rounded-lg text-xs">
                     <XCircle className="w-4 h-4 text-red-400 shrink-0" />
                     <span className="text-text-secondary">{r.identifier}</span>
+                    <span className="text-red-500 ml-auto">{r.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>}
+
+      {activeTab === ('expense' as any) && <div className="space-y-4">
+        {/* Expense Step 1 */}
+        <div className="bg-white rounded-xl border border-border p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">Step 1 — Download Template</h3>
+              <p className="text-xs text-text-secondary mt-0.5">Fill with expense details — one row per expense</p>
+            </div>
+            <button onClick={downloadExpenseTemplate} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700">
+              <Download className="w-4 h-4" /> Download Template
+            </button>
+          </div>
+          <div className="bg-surface rounded-lg p-3 overflow-x-auto text-xs">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  {EXPENSE_COLUMNS.map((c) => (
+                    <th key={c.key} className={`px-2 py-1.5 text-left font-semibold whitespace-nowrap ${c.required ? 'text-yellow-700 bg-yellow-50' : 'text-text-secondary'}`}>
+                      {c.label}{c.required && ' ★'}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="text-text-secondary">
+                  {EXPENSE_SAMPLE.map((v, i) => <td key={i} className="px-2 py-1">{v}</td>)}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Expense Step 2 */}
+        <div className="bg-white rounded-xl border border-border p-5">
+          <h3 className="text-sm font-semibold text-text-primary mb-1">Step 2 — Upload Filled Excel</h3>
+          <p className="text-xs text-text-secondary mb-4">Each row creates one expense record</p>
+          <div onClick={() => expFileRef.current?.click()}
+            className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-red-400/50 hover:bg-red-50/20 transition-colors">
+            <FileSpreadsheet className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm font-medium text-text-primary">Click to select Excel file</p>
+            <p className="text-xs text-text-secondary mt-1">.xlsx or .xls</p>
+            <input ref={expFileRef} type="file" accept=".xlsx,.xls" onChange={handleExpFile} className="hidden" />
+          </div>
+
+          {expRows.length > 0 && !expDone && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-text-primary">{expRows.length} expenses ready to import</p>
+                <button onClick={handleExpImport} disabled={expLoading}
+                  className="flex items-center gap-2 px-5 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50">
+                  {expLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {expLoading ? 'Importing...' : 'Import All Expenses'}
+                </button>
+              </div>
+              <div className="max-h-48 overflow-y-auto rounded-lg border border-border text-xs">
+                <table className="w-full">
+                  <thead className="bg-surface sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-text-secondary">Title</th>
+                      <th className="px-3 py-2 text-left font-medium text-text-secondary">Category</th>
+                      <th className="px-3 py-2 text-left font-medium text-text-secondary">Amount</th>
+                      <th className="px-3 py-2 text-left font-medium text-text-secondary">Date</th>
+                      <th className="px-3 py-2 text-left font-medium text-text-secondary">Mode</th>
+                      <th className="px-3 py-2 text-left font-medium text-text-secondary">Paid To</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expRows.map((r, i) => (
+                      <tr key={i} className="border-t border-border">
+                        <td className="px-3 py-1.5 font-medium text-text-primary">{r.title}</td>
+                        <td className="px-3 py-1.5 text-text-secondary">{r.category || '—'}</td>
+                        <td className="px-3 py-1.5 text-red-600 font-medium">₹{r.amount.toLocaleString()}</td>
+                        <td className="px-3 py-1.5 text-text-secondary">{r.date}</td>
+                        <td className="px-3 py-1.5 text-text-secondary">{r.mode}</td>
+                        <td className="px-3 py-1.5 text-text-secondary">{r.paid_to || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Expense Results */}
+        {expDone && expResults.length > 0 && (
+          <div className="bg-white rounded-xl border border-border overflow-hidden">
+            <div className={`px-6 py-5 flex items-center gap-4 ${expFailed === 0 ? 'bg-green-50 border-b border-green-200' : 'bg-amber-50 border-b border-amber-200'}`}>
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${expFailed === 0 ? 'bg-green-100' : 'bg-amber-100'}`}>
+                <CheckCircle className={`w-7 h-7 ${expFailed === 0 ? 'text-green-600' : 'text-amber-600'}`} />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-text-primary">{expSuccess} expense{expSuccess !== 1 ? 's' : ''} recorded</p>
+                <p className="text-sm text-text-secondary mt-0.5">{expFailed > 0 && `${expFailed} failed`}</p>
+              </div>
+              <button onClick={() => { setExpRows([]); setExpResults([]); setExpDone(false) }}
+                className="px-4 py-2 border border-border text-text-secondary text-sm font-medium rounded-lg hover:bg-gray-50">
+                Upload More
+              </button>
+            </div>
+            {expFailed > 0 && (
+              <div className="p-4 space-y-2">
+                {expResults.filter((r) => r.status === 'error').map((r, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2.5 bg-red-50 rounded-lg text-xs">
+                    <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <span className="font-medium text-text-primary">{r.title}</span>
                     <span className="text-red-500 ml-auto">{r.message}</span>
                   </div>
                 ))}
