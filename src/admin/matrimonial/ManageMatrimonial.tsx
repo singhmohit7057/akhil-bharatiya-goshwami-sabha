@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Check, X, Eye, Edit2, Search, User } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { calculateAge } from '../../lib/utils'
 import type { MatrimonialProfile, Profile } from '../../types'
@@ -38,6 +39,9 @@ export function ManageMatrimonial() {
 
   async function handleToggleActive(id: string, currentActive: boolean) {
     await supabase.from('matrimonial_profiles').update({ is_active: !currentActive }).eq('id', id)
+    const mp = profiles.find((p) => p.id === id)
+    const mpName = (mp as any)?.candidate_name || mp?.profiles?.full_name || id
+    logAction('update', 'matrimonial', mpName, id)
     toast.success(currentActive ? 'Profile hidden from public' : 'Profile visible to public')
     fetchProfiles()
   }
@@ -110,74 +114,118 @@ export function ManageMatrimonial() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-border p-8 text-center text-text-secondary">No profiles found.</div>
       ) : (
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-gray-50 text-left">
-                  <th className="px-4 py-3 font-medium text-text-secondary">Profile</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Education</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Occupation</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">City</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Status</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((mp) => (
-                  <tr key={mp.id} className="border-b border-border/50 hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                          {(mp as any).matrimonial_photos?.[0]?.photo_url ? (
-                            <img src={(mp as any).matrimonial_photos[0].photo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
-                          ) : (
-                            <User className="w-4 h-4 text-primary" />
+        <>
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-2">
+            {filtered.map((mp) => (
+              <div key={mp.id} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                  {(mp as any).matrimonial_photos?.[0]?.photo_url ? (
+                    <img src={(mp as any).matrimonial_photos[0].photo_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5 text-primary" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-text-primary text-sm truncate">{(mp as any).candidate_name || mp.profiles?.full_name}</p>
+                  <p className="text-xs text-text-secondary truncate">
+                    {((mp as any).candidate_gender || mp.profiles?.gender) === 'male' ? 'Male' : 'Female'}
+                    {((mp as any).date_of_birth || mp.profiles?.date_of_birth) ? ` · ${calculateAge((mp as any).date_of_birth || mp.profiles?.date_of_birth)}y` : ''}
+                    {((mp as any).city || mp.profiles?.city) ? ` · ${(mp as any).city || mp.profiles?.city}` : ''}
+                  </p>
+                </div>
+                {mp.is_active ? (
+                  <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full shrink-0">Visible</span>
+                ) : (
+                  <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full shrink-0">Hidden</span>
+                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {superAdmin && (
+                    <>
+                      <Link to={`/admin/matrimonial/edit/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`} className="text-text-secondary hover:text-primary">
+                        <Edit2 className="w-4 h-4" />
+                      </Link>
+                      <button onClick={() => handleToggleActive(mp.id, mp.is_active)}
+                        className={mp.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}>
+                        {mp.is_active ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50 text-left">
+                    <th className="px-4 py-3 font-medium text-text-secondary">Profile</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Education</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Occupation</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">City</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Status</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((mp) => (
+                    <tr key={mp.id} className="border-b border-border/50 hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                            {(mp as any).matrimonial_photos?.[0]?.photo_url ? (
+                              <img src={(mp as any).matrimonial_photos[0].photo_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                              <User className="w-4 h-4 text-primary" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-text-primary">{(mp as any).candidate_name || mp.profiles?.full_name}</p>
+                            <p className="text-xs text-text-secondary">
+                              {((mp as any).candidate_gender || mp.profiles?.gender) === 'male' ? 'M' : 'F'}
+                              {((mp as any).date_of_birth || mp.profiles?.date_of_birth) ? ` · ${calculateAge((mp as any).date_of_birth || mp.profiles?.date_of_birth)}y` : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">{mp.education || '—'}</td>
+                      <td className="px-4 py-3 text-text-secondary">{mp.occupation || '—'}</td>
+                      <td className="px-4 py-3 text-text-secondary">{(mp as any).city || mp.profiles?.city || '—'}</td>
+                      <td className="px-4 py-3">
+                        {mp.is_active ? (
+                          <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Visible</span>
+                        ) : (
+                          <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Hidden</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Link to={`/matrimonial/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </Link>
+                          {superAdmin && (
+                            <>
+                              <Link to={`/admin/matrimonial/edit/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
+                                <Edit2 className="w-3.5 h-3.5" /> Edit
+                              </Link>
+                              <button onClick={() => handleToggleActive(mp.id, mp.is_active)}
+                                className={`flex items-center gap-1 text-xs ${mp.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}>
+                                {mp.is_active ? <><X className="w-3.5 h-3.5" /> Hide</> : <><Check className="w-3.5 h-3.5" /> Show</>}
+                              </button>
+                            </>
                           )}
                         </div>
-                        <div>
-                          <p className="font-medium text-text-primary">{(mp as any).candidate_name || mp.profiles?.full_name}</p>
-                          <p className="text-xs text-text-secondary">
-                            {((mp as any).candidate_gender || mp.profiles?.gender) === 'male' ? 'M' : 'F'}
-                            {((mp as any).date_of_birth || mp.profiles?.date_of_birth) ? ` · ${calculateAge((mp as any).date_of_birth || mp.profiles?.date_of_birth)}y` : ''}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">{mp.education || '—'}</td>
-                    <td className="px-4 py-3 text-text-secondary">{mp.occupation || '—'}</td>
-                    <td className="px-4 py-3 text-text-secondary">{(mp as any).city || mp.profiles?.city || '—'}</td>
-                    <td className="px-4 py-3">
-                      {mp.is_active ? (
-                        <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Visible</span>
-                      ) : (
-                        <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Hidden</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Link to={`/matrimonial/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </Link>
-                        {superAdmin && (
-                          <>
-                            <Link to={`/admin/matrimonial/edit/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
-                              <Edit2 className="w-3.5 h-3.5" /> Edit
-                            </Link>
-                            <button onClick={() => handleToggleActive(mp.id, mp.is_active)}
-                              className={`flex items-center gap-1 text-xs ${mp.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}>
-                              {mp.is_active ? <><X className="w-3.5 h-3.5" /> Hide</> : <><Check className="w-3.5 h-3.5" /> Show</>}
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   )

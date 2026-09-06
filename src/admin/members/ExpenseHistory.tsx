@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Plus, Search, Trash2, TrendingDown, IndianRupee, Tag, Pencil } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { formatDate } from '../../lib/utils'
 import { Spinner } from '../../components/ui/Spinner'
@@ -19,6 +20,8 @@ interface Expense {
 }
 
 export function ExpenseHistory() {
+  const { canWrite } = useAuth()
+  const canEdit = canWrite('payments')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -63,9 +66,9 @@ export function ExpenseHistory() {
           <h1 className="text-2xl font-bold text-text-primary">Expense History</h1>
           <p className="text-sm text-text-secondary mt-0.5">All recorded expenses</p>
         </div>
-        <Link to="/admin/expenses/add" className="flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
+        {canEdit && <Link to="/admin/expenses/add" className="flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
           <Plus className="w-4 h-4" /> Add Expense
-        </Link>
+        </Link>}
       </div>
 
       {/* Stats */}
@@ -113,52 +116,83 @@ export function ExpenseHistory() {
           No expenses found.
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-gray-50 text-left">
-                  <th className="px-4 py-3 font-medium text-text-secondary">Title</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Category</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Paid To</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Mode</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((e) => (
-                  <tr key={e.id} className="border-b border-border hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-text-primary">
-                      {e.title}
-                      {e.notes && <p className="text-xs text-text-secondary font-normal mt-0.5 truncate max-w-[200px]">{e.notes}</p>}
-                    </td>
-                    <td className="px-4 py-3">
-                      {e.category ? (
-                        <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{e.category}</span>
-                      ) : '—'}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-red-600">₹{Number(e.amount).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-text-secondary">{formatDate(e.expense_date, 'en')}</td>
-                    <td className="px-4 py-3 text-text-secondary">{e.paid_to || '—'}</td>
-                    <td className="px-4 py-3 text-text-secondary">{e.payment_mode || '—'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <Link to={`/admin/expenses/edit/${e.id}`} className="p-1.5 text-text-secondary hover:text-primary transition-colors">
-                          <Pencil className="w-4 h-4" />
-                        </Link>
-                        <button onClick={() => handleDelete(e.id)} className="p-1.5 text-text-secondary hover:text-red-500 transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-2">
+            {filtered.map((e) => (
+              <div key={e.id} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-text-primary text-sm truncate">{e.title}</p>
+                  <p className="text-xs text-text-secondary">{formatDate(e.expense_date, 'en')}</p>
+                  {e.category && (
+                    <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full">{e.category}</span>
+                  )}
+                </div>
+                <p className="font-semibold text-sm text-red-600 shrink-0">₹{Number(e.amount).toLocaleString()}</p>
+                {canEdit && (
+                  <div className="flex gap-1 shrink-0">
+                    <Link to={`/admin/expenses/edit/${e.id}`} className="p-1.5 text-text-secondary hover:text-primary transition-colors">
+                      <Pencil className="w-4 h-4" />
+                    </Link>
+                    <button onClick={() => handleDelete(e.id)} className="p-1.5 text-text-secondary hover:text-red-500 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50 text-left">
+                    <th className="px-4 py-3 font-medium text-text-secondary">Title</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Category</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Paid To</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Mode</th>
+                    {canEdit && <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((e) => (
+                    <tr key={e.id} className="border-b border-border hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-text-primary">
+                        {e.title}
+                        {e.notes && <p className="text-xs text-text-secondary font-normal mt-0.5 truncate max-w-[200px]">{e.notes}</p>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {e.category ? (
+                          <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{e.category}</span>
+                        ) : '—'}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-red-600">₹{Number(e.amount).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-text-secondary">{formatDate(e.expense_date, 'en')}</td>
+                      <td className="px-4 py-3 text-text-secondary">{e.paid_to || '—'}</td>
+                      <td className="px-4 py-3 text-text-secondary">{e.payment_mode || '—'}</td>
+                      {canEdit && (
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1">
+                            <Link to={`/admin/expenses/edit/${e.id}`} className="p-1.5 text-text-secondary hover:text-primary transition-colors">
+                              <Pencil className="w-4 h-4" />
+                            </Link>
+                            <button onClick={() => handleDelete(e.id)} className="p-1.5 text-text-secondary hover:text-red-500 transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

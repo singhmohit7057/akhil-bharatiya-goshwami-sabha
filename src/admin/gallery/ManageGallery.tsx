@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, X, Images, Upload, Camera, Home, Edit2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { localized } from '../../lib/utils'
 import { Spinner } from '../../components/ui/Spinner'
@@ -72,6 +73,7 @@ export function ManageGallery() {
       await supabase.from('homepage_gallery').insert({ image_url: data.publicUrl, sort_order: homeImages.length + i })
     }
     setUploadingHome(false)
+    logAction('upload', 'gallery-image', 'Homepage Gallery')
     toast.success('Images added')
     fetchHomeGallery()
     if (homeFileRef.current) homeFileRef.current.value = ''
@@ -80,6 +82,7 @@ export function ManageGallery() {
   async function handleHomeDelete(id: string) {
     if (!confirm('Remove this image?')) return
     await supabase.from('homepage_gallery').delete().eq('id', id)
+    logAction('delete', 'gallery-image', 'Homepage Gallery', id)
     toast.success('Removed')
     fetchHomeGallery()
   }
@@ -116,6 +119,7 @@ export function ManageGallery() {
         description: form.description || null, slug: slug || null,
       }).eq('id', editingAlbum.id)
       if (error) { toast.error('Failed to update'); setSaving(false); return }
+      logAction('update', 'album', form.title_en, editingAlbum.id)
       toast.success('Album updated')
     } else {
       const { error } = await supabase.from('gallery_albums').insert({
@@ -123,6 +127,7 @@ export function ManageGallery() {
         description: form.description || null, slug: slug || null, created_by: user?.id,
       })
       if (error) { toast.error('Failed to create album'); setSaving(false); return }
+      logAction('create', 'album', form.title_en)
       toast.success('Album created')
     }
 
@@ -136,7 +141,9 @@ export function ManageGallery() {
 
   async function handleDeleteAlbum(albumId: string) {
     if (!confirm('Delete this album and all its photos?')) return
+    const album = albums.find((a) => a.id === albumId)
     await supabase.from('gallery_albums').delete().eq('id', albumId)
+    logAction('delete', 'album', album?.title_en || albumId, albumId)
     toast.success('Album deleted')
     if (selectedAlbum?.id === albumId) { setSelectedAlbum(null); setPhotos([]) }
     fetchAlbums()
@@ -172,6 +179,7 @@ export function ManageGallery() {
       }
     }
 
+    logAction('upload', 'photo', selectedAlbum.title_en, selectedAlbum.id)
     toast.success(`${files.length} photo(s) uploaded`)
     setUploading(false)
     openAlbum(selectedAlbum)
@@ -182,6 +190,7 @@ export function ManageGallery() {
   async function handleDeletePhoto(photoId: string) {
     if (!confirm('Delete this photo?')) return
     await supabase.from('gallery_photos').delete().eq('id', photoId)
+    logAction('delete', 'photo', selectedAlbum?.title_en || '', photoId)
     toast.success('Photo deleted')
     if (selectedAlbum) openAlbum(selectedAlbum)
     fetchAlbums()

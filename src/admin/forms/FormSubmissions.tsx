@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Mail, IndianRupee, Trash2, Eye, EyeOff, MessageSquare } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { formatDate } from '../../lib/utils'
 import { Spinner } from '../../components/ui/Spinner'
 
@@ -49,10 +50,16 @@ export function FormSubmissions() {
 
   async function handleDelete(table: string, id: string) {
     if (!confirm('Delete this submission?')) return
+    const subName = table === 'contact_submissions'
+      ? contacts.find((c) => c.id === id)?.name
+      : table === 'donation_submissions'
+        ? donations.find((d) => d.id === id)?.name
+        : suggestions.find((s) => s.id === id)?.name
     await supabase.from(table).delete().eq('id', id)
     if (table === 'contact_submissions') setContacts(contacts.filter((c) => c.id !== id))
     else if (table === 'donation_submissions') setDonations(donations.filter((d) => d.id !== id))
     else setSuggestions(suggestions.filter((s) => s.id !== id))
+    logAction('delete', 'form', subName || id, id)
     toast.success('Deleted')
   }
 
@@ -67,7 +74,7 @@ export function FormSubmissions() {
       <h1 className="text-2xl font-bold text-text-primary mb-1">Form Submissions</h1>
       <p className="text-sm text-text-secondary mb-6">View contact and donation form submissions</p>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         <button onClick={() => setTab('contact')}
           className={`px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ${tab === 'contact' ? 'bg-primary text-white' : 'bg-white border border-border text-text-secondary hover:bg-gray-50'}`}>
           <Mail className="w-4 h-4" /> Contact Forms
@@ -127,50 +134,78 @@ export function FormSubmissions() {
         donations.length === 0 ? (
           <div className="bg-white rounded-xl border border-border p-8 text-center text-text-secondary">No donation submissions yet.</div>
         ) : (
-          <div className="bg-white rounded-xl border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-gray-50 text-left">
-                    <th className="px-4 py-3 font-medium text-text-secondary">Name</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Phone</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Email</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">PAN</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {donations.map((d) => (
-                    <tr key={d.id} className={`border-b border-border/50 ${d.is_read ? '' : 'bg-primary/5'}`}>
-                      <td className="px-4 py-3">
-                        <span className="font-medium text-text-primary">{d.name}</span>
-                        {!d.is_read && <span className="ml-1.5 text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full">New</span>}
-                      </td>
-                      <td className="px-4 py-3 text-text-secondary">{d.phone || '—'}</td>
-                      <td className="px-4 py-3 text-text-secondary">{d.email || '—'}</td>
-                      <td className="px-4 py-3 font-semibold text-text-primary">₹{Number(d.amount).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-text-secondary">{d.pan || '—'}</td>
-                      <td className="px-4 py-3 text-xs text-text-secondary">{formatDate(d.created_at, 'en')}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <button onClick={() => toggleRead('donation_submissions', d.id, d.is_read)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-primary">
-                            {d.is_read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            <span className="text-[9px]">{d.is_read ? 'Unread' : 'Read'}</span>
-                          </button>
-                          <button onClick={() => handleDelete('donation_submissions', d.id)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-red-500">
-                            <Trash2 className="w-4 h-4" />
-                            <span className="text-[9px]">Delete</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <>
+            {/* Mobile card list */}
+            <div className="sm:hidden space-y-2">
+              {donations.map((d) => (
+                <div key={d.id} className={`bg-white rounded-xl border p-3 flex items-center gap-3 ${d.is_read ? 'border-border' : 'border-primary/30 bg-primary/5'}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium text-text-primary text-sm truncate">{d.name}</p>
+                      {!d.is_read && <span className="text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full shrink-0">New</span>}
+                    </div>
+                    <p className="text-xs text-text-secondary truncate">{d.email || d.phone || '—'}</p>
+                    <p className="text-xs text-text-secondary">{formatDate(d.created_at, 'en')}</p>
+                  </div>
+                  <p className="font-semibold text-sm text-text-primary shrink-0">₹{Number(d.amount).toLocaleString()}</p>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => toggleRead('donation_submissions', d.id, d.is_read)} className="text-text-secondary hover:text-primary">
+                      {d.is_read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                    <button onClick={() => handleDelete('donation_submissions', d.id)} className="text-text-secondary hover:text-red-500">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+
+            {/* Desktop table */}
+            <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-gray-50 text-left">
+                      <th className="px-4 py-3 font-medium text-text-secondary">Name</th>
+                      <th className="px-4 py-3 font-medium text-text-secondary">Phone</th>
+                      <th className="px-4 py-3 font-medium text-text-secondary">Email</th>
+                      <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
+                      <th className="px-4 py-3 font-medium text-text-secondary">PAN</th>
+                      <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
+                      <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {donations.map((d) => (
+                      <tr key={d.id} className={`border-b border-border/50 ${d.is_read ? '' : 'bg-primary/5'}`}>
+                        <td className="px-4 py-3">
+                          <span className="font-medium text-text-primary">{d.name}</span>
+                          {!d.is_read && <span className="ml-1.5 text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full">New</span>}
+                        </td>
+                        <td className="px-4 py-3 text-text-secondary">{d.phone || '—'}</td>
+                        <td className="px-4 py-3 text-text-secondary">{d.email || '—'}</td>
+                        <td className="px-4 py-3 font-semibold text-text-primary">₹{Number(d.amount).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-text-secondary">{d.pan || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-text-secondary">{formatDate(d.created_at, 'en')}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button onClick={() => toggleRead('donation_submissions', d.id, d.is_read)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-primary">
+                              {d.is_read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              <span className="text-[9px]">{d.is_read ? 'Unread' : 'Read'}</span>
+                            </button>
+                            <button onClick={() => handleDelete('donation_submissions', d.id)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-red-500">
+                              <Trash2 className="w-4 h-4" />
+                              <span className="text-[9px]">Delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )
       )}
 

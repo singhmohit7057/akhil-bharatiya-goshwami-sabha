@@ -5,6 +5,7 @@ import { UserPlus, Eye, EyeOff, Download, Upload, CheckCircle, XCircle, Loader2,
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import { supabaseAdmin } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { transliterateToHindi } from '../../lib/transliterate'
 import { useAuth } from '../../hooks/useAuth'
 import { useDesignations } from '../../hooks/useDesignations'
@@ -69,6 +70,7 @@ export function AddMember() {
     phone: '', gender: '', gotra: '', city: '', state: '',
     role: 'member' as MemberRole,
     date_of_birth: '', caste: '', address: '', village_address: '',
+    father_name: '', mother_name: '', marital_status: '',
   })
 
   // Bulk upload
@@ -302,12 +304,16 @@ export function AddMember() {
         city: form.city || null, state: form.state || null,
         address: form.address || null,
         village_address: form.village_address || null,
+        father_name: form.father_name || null,
+        mother_name: form.mother_name || null,
+        marital_status: form.marital_status || null,
         role: form.role,
         member_id: memberId,
         account_status: 'active', approved_by: user?.id,
         approved_at: new Date().toISOString(),
       }).eq('id', userId)
     }
+    logAction('create', 'member', form.full_name, userId, `Role: ${form.role}`)
     toast.success(`Member "${form.full_name}" created and auto-approved`)
     navigate('/admin/members')
   }
@@ -355,6 +361,18 @@ export function AddMember() {
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Name (Hindi)</label>
                 <input type="text" value={form.full_name_hi} onChange={(e) => { setHiManuallyEdited(true); setForm({ ...form, full_name_hi: e.target.value }) }} className={inputClass} />
+              </div>
+            </div>
+
+            {/* Row 1b: Father | Mother */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Father's Name</label>
+                <input type="text" value={form.father_name} onChange={(e) => setForm({ ...form, father_name: e.target.value })} placeholder="Father's full name" className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Mother's Name</label>
+                <input type="text" value={form.mother_name} onChange={(e) => setForm({ ...form, mother_name: e.target.value })} placeholder="Mother's full name" className={inputClass} />
               </div>
             </div>
 
@@ -419,9 +437,22 @@ export function AddMember() {
             </div>
 
             {/* Row 6: City (shown on ID card) */}
-            <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">City <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
-              <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputClass} />
+            {/* Row 6: City | Marital Status */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">City <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+                <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Marital Status</label>
+                <select value={form.marital_status} onChange={(e) => setForm({ ...form, marital_status: e.target.value })} className={`${inputClass} bg-white`}>
+                  <option value="">Select</option>
+                  <option value="unmarried">Unmarried</option>
+                  <option value="married">Married</option>
+                  <option value="divorced">Divorced</option>
+                  <option value="widowed">Widowed</option>
+                </select>
+              </div>
             </div>
 
             {/* Row 7: Local Address */}

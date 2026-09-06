@@ -11,7 +11,7 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ children, allowedRoles, requireExecutive, requireAdmin }: RoleGuardProps) {
-  const { profile, loading, isAdmin } = useAuth()
+  const { profile, loading, isAdmin, isViewer } = useAuth()
 
   if (loading) {
     return (
@@ -25,7 +25,8 @@ export function RoleGuard({ children, allowedRoles, requireExecutive, requireAdm
     return <Navigate to="/login" replace />
   }
 
-  if (requireAdmin && !isAdmin()) {
+  // Allow admins AND viewers into the admin panel
+  if (requireAdmin && !isAdmin() && !isViewer()) {
     return <Navigate to="/unauthorized" replace />
   }
 

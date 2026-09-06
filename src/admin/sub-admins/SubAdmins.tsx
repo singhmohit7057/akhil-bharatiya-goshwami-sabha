@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
-import { Shield, ShieldCheck, Plus, Trash2, User } from 'lucide-react'
-import { supabase } from '../../lib/supabase'
-
+import { Shield, ShieldCheck, Plus, Trash2, User, Eye } from 'lucide-react'
+import { supabase, supabaseAdmin } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { getRoleLabel } from '../../lib/utils'
 import type { Profile, AdminLevel } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
@@ -30,8 +30,14 @@ export function SubAdmins() {
   }
 
   async function handleChangeLevel(id: string, newLevel: AdminLevel) {
-    const { error } = await supabase.from('profiles').update({ admin_level: newLevel }).eq('id', id)
+    const { error } = await supabaseAdmin.from('profiles').update({ admin_level: newLevel }).eq('id', id)
     if (error) { toast.error('Failed'); return }
+    const admin = admins.find((a) => a.id === id)
+    if (newLevel === 'none') {
+      logAction('delete', 'sub-admin', admin?.full_name || id, id)
+    } else {
+      logAction('update', 'sub-admin', admin?.full_name || id, id)
+    }
     toast.success('Updated')
     fetchData()
   }
@@ -51,7 +57,7 @@ export function SubAdmins() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck className="w-4 h-4 text-amber-500" />
@@ -65,6 +71,13 @@ export function SubAdmins() {
             <p className="text-xs text-text-secondary">Admins</p>
           </div>
           <p className="text-xl font-bold text-text-primary">{admins.filter((a) => a.admin_level === 'admin').length}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-border p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Eye className="w-4 h-4 text-gray-500" />
+            <p className="text-xs text-text-secondary">Viewers</p>
+          </div>
+          <p className="text-xl font-bold text-text-primary">{admins.filter((a) => a.admin_level === 'viewer').length}</p>
         </div>
       </div>
 
@@ -85,6 +98,13 @@ export function SubAdmins() {
                 <div>
                   <p className="font-medium text-text-primary text-sm">{admin.full_name}</p>
                   <p className="text-xs text-text-secondary">{admin.email} · {getRoleLabel(admin.role)}</p>
+                  {admin.admin_level === 'admin' && (
+                    <p className="text-[10px] text-blue-600 mt-0.5">
+                      {((admin as any).admin_permissions?.length ?? 0) > 0
+                        ? `Permissions: ${(admin as any).admin_permissions.join(', ')}`
+                        : 'No permissions assigned'}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -94,11 +114,14 @@ export function SubAdmins() {
                   className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium ${
                     admin.admin_level === 'super_admin'
                       ? 'bg-amber-50 border-amber-200 text-amber-700'
+                      : admin.admin_level === 'viewer'
+                      ? 'bg-gray-50 border-gray-300 text-gray-600'
                       : 'bg-blue-50 border-blue-200 text-blue-700'
                   }`}
                 >
                   <option value="super_admin">Super Admin</option>
                   <option value="admin">Admin</option>
+                  <option value="viewer">Viewer</option>
                 </select>
                 <button onClick={() => handleChangeLevel(admin.id, 'none')} className="p-1.5 text-text-secondary hover:text-red-500" title="Remove admin access">
                   <Trash2 className="w-4 h-4" />

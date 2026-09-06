@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Eye, Edit2, EyeOff, Search, Plus } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import type { BusinessListing } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
@@ -35,6 +36,8 @@ export function ManageDirectory() {
 
   async function handleToggleActive(id: string, currentActive: boolean) {
     await supabase.from('business_directory').update({ is_active: !currentActive }).eq('id', id)
+    const business = listings.find((l) => l.id === id)
+    logAction('update', 'business', business?.business_name || id, id)
     toast.success(currentActive ? 'Business hidden' : 'Business visible')
     fetchListings()
   }
@@ -91,62 +94,96 @@ export function ManageDirectory() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-border p-8 text-center text-text-secondary">No businesses found.</div>
       ) : (
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-gray-50 text-left">
-                  <th className="px-4 py-3 font-medium text-text-secondary">Business</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Category</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Owner</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">City</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Status</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((l) => (
-                  <tr key={l.id} className="border-b border-border/50 hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-text-primary">{l.business_name}</p>
-                      {l.phone && <p className="text-xs text-text-secondary">{l.phone}</p>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{l.category}</span>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary">{ownerNames[l.id] || '—'}</td>
-                    <td className="px-4 py-3 text-text-secondary">{l.city || '—'}</td>
-                    <td className="px-4 py-3">
-                      {l.is_active ? (
-                        <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Visible</span>
-                      ) : (
-                        <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Hidden</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Link to={`/businesses`} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </Link>
-                        {superAdmin && (
-                          <>
-                            <Link to={`/admin/business/edit/${l.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
-                              <Edit2 className="w-3.5 h-3.5" /> Edit
-                            </Link>
-                            <button onClick={() => handleToggleActive(l.id, l.is_active)}
-                              className={`flex items-center gap-1 text-xs ${l.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}>
-                              {l.is_active ? <><EyeOff className="w-3.5 h-3.5" /> Hide</> : <><Eye className="w-3.5 h-3.5" /> Show</>}
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-2">
+            {filtered.map((l) => (
+              <div key={l.id} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-text-primary text-sm truncate">{l.business_name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{l.category}</span>
+                    {l.city && <span className="text-xs text-text-secondary">{l.city}</span>}
+                  </div>
+                </div>
+                {l.is_active ? (
+                  <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full shrink-0">Visible</span>
+                ) : (
+                  <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full shrink-0">Hidden</span>
+                )}
+                {superAdmin && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link to={`/admin/business/edit/${l.id}`} className="text-text-secondary hover:text-primary">
+                      <Edit2 className="w-4 h-4" />
+                    </Link>
+                    <button onClick={() => handleToggleActive(l.id, l.is_active)}
+                      className={l.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}>
+                      {l.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50 text-left">
+                    <th className="px-4 py-3 font-medium text-text-secondary">Business</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Category</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Owner</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">City</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Status</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((l) => (
+                    <tr key={l.id} className="border-b border-border/50 hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-text-primary">{l.business_name}</p>
+                        {l.phone && <p className="text-xs text-text-secondary">{l.phone}</p>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{l.category}</span>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">{ownerNames[l.id] || '—'}</td>
+                      <td className="px-4 py-3 text-text-secondary">{l.city || '—'}</td>
+                      <td className="px-4 py-3">
+                        {l.is_active ? (
+                          <span className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Visible</span>
+                        ) : (
+                          <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Hidden</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Link to={`/businesses`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </Link>
+                          {superAdmin && (
+                            <>
+                              <Link to={`/admin/business/edit/${l.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
+                                <Edit2 className="w-3.5 h-3.5" /> Edit
+                              </Link>
+                              <button onClick={() => handleToggleActive(l.id, l.is_active)}
+                                className={`flex items-center gap-1 text-xs ${l.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}>
+                                {l.is_active ? <><EyeOff className="w-3.5 h-3.5" /> Hide</> : <><Eye className="w-3.5 h-3.5" /> Show</>}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

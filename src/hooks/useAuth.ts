@@ -44,10 +44,15 @@ export function useAuth() {
     if (!error && data) {
       setProfile(data as Profile)
     } else if (error) {
-      await supabase.auth.signOut()
-      setUser(null)
-      setSession(null)
-      setProfile(null)
+      // Only sign out if profile row genuinely doesn't exist (PGRST116 = no rows)
+      // Don't sign out on network/schema errors to avoid unexpected logouts
+      if (error.code === 'PGRST116') {
+        await supabase.auth.signOut()
+        setUser(null)
+        setSession(null)
+        setProfile(null)
+      }
+      // For other errors (network, etc.) just clear loading without signing out
     }
     setLoading(false)
   }
@@ -64,14 +69,36 @@ export function useAuth() {
   }
 
   async function signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (!error && data.user) {
+      // Log login after profile is fetched (defer slightly)
+      setTimeout(async () => {
+        const { data: prof } = await supabase.from('profiles').select('full_name, admin_level').eq('id', data.user!.id).single()
+        if (prof?.admin_level && prof.admin_level !== 'none') {
+          await supabase.from('admin_logs').insert({
+            admin_id: data.user!.id,
+            admin_name: prof.full_name || email,
+            action: 'login',
+            entity_type: 'session',
+            entity_name: `Logged in`,
+            details: `Email: ${email}`,
+          })
+        }
+      }, 1000)
+    }
     return { data, error }
   }
 
   async function signOut() {
+    if (profile && profile.admin_level && profile.admin_level !== 'none') {
+      await supabase.from('admin_logs').insert({
+        admin_id: profile.id,
+        admin_name: profile.full_name || '',
+        action: 'logout',
+        entity_type: 'session',
+        entity_name: 'Logged out',
+      })
+    }
     await supabase.auth.signOut()
     setProfile(null)
   }
@@ -91,6 +118,31 @@ export function useAuth() {
   function isSuperAdmin(): boolean {
     if (!profile) return false
     return profile.admin_level === 'super_admin'
+  }
+
+  function isViewer(): boolean {
+    if (!profile) return false
+    return profile.admin_level === 'viewer'
+  }
+
+  // Check if admin has a specific permission (super_admin always has all)
+  function hasPermission(perm: string): boolean {
+    if (!profile) return false
+    if (profile.admin_level === 'super_admin') return true
+    if (profile.admin_level !== 'admin') return false
+    const perms: string[] = (profile as any).admin_permissions || []
+    return perms.includes(perm)
+  }
+
+  // Can write/modify (not viewer, and has permission if admin)
+  function canWrite(section?: string): boolean {
+    if (!profile) return false
+    if (profile.admin_level === 'super_admin') return true
+    if (profile.admin_level === 'viewer') return false
+    if (profile.admin_level === 'admin') {
+      return section ? hasPermission(section) : true
+    }
+    return false
   }
 
   function isExecutiveMember(): boolean {
@@ -116,6 +168,9 @@ export function useAuth() {
     signOut,
     resetPassword,
     isAdmin,
+    isViewer,
+    hasPermission,
+    canWrite,
     isSuperAdmin,
     isExecutiveMember,
     isApproved,

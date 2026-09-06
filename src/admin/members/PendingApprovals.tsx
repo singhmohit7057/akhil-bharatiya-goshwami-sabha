@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Check, X, CheckCheck } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { formatDate } from '../../lib/utils'
 
@@ -53,6 +54,8 @@ export function PendingApprovals() {
       approved_at: new Date().toISOString(),
     }).eq('id', id)
     if (error) { toast.error('Failed'); return }
+    const approved = members.find(m => m.id === id)
+    logAction('approve', 'member', approved?.full_name || id, id, `ID: ${memberId}`)
     toast.success(`${t('members.approved')} — ID: ${memberId}`)
     fetchPending()
   }
@@ -113,6 +116,8 @@ export function PendingApprovals() {
     if (!confirm(t('members.rejectConfirm'))) return
     const { error } = await supabase.rpc('delete_user_completely', { user_id: id })
     if (error) { toast.error('Failed to reject'); return }
+    const rejected = members.find(m => m.id === id)
+    logAction('reject', 'member', rejected?.full_name || id, id)
     toast.success('Registration rejected & deleted')
     fetchPending()
   }
@@ -130,7 +135,7 @@ export function PendingApprovals() {
           </h1>
         </div>
         {superAdmin && selected.size > 0 && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={handleApproveSelected}
               disabled={approvingSelected || rejectingSelected}

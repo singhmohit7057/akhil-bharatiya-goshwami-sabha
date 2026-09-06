@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { ImagePlus, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { DateMaskInput } from '../../components/ui/DateMaskInput'
 import { TimeMaskInput } from '../../components/ui/TimeMaskInput'
 
@@ -89,6 +90,7 @@ export function EditEvent() {
 
     const { error } = await supabase.from('events').update(updateData).eq('id', eventUUID || id!)
     if (error) { toast.error('Failed'); setSaving(false); return }
+    logAction('update', 'event', form.title_en, eventUUID || id!)
     toast.success('Event updated')
     navigate('/admin/yearly-planner')
   }

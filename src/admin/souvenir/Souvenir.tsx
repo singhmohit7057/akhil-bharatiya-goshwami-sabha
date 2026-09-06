@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, X, BookOpen, Upload, FileText, Check, Edit2, Pencil } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
 
@@ -91,10 +92,12 @@ export function Souvenir() {
     if (editingId) {
       const { error } = await supabase.from('souvenirs').update(payload).eq('id', editingId)
       if (error) { toast.error('Failed to update'); setSaving(false); return }
+      logAction('update', 'souvenir', form.title, editingId!)
       toast.success('Souvenir updated')
     } else {
       const { error } = await supabase.from('souvenirs').insert({ ...payload, pdf_url: '', created_by: user?.id })
       if (error) { toast.error('Failed to save'); setSaving(false); return }
+      logAction('create', 'souvenir', form.title)
       toast.success('Souvenir created')
     }
     resetForm(); setSaving(false); fetchItems()
@@ -110,6 +113,7 @@ export function Souvenir() {
       if (uploadError) { toast.error('Failed to upload PDF'); return }
       const { data: pdfUrl } = supabase.storage.from('souvenirs').getPublicUrl(pdfPath)
       await supabase.from('souvenirs').update({ pdf_url: pdfUrl.publicUrl }).eq('id', item.id)
+      logAction('upload', 'souvenir-pdf', item.title, item.id)
       toast.success('PDF uploaded')
       fetchItems()
       if (selectedSouvenir?.id === item.id) setSelectedSouvenir({ ...item, pdf_url: pdfUrl.publicUrl })
@@ -127,6 +131,7 @@ export function Souvenir() {
       if (uploadError) { console.error('Cover upload error:', uploadError); toast.error('Failed to upload cover: ' + uploadError.message); return }
       const { data: coverUrl } = supabase.storage.from('souvenirs').getPublicUrl(coverPath)
       await supabase.from('souvenirs').update({ cover_url: coverUrl.publicUrl }).eq('id', item.id)
+      logAction('upload', 'souvenir-cover', item.title, item.id)
       toast.success('Cover uploaded')
       fetchItems()
     }
@@ -135,6 +140,7 @@ export function Souvenir() {
   async function handleDelete(item: SouvenirItem) {
     if (!confirm(`Delete "${item.title}"?`)) return
     await supabase.from('souvenirs').delete().eq('id', item.id)
+    logAction('delete', 'souvenir', item.title, item.id)
     toast.success('Deleted')
     if (selectedSouvenir?.id === item.id) { setSelectedSouvenir(null); setSponsors([]) }
     fetchItems()
@@ -184,10 +190,10 @@ export function Souvenir() {
     let error
     if (editingSponsorId) {
       ({ error } = await supabase.from('souvenir_sponsors').update(payload).eq('id', editingSponsorId))
-      if (!error) toast.success('Sponsor updated')
+      if (!error) { logAction('update', 'sponsor', sponsorForm.sponsor_name, editingSponsorId!); toast.success('Sponsor updated') }
     } else {
       ({ error } = await supabase.from('souvenir_sponsors').insert({ ...payload, souvenir_id: selectedSouvenir.id }))
-      if (!error) toast.success('Sponsor added')
+      if (!error) { logAction('create', 'sponsor', sponsorForm.sponsor_name); toast.success('Sponsor added') }
     }
     if (error) { toast.error('Failed'); setSavingSponsor(false); return }
     resetSponsorForm(); setSavingSponsor(false); openSponsors(selectedSouvenir); fetchItems()
@@ -200,7 +206,9 @@ export function Souvenir() {
 
   async function deleteSponsor(id: string) {
     if (!confirm('Remove this sponsor?')) return
+    const sponsor = sponsors.find((s) => s.id === id)
     await supabase.from('souvenir_sponsors').delete().eq('id', id)
+    logAction('delete', 'sponsor', sponsor?.sponsor_name || id, id)
     toast.success('Removed')
     if (selectedSouvenir) openSponsors(selectedSouvenir); fetchItems()
   }
@@ -232,7 +240,7 @@ export function Souvenir() {
             <button onClick={resetForm}><X className="w-4 h-4 text-text-secondary" /></button>
           </div>
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Title *</label>
                 <input type="text" required placeholder="e.g. Annual Meet 2026" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} />

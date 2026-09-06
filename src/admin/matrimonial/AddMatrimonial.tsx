@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { User, Users } from 'lucide-react'
+import { MemberSelect } from '../../components/ui/MemberSelect'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { DateInput } from '../../components/ui/DateInput'
-import { getRoleLabel } from '../../lib/utils'
 import type { Profile, FamilyMember } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
 
@@ -95,6 +96,7 @@ export function AddMatrimonial() {
     })
 
     if (error) { toast.error('Failed to create'); setSaving(false); return }
+    logAction('create', 'matrimonial', candidateName || '')
     toast.success('Matrimonial profile created')
     navigate('/admin/matrimonial')
   }
@@ -113,12 +115,12 @@ export function AddMatrimonial() {
           {/* Step 1: Select Member */}
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">Select Member *</label>
-            <select required value={form.user_id} onChange={(e) => handleMemberSelect(e.target.value)} className={`${inputClass} bg-white`}>
-              <option value="">Choose member...</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>{m.full_name} — {getRoleLabel(m.role)} ({m.city || 'No city'})</option>
-              ))}
-            </select>
+            <MemberSelect
+              members={members.map(m => ({ id: m.id, full_name: m.full_name, role: m.role, email: (m as any).email, phone: (m as any).phone }))}
+              value={form.user_id}
+              onChange={(id) => handleMemberSelect(id)}
+              required
+            />
           </div>
 
           {selected && (

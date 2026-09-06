@@ -2,8 +2,9 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { ArrowLeft, User, Shield, Camera, Plus, Edit2, Trash2, X, Users, Eye, EyeOff, KeyRound } from 'lucide-react'
+import { ArrowLeft, User, Shield, Camera, Plus, Edit2, Trash2, X, Users, Eye, EyeOff, KeyRound, IndianRupee, Crown } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleLabel, formatDate } from '../../lib/utils'
 import { transliterateToHindi } from '../../lib/transliterate'
@@ -26,6 +27,11 @@ export function MemberDetail() {
 
   // Profile edit
   const [saving, setSaving] = useState(false)
+  const [revokeWarning, setRevokeWarning] = useState<{ payments: number; latest: string; amount: number; validTill: string | null } | null>(null)
+  const [revokeLoading, setRevokeLoading] = useState(false)
+  const [showGrantForm, setShowGrantForm] = useState(false)
+  const [grantStartDate, setGrantStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [grantLoading, setGrantLoading] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
@@ -36,11 +42,12 @@ export function MemberDetail() {
   const [form, setForm] = useState({
     full_name: '', full_name_hi: '', phone: '', gender: '', date_of_birth: '',
     gotra: '', caste: '', address: '', village_address: '', city: '', state: '', pincode: '',
-    member_since: '',
+    member_since: '', father_name: '', mother_name: '', marital_status: '',
   })
 
   // Family members
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
+  const [memberPayments, setMemberPayments] = useState<any[]>([])
   const [showFamilyForm, setShowFamilyForm] = useState(false)
   const [editingFamily, setEditingFamily] = useState<FamilyMember | null>(null)
   const [savingFamily, setSavingFamily] = useState(false)
@@ -65,6 +72,8 @@ export function MemberDetail() {
       setMember(m)
       setSelectedRole(m.role)
       fetchFamilyMembers(m.id)
+      supabase.from('donations').select('*').eq('user_id', m.id).order('donation_date', { ascending: false })
+        .then(({ data }) => setMemberPayments(data || []))
       setForm({
         full_name: m.full_name || '',
         full_name_hi: m.full_name_hi || (m.full_name ? transliterateToHindi(m.full_name) : ''),
@@ -76,6 +85,9 @@ export function MemberDetail() {
         address: m.address || '',
         village_address: (m as any).village_address || '',
         city: m.city || '',
+        father_name: (m as any).father_name || '',
+        mother_name: (m as any).mother_name || '',
+        marital_status: (m as any).marital_status || '',
         state: m.state || '',
         pincode: m.pincode || '',
         member_since: (m as any).member_since || m.created_at?.split('T')[0] || '',
@@ -113,10 +125,14 @@ export function MemberDetail() {
       state: form.state || null,
       pincode: form.pincode || null,
       member_since: form.member_since || null,
+      father_name: form.father_name || null,
+      mother_name: form.mother_name || null,
+      marital_status: form.marital_status || null,
       role: selectedRole,
     }).eq('id', member.id)
 
     if (error) { toast.error('Failed to update profile'); setSaving(false); return }
+    logAction('update', 'member', form.full_name, member.id, `Role: ${selectedRole}`)
     toast.success('Profile updated')
     setMember({ ...member, ...form, role: selectedRole } as Profile)
     setSaving(false)
@@ -251,6 +267,49 @@ export function MemberDetail() {
         </div>
       </div>
 
+      {/* Read-only profile view for non-super-admin (viewer) */}
+      {!superAdmin && (
+        <div className="bg-white rounded-xl border border-border p-5 mb-6">
+          <h2 className="font-semibold text-text-primary mb-1">Member Details</h2>
+          {((member as any).member_since || member.created_at) && (
+            <p className="text-xs text-text-secondary mb-4">
+              Member Since: <span className="font-semibold text-text-primary">{(member as any).member_since || member.created_at?.split('T')[0]}</span>
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            {[
+              { label: 'Name (English)', value: member.full_name },
+              { label: 'Name (Hindi)', value: member.full_name_hi },
+              { label: "Father's Name", value: (member as any).father_name },
+              { label: "Mother's Name", value: (member as any).mother_name },
+              { label: 'Date of Birth', value: member.date_of_birth ? formatDate(member.date_of_birth, lang) : null },
+              { label: 'Gender', value: member.gender ? member.gender.charAt(0).toUpperCase() + member.gender.slice(1) : null },
+              { label: 'Caste', value: (member as any).caste },
+              { label: 'Gotra', value: member.gotra },
+              { label: 'Phone', value: member.phone },
+              { label: 'Email', value: member.email },
+              { label: 'City', value: member.city },
+              { label: 'Marital Status', value: (member as any).marital_status ? (member as any).marital_status.charAt(0).toUpperCase() + (member as any).marital_status.slice(1) : null },
+            ].map((f) => (
+              <div key={f.label}>
+                <p className="text-xs text-text-secondary mb-0.5">{f.label}</p>
+                <p className={`font-medium ${f.value ? 'text-text-primary' : 'text-text-secondary'}`}>{f.value || '—'}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-text-secondary mb-0.5">Local Address</p>
+              <p className={`font-medium ${member.address ? 'text-text-primary' : 'text-text-secondary'}`}>{member.address || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary mb-0.5">Village Address</p>
+              <p className={`font-medium ${(member as any).village_address ? 'text-text-primary' : 'text-text-secondary'}`}>{(member as any).village_address || '—'}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Profile Form */}
       {superAdmin && (
         <div className="bg-white rounded-xl border border-border p-6 mb-6">
@@ -277,6 +336,17 @@ export function MemberDetail() {
                   hiManuallyEdited.current = true
                   updateField('full_name_hi', e.target.value)
                 }} className={inputClass} />
+              </div>
+            </div>
+            {/* Row 1b: Father | Mother */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Father's Name</label>
+                <input type="text" value={form.father_name} onChange={(e) => updateField('father_name', e.target.value)} placeholder="Father's full name" className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Mother's Name</label>
+                <input type="text" value={form.mother_name} onChange={(e) => updateField('mother_name', e.target.value)} placeholder="Mother's full name" className={inputClass} />
               </div>
             </div>
             {/* Row 2: DOB | Gender */}
@@ -319,10 +389,22 @@ export function MemberDetail() {
                 <input type="text" value={form.gotra} onChange={(e) => updateField('gotra', e.target.value)} className={inputClass} />
               </div>
             </div>
-            {/* Row 5: City */}
-            <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">City <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
-              <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
+            {/* Row 5: City | Marital Status */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">City <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+                <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Marital Status</label>
+                <select value={form.marital_status} onChange={(e) => updateField('marital_status', e.target.value)} className={`${inputClass} bg-white`}>
+                  <option value="">Select</option>
+                  <option value="unmarried">Unmarried</option>
+                  <option value="married">Married</option>
+                  <option value="divorced">Divorced</option>
+                  <option value="widowed">Widowed</option>
+                </select>
+              </div>
             </div>
             {/* Row 6: Local Address */}
             <div>
@@ -341,6 +423,152 @@ export function MemberDetail() {
         </div>
       )}
 
+      {/* Executive Status Toggle */}
+      {superAdmin && (
+        <div className="bg-white rounded-xl border border-border p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="font-semibold text-text-primary flex items-center gap-2">
+                <Shield className="w-4 h-4 text-amber-500" /> Executive Membership
+              </h2>
+              <p className="text-xs text-text-secondary mt-0.5">
+                {member.is_executive_member
+                  ? (member as any).membership_end_date
+                    ? `Active · expires ${(member as any).membership_end_date}`
+                    : 'Active · no expiry date set'
+                  : 'Not an executive member'}
+              </p>
+            </div>
+            {member.is_executive_member && !revokeWarning && (
+              <button
+                onClick={async () => {
+                  const { data: payments } = await supabase
+                    .from('donations').select('amount, donation_date')
+                    .eq('user_id', member.id).eq('purpose', 'Executive Membership')
+                    .order('donation_date', { ascending: false })
+                  const p = (payments || []) as any[]
+                  setRevokeWarning({
+                    payments: p.length,
+                    latest: p[0]?.donation_date || '',
+                    amount: p[0]?.amount || 0,
+                    validTill: (member as any).membership_end_date || null,
+                  })
+                }}
+                className="px-3 py-1.5 text-xs font-medium bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                Revoke Executive Status
+              </button>
+            )}
+            {!member.is_executive_member && !showGrantForm && (
+              <button
+                onClick={() => setShowGrantForm(true)}
+                className="px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+              >
+                Grant Executive Status
+              </button>
+            )}
+          </div>
+
+          {/* Grant Executive Status inline form */}
+          {showGrantForm && !member.is_executive_member && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-2">
+              <p className="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                <Shield className="w-4 h-4" /> Grant Executive Membership
+              </p>
+              <p className="text-xs text-amber-700 mb-3">
+                This will activate executive status without a payment record. Used for honorary/special cases.
+              </p>
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-amber-800 mb-1">Membership Start Date</label>
+                <input type="date" value={grantStartDate} onChange={(e) => setGrantStartDate(e.target.value)}
+                  className="px-3 py-2 border border-amber-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300" />
+                {grantStartDate && (
+                  <p className="text-[11px] text-amber-700 mt-1">
+                    Valid for 1 year → expires {new Date(new Date(grantStartDate).setFullYear(new Date(grantStartDate).getFullYear() + 1)).toISOString().split('T')[0]}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  disabled={grantLoading || !grantStartDate}
+                  onClick={async () => {
+                    setGrantLoading(true)
+                    const endDate = new Date(grantStartDate)
+                    endDate.setFullYear(endDate.getFullYear() + 1)
+                    const { error } = await supabase.from('profiles').update({
+                      is_executive_member: true,
+                      membership_start_date: grantStartDate,
+                      membership_end_date: endDate.toISOString().split('T')[0],
+                    }).eq('id', member.id)
+                    if (error) { toast.error('Failed'); setGrantLoading(false); return }
+                    logAction('update', 'member', member.full_name, member.id, `Executive status granted from ${grantStartDate} (no payment)`)
+                    toast.success('Executive status granted')
+                    setMember({ ...member, is_executive_member: true })
+                    setShowGrantForm(false)
+                    setGrantLoading(false)
+                  }}
+                  className="px-4 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {grantLoading ? 'Granting...' : 'Grant Status'}
+                </button>
+                <button onClick={() => setShowGrantForm(false)} className="px-4 py-1.5 border border-border text-xs font-medium rounded-lg hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Inline revoke confirmation */}
+          {revokeWarning && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-2">
+              <div className="flex items-start gap-3 mb-3">
+                <Shield className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  {revokeWarning.payments > 0 ? (
+                    <>
+                      <p className="text-sm font-semibold text-amber-800">
+                        {member.full_name} has {revokeWarning.payments} membership payment{revokeWarning.payments > 1 ? 's' : ''}
+                      </p>
+                      <p className="text-xs text-amber-700 mt-1">Latest: ₹{revokeWarning.amount.toLocaleString()} on {revokeWarning.latest}</p>
+                      {revokeWarning.validTill
+                        ? <p className="text-xs text-amber-700">Membership valid till: {revokeWarning.validTill}</p>
+                        : <p className="text-xs text-amber-700">No expiry date set on this membership</p>
+                      }
+                      <p className="text-xs text-amber-700 mt-2">Revoking will remove executive status despite the payment record.</p>
+                    </>
+                  ) : (
+                    <p className="text-sm font-semibold text-amber-800">No payment records found. Safe to revoke.</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  disabled={revokeLoading}
+                  onClick={async () => {
+                    setRevokeLoading(true)
+                    const { error } = await supabase.from('profiles').update({
+                      is_executive_member: false, membership_start_date: null, membership_end_date: null,
+                    }).eq('id', member.id)
+                    if (error) { toast.error('Failed'); setRevokeLoading(false); return }
+                    logAction('update', 'member', member.full_name, member.id, 'Executive status revoked')
+                    toast.success('Executive status revoked')
+                    setMember({ ...member, is_executive_member: false })
+                    setRevokeWarning(null)
+                    setRevokeLoading(false)
+                  }}
+                  className="px-4 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {revokeLoading ? 'Revoking...' : 'Yes, Revoke'}
+                </button>
+                <button onClick={() => setRevokeWarning(null)} className="px-4 py-1.5 border border-border text-xs font-medium rounded-lg hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Reset Password */}
       {superAdmin && (
         <div className="bg-white rounded-xl border border-border p-6 mb-6">
@@ -356,7 +584,7 @@ export function MemberDetail() {
             toast.success('Password updated successfully')
             setNewPassword('')
             setSavingPassword(false)
-          }} className="flex gap-3 items-end">
+          }} className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
             <div className="flex-1">
               <label className="block text-xs font-medium text-text-primary mb-1">New Password</label>
               <div className="relative">
@@ -384,7 +612,7 @@ export function MemberDetail() {
 
 
       {/* Family Members */}
-      <div className="bg-white rounded-xl border border-border p-6">
+      <div className="bg-white rounded-xl border border-border p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-text-primary flex items-center gap-2">
             <Users className="w-4 h-4" /> Family Members
@@ -479,6 +707,42 @@ export function MemberDetail() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Payment History */}
+      <div className="bg-white rounded-xl border border-border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-text-primary flex items-center gap-2">
+            <IndianRupee className="w-4 h-4 text-primary" /> Payment History
+          </h2>
+          <span className="text-xs text-text-secondary">{memberPayments.length} record{memberPayments.length !== 1 ? 's' : ''}</span>
+        </div>
+        {memberPayments.length === 0 ? (
+          <p className="text-sm text-text-secondary text-center py-4">No payments recorded.</p>
+        ) : (
+          <div className="space-y-2">
+            {memberPayments.map((p: any) => (
+              <div key={p.id} className="flex items-center gap-3 p-3 bg-surface rounded-lg">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${p.purpose === 'Executive Membership' ? 'bg-amber-50' : 'bg-green-50'}`}>
+                  {p.purpose === 'Executive Membership'
+                    ? <Crown className="w-4 h-4 text-amber-500" />
+                    : <IndianRupee className="w-4 h-4 text-green-600" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-primary">{p.purpose || 'General Donation'}</p>
+                  <p className="text-xs text-text-secondary">{formatDate(p.donation_date, lang)} {p.payment_method ? `· ${p.payment_method}` : ''}</p>
+                </div>
+                <p className={`text-sm font-semibold shrink-0 ${p.purpose === 'Executive Membership' ? 'text-amber-600' : 'text-green-600'}`}>
+                  ₹{Number(p.amount).toLocaleString()}
+                </p>
+              </div>
+            ))}
+            <div className="flex justify-between pt-2 border-t border-border text-xs text-text-secondary">
+              <span>Total</span>
+              <span className="font-semibold text-text-primary">₹{memberPayments.reduce((s, p) => s + Number(p.amount), 0).toLocaleString()}</span>
+            </div>
           </div>
         )}
       </div>

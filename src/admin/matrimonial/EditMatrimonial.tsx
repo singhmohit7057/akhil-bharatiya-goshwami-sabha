@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Upload, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { DateInput } from '../../components/ui/DateInput'
 import { Spinner } from '../../components/ui/Spinner'
 
@@ -85,6 +86,7 @@ export function EditMatrimonial() {
       preferences_en: form.preferences_en || null,
     }).eq('id', realId!)
     if (error) { toast.error('Failed to update'); setSaving(false); return }
+    logAction('update', 'matrimonial', form.candidate_name, realId!)
     toast.success('Profile updated')
     setSaving(false)
     navigate('/admin/matrimonial')
@@ -107,6 +109,7 @@ export function EditMatrimonial() {
     const { data: updated } = await supabase.from('matrimonial_photos').select('*').eq('matrimonial_id', realId).order('created_at')
     setPhotos((updated as Photo[]) || [])
     setUploading(false)
+    logAction('upload', 'matrimonial-photo', form.candidate_name, realId!)
     toast.success('Photos uploaded')
   }
 
@@ -114,6 +117,7 @@ export function EditMatrimonial() {
     if (!confirm('Delete this photo?')) return
     await supabase.from('matrimonial_photos').delete().eq('id', photoId)
     setPhotos(photos.filter((p) => p.id !== photoId))
+    logAction('delete', 'matrimonial-photo', form.candidate_name, photoId)
     toast.success('Photo deleted')
   }
 

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Globe, GlobeOff, Plus, Trash2, X, Upload, Image } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import type { BusinessListing } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
 
@@ -133,6 +134,7 @@ export function EditBusiness() {
       await supabase.from('business_details').insert(detailPayload)
     }
 
+    logAction('update', 'business', form.business_name, id!)
     toast.success('Business updated')
     navigate('/admin/business')
   }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { IndianRupee, Crown, Search, Plus, X, Edit2, Trash2, BookOpen } from 'lucide-react'
+import { IndianRupee, Crown, Search, Plus, X, Edit2, Trash2, BookOpen, FileDown } from 'lucide-react'
+import { generatePaymentReceiptPdf, generateSouvenirReceiptPdf } from '../../lib/receiptPdf'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
@@ -9,7 +10,7 @@ import type { Donation, Profile } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
 
 interface PaymentWithProfile extends Donation {
-  profiles: Pick<Profile, 'full_name' | 'email'>
+  profiles: Pick<Profile, 'full_name' | 'email'> & { member_id?: string }
 }
 
 const MEMBERSHIP_FEE = 1100
@@ -18,6 +19,7 @@ export function PaymentHistory() {
   const { user, isSuperAdmin } = useAuth()
   const superAdmin = isSuperAdmin()
   const [payments, setPayments] = useState<PaymentWithProfile[]>([])
+  const [souvenirPayments, setSouvenirPayments] = useState<any[]>([])
   const [members, setMembers] = useState<Pick<Profile, 'id' | 'full_name'>[]>([])
   const [loading, setLoading] = useState(true)
   const [souvenirCollected, setSouvenirCollected] = useState(0)
@@ -38,14 +40,15 @@ export function PaymentHistory() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email)').order('donation_date', { ascending: false }),
+      supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id)').order('donation_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name').eq('account_status', 'active').order('full_name'),
-      supabase.from('souvenir_sponsors').select('amount').eq('is_paid', true),
+      supabase.from('souvenir_sponsors').select('*, souvenirs(title, event_name, year)').eq('is_paid', true).order('created_at', { ascending: false }),
     ]).then(([payRes, memRes, souvenirRes]) => {
       setPayments((payRes.data as PaymentWithProfile[]) || [])
       setMembers(memRes.data || [])
-      const souvenirTotal = (souvenirRes.data || []).reduce((sum: number, s: any) => sum + Number(s.amount), 0)
-      setSouvenirCollected(souvenirTotal)
+      const sData = (souvenirRes.data || []) as any[]
+      setSouvenirPayments(sData)
+      setSouvenirCollected(sData.reduce((sum, s) => sum + Number(s.amount), 0))
       setLoading(false)
     })
   }, [])
@@ -57,11 +60,42 @@ export function PaymentHistory() {
     setEditingId(null)
   }
 
+  function downloadSouvenirReceipt(s: any) {
+    generateSouvenirReceiptPdf({
+      id: s.id,
+      amount: s.amount,
+      date: s.created_at ? s.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+      sponsorName: s.sponsor_name || '',
+      companyName: s.company_name || undefined,
+      phone: s.phone || undefined,
+      eventTitle: s.souvenirs?.title || undefined,
+      eventName: s.souvenirs?.event_name || undefined,
+      eventYear: s.souvenirs?.year || undefined,
+      adSize: s.ad_size || undefined,
+      paymentMode: s.payment_mode || undefined,
+      remark: s.notes || undefined,
+    })
+  }
+
+  function downloadReceipt(p: PaymentWithProfile) {
+    generatePaymentReceiptPdf({
+      id: p.id,
+      amount: p.amount,
+      donation_date: p.donation_date,
+      purpose: p.purpose,
+      payment_method: p.payment_method,
+      transaction_id: p.transaction_id,
+      memberName: p.profiles?.full_name || '',
+      memberId: p.profiles?.member_id || undefined,
+      memberEmail: p.profiles?.email || undefined,
+    })
+  }
+
   async function handleDelete(id: string) {
     if (!confirm('Delete this payment record?')) return
     await supabase.from('donations').delete().eq('id', id)
     toast.success('Payment deleted')
-    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email)').order('donation_date', { ascending: false })
+    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id)').order('donation_date', { ascending: false })
     if (data) setPayments(data as PaymentWithProfile[])
   }
 
@@ -99,17 +133,27 @@ export function PaymentHistory() {
 
     resetForm()
     setSaving(false)
-    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email)').order('donation_date', { ascending: false })
+    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id)').order('donation_date', { ascending: false })
     if (data) setPayments(data as PaymentWithProfile[])
   }
 
-  const filtered = payments.filter((p) => {
+  const filteredDonations = typeFilter === 'souvenir' ? [] : payments.filter((p) => {
     const matchSearch = !search || p.profiles?.full_name?.toLowerCase().includes(search.toLowerCase())
-    const matchType = !typeFilter || (typeFilter === 'membership' ? p.purpose === 'Executive Membership' : p.purpose !== 'Executive Membership')
+    const matchType = !typeFilter
+      ? true
+      : typeFilter === 'membership'
+        ? p.purpose === 'Executive Membership'
+        : p.purpose !== 'Executive Membership'
     return matchSearch && matchType
   })
 
-  const totalAmount = filtered.reduce((sum, d) => sum + Number(d.amount), 0)
+  const filteredSouvenirs = typeFilter === 'donation' || typeFilter === 'membership' ? [] :
+    souvenirPayments.filter((s) =>
+      !search || s.sponsor_name?.toLowerCase().includes(search.toLowerCase()) || s.company_name?.toLowerCase().includes(search.toLowerCase())
+    )
+
+  const filtered = filteredDonations
+  const totalAmount = [...filteredDonations, ...filteredSouvenirs].reduce((sum, d) => sum + Number(d.amount), 0)
   const membershipTotal = payments.filter((p) => p.purpose === 'Executive Membership').reduce((sum, p) => sum + Number(p.amount), 0)
   const donationTotal = payments.filter((p) => p.purpose !== 'Executive Membership').reduce((sum, p) => sum + Number(p.amount), 0)
 
@@ -172,7 +216,7 @@ export function PaymentHistory() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {paymentType === 'donation' ? (
                 <div>
                   <label className="block text-xs font-medium text-text-primary mb-1">Amount (₹) *</label>
@@ -197,7 +241,7 @@ export function PaymentHistory() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-text-primary mb-1">Payment Method</label>
                 <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className={`${inputClass} bg-white`}>
@@ -268,62 +312,141 @@ export function PaymentHistory() {
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
           className="px-4 py-2 border border-border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">All Payments</option>
-          <option value="donation">Donations Only</option>
-          <option value="membership">Membership Only</option>
+          <option value="donation">Donation</option>
+          <option value="membership">Membership</option>
+          <option value="souvenir">Souvenir</option>
         </select>
       </div>
 
       {/* Table */}
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && filteredSouvenirs.length === 0 ? (
         <div className="bg-white rounded-xl border border-border p-8 text-center text-text-secondary">No payments found.</div>
       ) : (
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-gray-50 text-left">
-                  <th className="px-4 py-3 font-medium text-text-secondary">Member</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Type</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Payment</th>
-                  {superAdmin && <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => (
-                  <tr key={p.id} className="border-b border-border/50 hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-text-primary">{p.profiles?.full_name}</td>
-                    <td className="px-4 py-3 font-semibold text-text-primary">&#8377;{Number(p.amount).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-text-secondary">{formatDate(p.donation_date, 'en')}</td>
-                    <td className="px-4 py-3">
-                      {p.purpose === 'Executive Membership' ? (
-                        <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
-                          <Crown className="w-3 h-3" /> Membership
-                        </span>
-                      ) : (
-                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{p.purpose || 'Donation'}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-text-secondary">{p.payment_method || '—'}</td>
-                    {superAdmin && (
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <a href={`/admin/payments/edit/${p.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
-                            <Edit2 className="w-3.5 h-3.5" /> Edit
-                          </a>
-                          <button onClick={() => handleDelete(p.id)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-red-500">
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-2">
+            {filtered.map((p) => (
+              <div key={p.id} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-text-primary text-sm truncate">{p.profiles?.full_name}</p>
+                  <p className="text-xs text-text-secondary">{formatDate(p.donation_date, 'en')}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-semibold text-sm text-text-primary">₹{Number(p.amount).toLocaleString()}</p>
+                  {p.purpose === 'Executive Membership' ? (
+                    <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-full">Membership</span>
+                  ) : (
+                    <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Donation</span>
+                  )}
+                </div>
+                {superAdmin && (
+                  <div className="flex gap-2 shrink-0">
+                    <a href={`/admin/payments/edit/${p.id}`} className="text-text-secondary hover:text-primary"><Edit2 className="w-4 h-4" /></a>
+                    <button onClick={() => handleDelete(p.id)} className="text-text-secondary hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                )}
+              </div>
+            ))}
+            {filteredSouvenirs.map((s: any) => (
+              <div key={`sov-${s.id}`} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-text-primary text-sm truncate">{s.sponsor_name}</p>
+                  <p className="text-xs text-text-secondary">{s.created_at ? formatDate(s.created_at.split('T')[0], 'en') : '—'}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-semibold text-sm text-text-primary">₹{Number(s.amount).toLocaleString()}</p>
+                  <span className="text-[10px] bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded-full">Souvenir</span>
+                </div>
+                {superAdmin && (
+                  <button onClick={() => downloadSouvenirReceipt(s)} className="shrink-0 text-text-secondary hover:text-emerald-600">
+                    <FileDown className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50 text-left">
+                    <th className="px-4 py-3 font-medium text-text-secondary">Member</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Type</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Payment</th>
+                    {superAdmin && <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((p) => (
+                    <tr key={p.id} className="border-b border-border/50 hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-text-primary">{p.profiles?.full_name}</td>
+                      <td className="px-4 py-3 font-semibold text-text-primary">&#8377;{Number(p.amount).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-text-secondary">{formatDate(p.donation_date, 'en')}</td>
+                      <td className="px-4 py-3">
+                        {p.purpose === 'Souvenir Ad' ? (
+                          <span className="text-xs bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
+                            <BookOpen className="w-3 h-3" /> Souvenir
+                          </span>
+                        ) : p.purpose === 'Executive Membership' ? (
+                          <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
+                            <Crown className="w-3 h-3" /> Membership
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Donation</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-text-secondary">{p.payment_method || '—'}</td>
+                      {superAdmin && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => downloadReceipt(p)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-emerald-600">
+                              <FileDown className="w-3.5 h-3.5" /> Receipt
+                            </button>
+                            <a href={`/admin/payments/edit/${p.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
+                              <Edit2 className="w-3.5 h-3.5" /> Edit
+                            </a>
+                            <button onClick={() => handleDelete(p.id)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-red-500">
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                  {/* Souvenir rows */}
+                  {filteredSouvenirs.map((s: any) => (
+                    <tr key={`sov-${s.id}`} className="border-b border-border/50 hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-text-primary">
+                        {s.sponsor_name}
+                        {s.company_name && <p className="text-[10px] text-text-secondary">{s.company_name}</p>}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-text-primary">₹{Number(s.amount).toLocaleString()}</td>
+                      <td className="px-4 py-3 text-text-secondary">{s.created_at ? formatDate(s.created_at.split('T')[0], 'en') : '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
+                          <BookOpen className="w-3 h-3" /> Souvenir
+                        </span>
+                        {s.souvenirs?.title && <p className="text-[10px] text-text-secondary mt-0.5">{s.souvenirs.title}</p>}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-text-secondary">{s.payment_mode || '—'}</td>
+                      {superAdmin && (
+                        <td className="px-4 py-3">
+                          <button onClick={() => downloadSouvenirReceipt(s)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-emerald-600">
+                            <FileDown className="w-3.5 h-3.5" /> Receipt
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

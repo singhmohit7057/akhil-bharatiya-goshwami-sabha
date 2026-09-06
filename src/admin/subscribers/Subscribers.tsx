@@ -73,52 +73,78 @@ export function Subscribers() {
           {tab === 'active' ? 'No active subscribers yet.' : 'No unsubscribed users.'}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-gray-50 text-left">
-                  <th className="px-4 py-3 font-medium text-text-secondary">#</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Email</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Status</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Subscribed On</th>
-                  <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((s, i) => (
-                  <tr key={s.id} className="border-b border-border/50 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-text-secondary">{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {s.is_active ? <Mail className="w-4 h-4 text-green-500" /> : <MailX className="w-4 h-4 text-red-400" />}
-                        <span className="font-medium text-text-primary">{s.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${s.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
-                        {s.is_active ? 'Active' : 'Unsubscribed'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-text-secondary text-xs">{formatDate(s.created_at, 'en')}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button onClick={() => handleToggle(s.id, s.is_active)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-primary">
-                          {s.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                          <span className="text-[9px]">{s.is_active ? 'Unsub' : 'Re-sub'}</span>
-                        </button>
-                        <button onClick={() => handleDelete(s.id)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-red-500">
-                          <Trash2 className="w-4 h-4" />
-                          <span className="text-[9px]">Delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-2">
+            {list.map((s) => (
+              <div key={s.id} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
+                <div className="shrink-0">
+                  {s.is_active ? <Mail className="w-4 h-4 text-green-500" /> : <MailX className="w-4 h-4 text-red-400" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-text-primary text-sm truncate">{s.email}</p>
+                  <p className="text-xs text-text-secondary">{formatDate(s.created_at, 'en')}</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => handleToggle(s.id, s.is_active)} className="text-text-secondary hover:text-primary">
+                    {s.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                  </button>
+                  <button onClick={() => handleDelete(s.id)} className="text-text-secondary hover:text-red-500">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50 text-left">
+                    <th className="px-4 py-3 font-medium text-text-secondary">#</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Email</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Status</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Subscribed On</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((s, i) => (
+                    <tr key={s.id} className="border-b border-border/50 hover:bg-gray-50">
+                      <td className="px-4 py-3 text-text-secondary">{i + 1}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {s.is_active ? <Mail className="w-4 h-4 text-green-500" /> : <MailX className="w-4 h-4 text-red-400" />}
+                          <span className="font-medium text-text-primary">{s.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${s.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                          {s.is_active ? 'Active' : 'Unsubscribed'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary text-xs">{formatDate(s.created_at, 'en')}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button onClick={() => handleToggle(s.id, s.is_active)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-primary">
+                            {s.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                            <span className="text-[9px]">{s.is_active ? 'Unsub' : 'Re-sub'}</span>
+                          </button>
+                          <button onClick={() => handleDelete(s.id)} className="flex flex-col items-center gap-0.5 text-text-secondary hover:text-red-500">
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-[9px]">Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

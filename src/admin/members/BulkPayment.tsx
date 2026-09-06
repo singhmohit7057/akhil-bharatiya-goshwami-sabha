@@ -549,7 +549,7 @@ export function BulkPayment() {
                   {loading ? 'Importing...' : 'Import All Payments'}
                 </button>
               </div>
-              <div className="max-h-48 overflow-y-auto rounded-lg border border-border text-xs">
+              <div className="max-h-48 overflow-y-auto overflow-x-auto rounded-lg border border-border text-xs">
                 <table className="w-full">
                   <thead className="bg-surface sticky top-0">
                     <tr>
@@ -663,7 +663,7 @@ export function BulkPayment() {
                   {donLoading ? 'Importing...' : 'Import All Donations'}
                 </button>
               </div>
-              <div className="max-h-48 overflow-y-auto rounded-lg border border-border text-xs">
+              <div className="max-h-48 overflow-y-auto overflow-x-auto rounded-lg border border-border text-xs">
                 <table className="w-full">
                   <thead className="bg-surface sticky top-0">
                     <tr>
@@ -776,7 +776,7 @@ export function BulkPayment() {
                   {expLoading ? 'Importing...' : 'Import All Expenses'}
                 </button>
               </div>
-              <div className="max-h-48 overflow-y-auto rounded-lg border border-border text-xs">
+              <div className="max-h-48 overflow-y-auto overflow-x-auto rounded-lg border border-border text-xs">
                 <table className="w-full">
                   <thead className="bg-surface sticky top-0">
                     <tr>

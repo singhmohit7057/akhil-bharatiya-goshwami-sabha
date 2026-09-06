@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Receipt } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { DateInput } from '../../components/ui/DateInput'
 
@@ -65,10 +66,10 @@ export function AddExpense() {
     let error
     if (editId) {
       ({ error } = await supabase.from('expenses').update(payload).eq('id', editId))
-      if (!error) toast.success('Expense updated')
+      if (!error) { logAction('update', 'expense', form.title, editId, `₹${form.amount}`); toast.success('Expense updated') }
     } else {
       ({ error } = await supabase.from('expenses').insert({ ...payload, recorded_by: user?.id }))
-      if (!error) toast.success('Expense recorded')
+      if (!error) { logAction('create', 'expense', form.title, undefined, `₹${form.amount} — ${form.category}`); toast.success('Expense recorded') }
     }
     if (error) { toast.error('Failed'); setLoading(false); return }
     navigate('/admin/expenses')

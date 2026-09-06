@@ -50,6 +50,7 @@ import { AddExpense } from './admin/members/AddExpense'
 import { ExpenseHistory } from './admin/members/ExpenseHistory'
 import { BulkPayment } from './admin/members/BulkPayment'
 import { Reports } from './admin/reports/Reports'
+import { AdminLogs } from './admin/logs/AdminLogs'
 import { AllMembers } from './admin/members/AllMembers'
 import { AddMember } from './admin/members/AddMember'
 import { MemberDetail } from './admin/members/MemberDetail'
@@ -178,6 +179,7 @@ export default function App() {
           <Route path="expenses/edit/:id" element={<AddExpense />} />
           <Route path="payments/bulk" element={<BulkPayment />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="logs" element={<AdminLogs />} />
           <Route path="members/:id" element={<MemberDetail />} />
 
           {/* Designations */}

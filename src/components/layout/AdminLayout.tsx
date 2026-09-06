@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShieldCheck, Users, Award, Heart, Briefcase,
   CalendarRange, Gift, IndianRupee, Images, Megaphone, FileText, Mail,
-  ChevronDown, Menu, BarChart3,
+  ChevronDown, Menu, BarChart3, Eye,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { cn } from '../../lib/utils'
@@ -145,21 +145,79 @@ const sections: NavSection[] = [
       { to: '/admin/subscribers', icon: Mail, label: 'Subscribers' },
     ],
   },
+  {
+    title: 'LOGS',
+    titleColor: 'text-slate-600',
+    iconColor: 'text-slate-500',
+    hoverBg: 'hover:bg-slate-50',
+    items: [
+      { to: '/admin/logs', icon: FileText, label: 'Admin Logs' },
+    ],
+  },
 ]
+
+// Map permission key → section titles that require it
+const PERM_SECTION_MAP: Record<string, string[]> = {
+  members:     ['MEMBERS'],
+  payments:    ['PAYMENTS'],
+  events:      ['COMMUNITY'],
+  gallery:     ['MEDIA & PROMOTIONS'],
+  matrimonial: ['COMMUNITY'],
+  directory:   ['COMMUNITY'],
+  reports:     ['REPORTS', 'LOGS'],
+  community:   ['MEDIA & PROMOTIONS', 'COMMUNITY'],
+}
 
 export function AdminLayout() {
   const location = useLocation()
-  const { isSuperAdmin } = useAuth()
+  const { isSuperAdmin, isViewer, profile } = useAuth()
   const superAdmin = isSuperAdmin()
+  const viewer = isViewer()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  const filteredSections = superAdmin
-    ? sections
-    : sections.map((s) => ({
+  const filteredSections = (() => {
+    if (superAdmin) return sections
+    // Viewer: curated view — specific sections and items only
+    if (viewer) {
+      const viewerAllowed: Record<string, string[]> = {
+        '':          ['/admin'],
+        'MEMBERS':   ['/admin/members'],
+        'PAYMENTS':  ['/admin/payments', '/admin/expenses'],
+        'REPORTS':   ['/admin/reports'],
+        'COMMUNITY': ['/admin/matrimonial', '/admin/business', '/admin/yearly-planner'],
+        'MEDIA & PROMOTIONS': ['/admin/forms', '/admin/subscribers'],
+      }
+      return sections
+        .filter((s) => viewerAllowed[s.title ?? ''] !== undefined)
+        .map((s) => ({
+          ...s,
+          items: s.items.map((item) => ({
+            ...item,
+            children: item.children?.filter((c) =>
+              viewerAllowed[s.title ?? '']?.some((path) => c.to.startsWith(path)) &&
+              !c.to.includes('/add') && !c.to.includes('/pending') && !c.to.includes('/bulk')
+            ),
+          })).filter((item) =>
+            viewerAllowed[s.title ?? '']?.some((path) => item.to.startsWith(path))
+          ),
+        }))
+        .filter((s) => s.items.length > 0)
+    }
+    // Admin: show only sections they have permission for
+    const allowedTitles = new Set<string>(['DASHBOARD', ''])
+    const perms: string[] = (profile as any)?.admin_permissions || []
+    perms.forEach((p) => {
+      ;(PERM_SECTION_MAP[p] || []).forEach((t) => allowedTitles.add(t))
+    })
+    return sections
+      .filter((s) => !s.title || allowedTitles.has(s.title))
+      .map((s) => ({
         ...s,
-        items: s.items.filter((item) => item.to !== '/admin/sub-admins'),
-      })).filter((s) => s.items.length > 0)
+        items: s.items.filter((item) => item.to !== '/admin/sub-admins' && item.to !== '/admin/sub-admins/add'),
+      }))
+      .filter((s) => s.items.length > 0)
+  })()
 
   function isActive(path: string, exact?: boolean) {
     if (exact) return location.pathname === path
@@ -190,8 +248,10 @@ export function AdminLayout() {
           <p className="text-sm font-bold leading-tight text-text-primary">ABGSPB</p>
           <p className="text-[11px] text-text-secondary flex items-center gap-1.5">
             Admin Panel
-            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${superAdmin ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
-              {superAdmin ? 'Super Admin' : 'Admin'}
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+              superAdmin ? 'bg-amber-50 text-amber-600' : viewer ? 'bg-gray-100 text-gray-600' : 'bg-blue-50 text-blue-600'
+            }`}>
+              {superAdmin ? 'Super Admin' : viewer ? 'Viewer' : 'Admin'}
             </span>
           </p>
         </div>
@@ -305,14 +365,21 @@ export function AdminLayout() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 lg:ml-[260px]">
+      <div className="flex-1 lg:ml-[260px] min-w-0 overflow-x-hidden">
         {/* Mobile header */}
         <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-border sticky top-0 z-20">
           <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-lg hover:bg-gray-100">
             <Menu className="w-5 h-5 text-text-primary" />
           </button>
           <p className="text-sm font-bold text-text-primary">Admin Panel</p>
+          {viewer && <span className="ml-auto text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">View Only</span>}
         </div>
+        {/* Desktop viewer banner */}
+        {viewer && (
+          <div className="hidden lg:flex items-center gap-2 px-6 py-2 bg-gray-50 border-b border-border text-xs text-gray-600">
+            <Eye className="w-3.5 h-3.5" /> View Only Mode — you can browse but cannot add, edit or delete anything.
+          </div>
+        )}
 
         <main className="p-4 sm:p-5 lg:p-6">
           <Outlet />

@@ -8,7 +8,7 @@ import { cn } from '../../lib/utils'
 
 export function Navbar() {
   const { t } = useTranslation('common')
-  const { user, profile, signOut, isAdmin } = useAuth()
+  const { user, profile, signOut, isAdmin, isViewer } = useAuth()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -93,7 +93,7 @@ export function Navbar() {
                         <User className="w-4 h-4" />
                         {t('nav.profile')}
                       </Link>
-                      {isAdmin() && (
+                      {(isAdmin() || isViewer()) && (
                         <a
                           href="/admin"
                           target="_blank"

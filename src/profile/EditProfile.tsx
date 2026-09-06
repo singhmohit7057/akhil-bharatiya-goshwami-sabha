@@ -19,6 +19,8 @@ export function EditProfile() {
   const [form, setForm] = useState({
     full_name: '',
     full_name_hi: '',
+    father_name: '',
+    mother_name: '',
     phone: '',
     gender: '',
     date_of_birth: '',
@@ -26,6 +28,7 @@ export function EditProfile() {
     address: '',
     village_address: '',
     city: '',
+    marital_status: '',
     state: '',
     pincode: '',
     caste: '',
@@ -39,11 +42,14 @@ export function EditProfile() {
         phone: profile.phone || '',
         gender: profile.gender || '',
         date_of_birth: profile.date_of_birth || '',
+        father_name: (profile as any).father_name || '',
+        mother_name: (profile as any).mother_name || '',
         gotra: profile.gotra || '',
         address: profile.address || '',
         village_address: (profile as any).village_address || '',
         caste: (profile as any).caste || '',
         city: profile.city || '',
+        marital_status: (profile as any).marital_status || '',
         state: profile.state || '',
         pincode: profile.pincode || '',
       })
@@ -71,8 +77,11 @@ export function EditProfile() {
         date_of_birth: form.date_of_birth || null,
         gotra: form.gotra || null,
         address: form.address || null,
+        father_name: form.father_name || null,
+        mother_name: form.mother_name || null,
         village_address: form.village_address || null,
         caste: (form as any).caste || null,
+        marital_status: form.marital_status || null,
         city: form.city || null,
         state: form.state || null,
         pincode: form.pincode || null,
@@ -179,6 +188,18 @@ export function EditProfile() {
           </div>
         </div>
 
+        {/* Row 1b: Father's Name | Mother's Name */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">Father's Name</label>
+            <input type="text" value={form.father_name} onChange={(e) => updateField('father_name', e.target.value)} placeholder="Father's full name" className={inputClass} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">Mother's Name</label>
+            <input type="text" value={form.mother_name} onChange={(e) => updateField('mother_name', e.target.value)} placeholder="Mother's full name" className={inputClass} />
+          </div>
+        </div>
+
         {/* Row 2: DOB | Gender */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -220,10 +241,22 @@ export function EditProfile() {
           </div>
         </div>
 
-        {/* Row 5: City */}
-        <div>
-          <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.city')} <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
-          <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
+        {/* Row 5: City | Marital Status */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.city')} <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+            <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">Marital Status</label>
+            <select value={form.marital_status} onChange={(e) => updateField('marital_status', e.target.value)} className={`${inputClass} bg-white`}>
+              <option value="">Select</option>
+              <option value="unmarried">Unmarried</option>
+              <option value="married">Married</option>
+              <option value="divorced">Divorced</option>
+              <option value="widowed">Widowed</option>
+            </select>
+          </div>
         </div>
 
         {/* Row 6: Local Address */}

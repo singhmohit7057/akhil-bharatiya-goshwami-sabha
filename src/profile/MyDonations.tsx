@@ -4,6 +4,7 @@ import { Download, Crown, IndianRupee, Calendar } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/utils'
+import { generatePaymentReceiptPdf } from '../lib/receiptPdf'
 
 import type { Donation } from '../types'
 import { Spinner } from '../components/ui/Spinner'
@@ -19,46 +20,20 @@ interface MembershipPayment {
   valid_until: string
 }
 
-function getExpiryDate(dateStr: string): string {
-  const d = new Date(dateStr)
-  d.setFullYear(d.getFullYear() + 1)
-  return d.toISOString().split('T')[0]
+function generateReceipt(donation: Donation, profileName: string, _type: 'donation' | 'membership', memberId?: string, memberEmail?: string) {
+  generatePaymentReceiptPdf({
+    id: donation.id,
+    amount: donation.amount,
+    donation_date: donation.donation_date,
+    purpose: donation.purpose,
+    payment_method: donation.payment_method,
+    transaction_id: donation.transaction_id,
+    memberName: profileName,
+    memberId,
+    memberEmail,
+  })
 }
 
-function generateReceipt(donation: Donation, profileName: string, type: 'donation' | 'membership') {
-  const receiptContent = `
-════════════════════════════════════════════
-      AKHIL BHARATIYA GOSWAMI SABHA
-            PASCHIM BANGAL
-════════════════════════════════════════════
-
-  ${type === 'membership' ? 'MEMBERSHIP PAYMENT RECEIPT' : 'DONATION RECEIPT'}
-
-────────────────────────────────────────────
-  Receipt No    : ${donation.id.slice(0, 8).toUpperCase()}
-  Date          : ${new Date(donation.donation_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
-  Name          : ${profileName}
-────────────────────────────────────────────
-
-  Amount        : ₹${Number(donation.amount).toLocaleString('en-IN')}
-  Purpose       : ${donation.purpose || 'General Donation'}
-  Payment Mode  : ${donation.payment_method || 'N/A'}
-  Transaction ID: ${donation.transaction_id || 'N/A'}
-${type === 'membership' ? `  Valid Until   : ${new Date(getExpiryDate(donation.donation_date)).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}` : ''}
-
-════════════════════════════════════════════
-  This is a computer-generated receipt.
-  Thank you for your contribution!
-════════════════════════════════════════════
-`
-  const blob = new Blob([receiptContent], { type: 'text/plain' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `ABGSPB_${type === 'membership' ? 'Membership' : 'Donation'}_Receipt_${donation.id.slice(0, 8).toUpperCase()}.txt`
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 export function MyDonations() {
   const { t, i18n } = useTranslation('profile')
@@ -87,7 +62,7 @@ export function MyDonations() {
             donation_date: d.donation_date,
             payment_method: d.payment_method,
             transaction_id: d.transaction_id,
-            valid_until: getExpiryDate(d.donation_date),
+            valid_until: (() => { const dt = new Date(d.donation_date); dt.setFullYear(dt.getFullYear() + 1); return dt.toISOString().split('T')[0] })(),
           }))
         setDonations(general)
         setMembershipPayments(membership)
@@ -172,7 +147,7 @@ export function MyDonations() {
                   <div className="flex items-center gap-3">
                     <p className="text-sm text-text-secondary">{formatDate(d.donation_date, lang)}</p>
                     <button
-                      onClick={() => generateReceipt(d, profile?.full_name || '', 'donation')}
+                      onClick={() => generateReceipt(d, profile?.full_name || '', 'donation', profile?.member_id || undefined, profile?.email || undefined)}
                       className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" /> Receipt
@@ -232,6 +207,8 @@ export function MyDonations() {
                           { id: mp.id, user_id: profile?.id || '', amount: mp.amount, donation_date: mp.donation_date, purpose: 'Executive Membership', receipt_url: null, payment_method: mp.payment_method, transaction_id: mp.transaction_id, notes: null, recorded_by: null, created_at: mp.donation_date } as Donation,
                           profile?.full_name || '',
                           'membership',
+                          profile?.member_id || undefined,
+                          profile?.email || undefined,
                         )}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors shrink-0"
                       >

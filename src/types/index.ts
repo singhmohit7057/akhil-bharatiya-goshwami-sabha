@@ -1,6 +1,18 @@
 export type AccountStatus = 'pending_approval' | 'approved' | 'active' | 'rejected' | 'suspended'
 
-export type AdminLevel = 'none' | 'admin' | 'super_admin'
+export type AdminLevel = 'none' | 'viewer' | 'admin' | 'super_admin'
+
+// Granular permissions for 'admin' level
+export const ADMIN_PERMISSIONS = [
+  { key: 'members',    label: 'Members',           desc: 'Add, edit, approve members' },
+  { key: 'payments',   label: 'Payments',          desc: 'Add, view payments & expenses' },
+  { key: 'events',     label: 'Events',            desc: 'Add, edit, delete events' },
+  { key: 'gallery',    label: 'Gallery',           desc: 'Upload, manage gallery' },
+  { key: 'matrimonial',label: 'Matrimonial',       desc: 'Manage matrimonial profiles' },
+  { key: 'directory',  label: 'Business Directory',desc: 'Manage business listings' },
+  { key: 'reports',    label: 'Reports & Logs',    desc: 'View financial reports and logs' },
+  { key: 'community',  label: 'Community',         desc: 'Souvenir, promo, subscribers' },
+]
 
 export type MemberRole = string
 

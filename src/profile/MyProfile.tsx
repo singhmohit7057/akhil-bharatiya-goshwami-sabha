@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { User, Mail, Phone, MapPin, Calendar, Shield, Gem, UserCircle, Download, Tag } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -12,8 +12,26 @@ import { Spinner } from '../components/ui/Spinner'
 
 export function MyProfile() {
   const { t, i18n } = useTranslation('profile')
+  const cardWrapRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [mobileScale, setMobileScale] = useState(1)
+
+  useEffect(() => {
+    function calcScale() {
+      if (window.innerWidth < 640 && cardWrapRef.current) {
+        setMobileScale(Math.min(1, (cardWrapRef.current.offsetWidth - 16) / 420))
+      } else {
+        setMobileScale(1)
+      }
+    }
+    calcScale()
+    window.addEventListener('resize', calcScale)
+    return () => window.removeEventListener('resize', calcScale)
+  }, [])
+
   const lang = i18n.language
   const { profile, loading: authLoading } = useAuth()
+
   const [family, setFamily] = useState<FamilyMember[]>([])
   const [business, setBusiness] = useState<BusinessDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -91,8 +109,14 @@ export function MyProfile() {
           </button>
         </div>
 
-        <div className="flex justify-center">
-          <div id="id-card" className="w-[420px] rounded-2xl overflow-hidden shadow-xl" style={{ aspectRatio: '85.6/54' }}>
+        {/* Mobile-scale wrapper — desktop: normal, mobile: scale-to-fit */}
+        <div ref={cardWrapRef} className="flex justify-center">
+          <div ref={cardRef} id="id-card"
+            className="w-[420px] rounded-2xl overflow-hidden shadow-xl shrink-0"
+            style={{
+              aspectRatio: '85.6/54',
+              zoom: mobileScale < 1 ? mobileScale : undefined,
+            }}>
             <div className="h-full flex flex-col relative bg-white">
               {/* Saffron top band */}
               <div className="h-[56px] bg-gradient-to-r from-[#FF9933] to-[#e8702a] shrink-0 relative flex items-center">
@@ -204,12 +228,15 @@ export function MyProfile() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <InfoRow icon={User} label={t('common:labels.name')} value={profile.full_name} />
           <InfoRow icon={Calendar} label={t('common:labels.dateOfBirth')} value={profile.date_of_birth ? formatDate(profile.date_of_birth, lang) : null} />
+          <InfoRow icon={User} label="Father's Name" value={(profile as any).father_name || '—'} />
+          <InfoRow icon={User} label="Mother's Name" value={(profile as any).mother_name || '—'} />
           <InfoRow icon={UserCircle} label={t('common:labels.gender')} value={profile.gender ? t(`common:labels.${profile.gender}`) : null} />
-          <InfoRow icon={MapPin} label={t('common:labels.city')} value={profile.city} />
+          <InfoRow icon={UserCircle} label="Marital Status" value={(profile as any).marital_status ? (profile as any).marital_status.charAt(0).toUpperCase() + (profile as any).marital_status.slice(1) : '—'} />
           <InfoRow icon={Tag} label="Caste" value={(profile as any).caste || '—'} />
           <InfoRow icon={Gem} label={t('common:labels.gotra')} value={profile.gotra} />
           <InfoRow icon={Phone} label={t('common:labels.phone')} value={profile.phone} />
           <InfoRow icon={Mail} label={t('common:labels.email')} value={profile.email} />
+          <InfoRow icon={MapPin} label={t('common:labels.city')} value={profile.city} />
         </div>
         {(profile.address || (profile as any).village_address) && (
           <div className="grid grid-cols-1 gap-3 text-sm mt-3 pt-3 border-t border-border">

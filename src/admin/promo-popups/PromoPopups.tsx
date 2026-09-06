@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, X, Eye, EyeOff, Upload, Edit2, Megaphone } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { Spinner } from '../../components/ui/Spinner'
 
 interface Popup {
@@ -75,10 +76,12 @@ export function PromoPopups() {
     if (editingId) {
       const { error } = await supabase.from('promo_popups').update(payload).eq('id', editingId)
       if (error) { toast.error('Failed'); setSaving(false); return }
+      logAction('update', 'popup', form.title, editingId!)
       toast.success('Popup updated')
     } else {
       const { error } = await supabase.from('promo_popups').insert(payload)
       if (error) { toast.error('Failed'); setSaving(false); return }
+      logAction('create', 'popup', form.title)
       toast.success('Popup created')
     }
     resetForm()
@@ -91,13 +94,16 @@ export function PromoPopups() {
       await supabase.from('promo_popups').update({ is_active: false }).neq('id', p.id)
     }
     await supabase.from('promo_popups').update({ is_active: !p.is_active }).eq('id', p.id)
+    logAction('update', 'popup', p.title, p.id)
     toast.success(p.is_active ? 'Popup deactivated' : 'Popup activated')
     fetchPopups()
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this popup?')) return
+    const popup = popups.find((pp) => pp.id === id)
     await supabase.from('promo_popups').delete().eq('id', id)
+    logAction('delete', 'popup', popup?.title || id, id)
     toast.success('Deleted')
     fetchPopups()
   }

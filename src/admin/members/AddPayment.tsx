@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { IndianRupee, Crown, User } from 'lucide-react'
+import { MemberSelect } from '../../components/ui/MemberSelect'
+import { logAction } from '../../lib/adminLog'
 import { DateInput } from '../../components/ui/DateInput'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 
-import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
 
@@ -94,6 +95,7 @@ export function AddPayment() {
           membership_end_date: endDate.toISOString().split('T')[0],
         }).eq('id', form.user_id)
       }
+      logAction('update', 'payment', `₹${amount} — ${purpose}`, editId || undefined)
       toast.success('Payment updated')
       navigate('/admin/payments')
       return
@@ -111,6 +113,7 @@ export function AddPayment() {
         membership_start_date: form.membership_start_date,
         membership_end_date: endDate.toISOString().split('T')[0],
       }).eq('id', form.user_id)
+      logAction('create', 'payment', `₹${amount} Membership`, undefined, `Member: ${form.user_id}`)
       toast.success('Membership payment recorded & executive status activated')
     } else {
       toast.success('Donation recorded')
@@ -158,10 +161,12 @@ export function AddPayment() {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">Select Member *</label>
-            <select required value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} className={`${inputClass} bg-white`}>
-              <option value="">Choose member...</option>
-              {members.map((m) => <option key={m.id} value={m.id}>{m.full_name} — {getRoleLabel(m.role)}</option>)}
-            </select>
+            <MemberSelect
+              members={members.map(m => ({ id: m.id, full_name: m.full_name, role: m.role, email: (m as any).email, phone: (m as any).phone }))}
+              value={form.user_id}
+              onChange={(id) => setForm({ ...form, user_id: id })}
+              required
+            />
           </div>
 
           {selected && (
@@ -183,17 +188,17 @@ export function AddPayment() {
             </div>
           )}
 
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="w-36 shrink-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Amount (₹) *</label>
               <input type="number" required min="1" step="0.01" placeholder="e.g. 1100" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={inputClass} />
             </div>
-            <div className="flex-1 min-w-0">
+            <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Payment Date *</label>
               <DateInput value={form.donation_date} onChange={(v) => setForm({ ...form, donation_date: v })} required />
             </div>
             {paymentType === 'membership' && (
-              <div className="flex-1 min-w-0">
+              <div className="sm:col-span-2 sm:w-1/2">
                 <label className="block text-xs font-medium text-text-primary mb-1">Membership Start Date *</label>
                 <DateInput value={form.membership_start_date} onChange={(v) => setForm({ ...form, membership_start_date: v })} required />
               </div>
@@ -207,7 +212,7 @@ export function AddPayment() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Payment Method</label>
               <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className={`${inputClass} bg-white`}>

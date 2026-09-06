@@ -155,8 +155,34 @@ export function Designations() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-border overflow-hidden">
+      {/* Mobile card list */}
+      <div className="sm:hidden space-y-2">
+        {loading ? (
+          <div className="bg-white rounded-xl border border-border p-6 text-center text-text-secondary text-sm">Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-xl border border-border p-6 text-center text-text-secondary text-sm">No designations found</div>
+        ) : filtered.map((d) => (
+          <div key={d.id} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-text-primary text-sm truncate">{d.name_en}</p>
+              <p className="text-xs text-text-secondary truncate">{d.name_hi || '—'}</p>
+              <p className="text-xs text-text-secondary truncate mt-0.5">{d.description || '—'}</p>
+            </div>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${d.is_admin_role ? 'bg-orange-50 text-orange-600' : 'bg-gray-100 text-gray-600'}`}>
+              {d.is_admin_role ? 'Governing' : 'Member'}
+            </span>
+            {superAdmin && (
+              <div className="flex gap-2 shrink-0">
+                <button onClick={() => startEdit(d)} className="text-primary hover:text-primary-dark"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(d.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

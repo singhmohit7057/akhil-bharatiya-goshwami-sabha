@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { ImagePlus, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { DateMaskInput } from '../../components/ui/DateMaskInput'
 import { TimeMaskInput } from '../../components/ui/TimeMaskInput'
@@ -68,6 +69,7 @@ export function AddEvent() {
       created_by: user?.id,
     })
     if (error) { toast.error('Failed to create event'); setLoading(false); return }
+    logAction('create', 'event', form.title_en)
     toast.success('Event created')
     navigate('/admin/yearly-planner')
   }

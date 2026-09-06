@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { User, Globe, GlobeOff, Plus, Trash2, X, Upload, Image } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { logAction } from '../../lib/adminLog'
 import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
@@ -124,6 +125,7 @@ export function AddBusiness() {
       await supabase.from('business_details').insert(detailPayload)
     }
 
+    logAction('create', 'business', form.business_name)
     toast.success('Business added')
     navigate('/admin/business')
   }
