@@ -2,13 +2,14 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { ArrowLeft, User, Shield, Camera, Plus, Edit2, Trash2, X, Users, Eye, EyeOff, KeyRound, IndianRupee, Crown } from 'lucide-react'
+import { ArrowLeft, User, Shield, Camera, Plus, Edit2, Trash2, X, Users, Eye, EyeOff, KeyRound, IndianRupee, Crown, Download, Briefcase } from 'lucide-react'
+import { generateMemberProfilePdf } from '../../lib/receiptPdf'
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleLabel, formatDate } from '../../lib/utils'
 import { transliterateToHindi } from '../../lib/transliterate'
-import type { Profile, MemberRole, FamilyMember, FamilyRelation, Gender } from '../../types'
+import type { Profile, MemberRole, FamilyMember, FamilyRelation, Gender, BusinessDetail } from '../../types'
 import { FAMILY_RELATIONS } from '../../types'
 import { useDesignations } from '../../hooks/useDesignations'
 import { Spinner } from '../../components/ui/Spinner'
@@ -47,6 +48,7 @@ export function MemberDetail() {
 
   // Family members
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
+  const [businessDetail, setBusinessDetail] = useState<BusinessDetail | null>(null)
   const [memberPayments, setMemberPayments] = useState<any[]>([])
   const [showFamilyForm, setShowFamilyForm] = useState(false)
   const [editingFamily, setEditingFamily] = useState<FamilyMember | null>(null)
@@ -74,6 +76,8 @@ export function MemberDetail() {
       fetchFamilyMembers(m.id)
       supabase.from('donations').select('*').eq('user_id', m.id).order('donation_date', { ascending: false })
         .then(({ data }) => setMemberPayments(data || []))
+      supabase.from('business_details').select('*').eq('user_id', m.id).maybeSingle()
+        .then(({ data }) => setBusinessDetail(data as BusinessDetail | null))
       setForm({
         full_name: m.full_name || '',
         full_name_hi: m.full_name_hi || (m.full_name ? transliterateToHindi(m.full_name) : ''),
@@ -228,7 +232,8 @@ export function MemberDetail() {
 
       {/* Header */}
       <div className="bg-white rounded-xl border border-border p-6 mb-6">
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-center gap-4">
           <div
             onClick={() => superAdmin && fileInputRef.current?.click()}
             className={`relative w-16 h-16 rounded-full ${superAdmin ? 'cursor-pointer group' : ''}`}
@@ -264,6 +269,51 @@ export function MemberDetail() {
               )}
             </div>
           </div>
+        </div>
+          <button
+            onClick={() => generateMemberProfilePdf({
+              memberId: member.member_id || undefined,
+              fullName: member.full_name,
+              email: member.email || undefined,
+              phone: member.phone || undefined,
+              role: getRoleLabel(member.role),
+              isExecutive: member.is_executive_member,
+              memberSince: (member as any).member_since || member.created_at?.split('T')[0],
+              membershipEndDate: (member as any).membership_end_date || undefined,
+              fatherName: (member as any).father_name || undefined,
+              motherName: (member as any).mother_name || undefined,
+              dob: member.date_of_birth || undefined,
+              gender: member.gender || undefined,
+              caste: (member as any).caste || undefined,
+              gotra: member.gotra || undefined,
+              maritalStatus: (member as any).marital_status || undefined,
+              city: member.city || undefined,
+              address: member.address || undefined,
+              villageAddress: (member as any).village_address || undefined,
+              photoUrl: member.profile_photo_url || undefined,
+              familyMembers: familyMembers.map((fm) => ({ name: fm.name, relation: fm.relation, gender: fm.gender || undefined, dob: fm.date_of_birth || undefined, photoUrl: fm.photo_url || undefined })),
+              payments: memberPayments.map((p: any) => ({ date: p.donation_date, purpose: p.purpose || 'General Donation', amount: Number(p.amount), mode: p.payment_method })),
+              business: businessDetail ? {
+                isEmployed: businessDetail.is_employed,
+                businessName: businessDetail.business_name || undefined,
+                employerName: businessDetail.employer_name || undefined,
+                sector: businessDetail.sector || undefined,
+                designation: businessDetail.designation || undefined,
+                gstNumber: businessDetail.gst_number || undefined,
+                phone: businessDetail.phone || undefined,
+                email: (businessDetail as any).email || undefined,
+                description: businessDetail.description || undefined,
+                address: businessDetail.location || undefined,
+                website: businessDetail.has_website ? businessDetail.website || undefined : undefined,
+                logoUrl: (businessDetail as any).logo_url || undefined,
+                vcFrontUrl: (businessDetail as any).visiting_card_front || undefined,
+                vcBackUrl: (businessDetail as any).visiting_card_back || undefined,
+              } : null,
+            })}
+            className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary rounded-lg text-xs font-medium hover:bg-primary/20 transition-colors shrink-0"
+          >
+            <Download className="w-3.5 h-3.5" /> Download Profile
+          </button>
         </div>
       </div>
 
@@ -707,6 +757,75 @@ export function MemberDetail() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Business / Job Details */}
+      <div className="bg-white rounded-xl border border-border p-6 mb-6">
+        <h2 className="font-semibold text-text-primary flex items-center gap-2 mb-4">
+          <Briefcase className="w-4 h-4 text-primary" />
+          {businessDetail ? (businessDetail.is_employed ? 'Job Details' : 'Business Details') : 'Job / Business Details'}
+        </h2>
+        {!businessDetail ? (
+          <p className="text-sm text-text-secondary text-center py-4">No job or business details added by this member.</p>
+        ) : (
+          <div className="space-y-3 text-sm">
+            {/* Type */}
+            <div>
+              <p className="text-xs text-text-secondary mb-0.5">Type</p>
+              <p className="font-medium text-text-primary">{businessDetail.is_employed ? 'Employed' : 'Business / Self-Employed'}</p>
+            </div>
+            {/* Business Name | Sector */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-text-secondary mb-0.5">{businessDetail.is_employed ? 'Employer' : 'Business Name'}</p>
+                <p className="font-medium text-text-primary">{(businessDetail.is_employed ? businessDetail.employer_name : businessDetail.business_name) || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-secondary mb-0.5">Sector</p>
+                <p className="font-medium text-text-primary">{businessDetail.sector || '—'}</p>
+              </div>
+            </div>
+            {/* Designation | GST */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-text-secondary mb-0.5">Designation</p>
+                <p className="font-medium text-text-primary">{businessDetail.designation || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-secondary mb-0.5">GST Number</p>
+                <p className="font-medium text-text-primary">{businessDetail.gst_number || '—'}</p>
+              </div>
+            </div>
+            {/* Phone | Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-text-secondary mb-0.5">Work Phone</p>
+                <p className="font-medium text-text-primary">{businessDetail.phone || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-secondary mb-0.5">Work Email</p>
+                <p className="font-medium text-text-primary">{(businessDetail as any).email || '—'}</p>
+              </div>
+            </div>
+            {/* Description */}
+            <div>
+              <p className="text-xs text-text-secondary mb-0.5">Description</p>
+              <p className="font-medium text-text-primary">{businessDetail.description || '—'}</p>
+            </div>
+            {/* Address */}
+            <div>
+              <p className="text-xs text-text-secondary mb-0.5">Address</p>
+              <p className="font-medium text-text-primary">{businessDetail.location || '—'}</p>
+            </div>
+            {/* Website */}
+            <div>
+              <p className="text-xs text-text-secondary mb-0.5">Website</p>
+              {businessDetail.website && businessDetail.has_website
+                ? <a href={businessDetail.website} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">{businessDetail.website}</a>
+                : <p className="font-medium text-text-primary">—</p>}
+            </div>
           </div>
         )}
       </div>

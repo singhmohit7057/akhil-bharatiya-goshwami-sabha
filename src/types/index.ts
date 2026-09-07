@@ -157,6 +157,8 @@ export interface BusinessListing {
   email: string | null
   website: string | null
   logo_url: string | null
+  visiting_card_front: string | null
+  visiting_card_back: string | null
   is_approved: boolean
   is_active: boolean
   created_at: string

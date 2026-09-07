@@ -106,23 +106,50 @@ export function BusinessDetails() {
     toast.success('Branch removed')
   }
 
+  function getStoragePath(url: string): string | null {
+    const marker = '/profile-photos/'
+    const idx = url.indexOf(marker)
+    return idx !== -1 ? url.slice(idx + marker.length) : null
+  }
+
+  async function handleDeleteImage(type: 'logo' | 'vc_front' | 'vc_back') {
+    if (!profile) return
+    const currentUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
+    if (currentUrl) {
+      const storagePath = getStoragePath(currentUrl)
+      if (storagePath) await supabase.storage.from('profile-photos').remove([storagePath])
+    }
+    const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
+    await supabase.from('business_details').update({ [field]: null }).eq('user_id', profile.id)
+    await supabase.from('business_directory').update({ [field]: null }).eq('user_id', profile.id)
+    if (type === 'logo') setLogoUrl(null)
+    else if (type === 'vc_front') setVcFrontUrl(null)
+    else setVcBackUrl(null)
+    toast.success('Removed')
+  }
+
   async function handleFileUpload(file: File, type: 'logo' | 'vc_front' | 'vc_back') {
     if (!profile) return
     if (file.size > 2 * 1024 * 1024) { toast.error('File must be under 2MB'); return }
     setUploading(type)
+    // Delete old file from storage before uploading new one
+    const oldUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
+    if (oldUrl) {
+      const oldPath = getStoragePath(oldUrl)
+      if (oldPath) await supabase.storage.from('profile-photos').remove([oldPath])
+    }
     const ext = file.name.split('.').pop()
-    const path = `business/${profile.id}/${type}.${ext}`
-    const { error } = await supabase.storage.from('profile-photos').upload(path, file, { upsert: true })
+    const path = `business/${profile.id}/${type}_${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('profile-photos').upload(path, file)
     if (error) { toast.error('Upload failed'); setUploading(''); return }
     const { data } = supabase.storage.from('profile-photos').getPublicUrl(path)
     const url = data.publicUrl
     if (type === 'logo') setLogoUrl(url)
     else if (type === 'vc_front') setVcFrontUrl(url)
     else setVcBackUrl(url)
-    if (detail) {
-      const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
-      await supabase.from('business_details').update({ [field]: url }).eq('id', detail.id)
-    }
+    const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
+    await supabase.from('business_details').update({ [field]: url }).eq('user_id', profile.id)
+    await supabase.from('business_directory').update({ [field]: url }).eq('user_id', profile.id)
     toast.success('Uploaded!')
     setUploading('')
   }
@@ -367,39 +394,82 @@ export function BusinessDetails() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                 <div>
                   <label className="block text-xs font-medium text-text-primary mb-2">Business Logo</label>
-                  <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
+                  {/* Logo upload/delete */}
+                  <div className="relative border-2 border-dashed border-border rounded-xl p-3 text-center">
                     {logoUrl ? (
-                      <img src={logoUrl} alt="Logo" className="w-16 h-16 mx-auto rounded-lg object-contain" />
+                      <>
+                        <img src={logoUrl} alt="Logo" className="w-16 h-16 mx-auto rounded-lg object-contain" />
+                        <div className="flex gap-2 justify-center mt-2">
+                          <button type="button" onClick={() => handleDeleteImage('logo')} className="flex items-center gap-1 px-2 py-1 text-[10px] text-red-500 border border-red-200 rounded-lg hover:bg-red-50">
+                            <X className="w-3 h-3" /> Remove
+                          </button>
+                          <label className="flex items-center gap-1 px-2 py-1 text-[10px] text-primary border border-primary/30 rounded-lg hover:bg-primary/5 cursor-pointer">
+                            <Upload className="w-3 h-3" /> Re-upload
+                            <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} className="hidden" />
+                          </label>
+                        </div>
+                      </>
                     ) : (
-                      <><Upload className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Logo</p></>
+                      <label className="cursor-pointer block">
+                        <Upload className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                        <p className="text-[10px] text-text-secondary">Upload Logo</p>
+                        <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} className="hidden" />
+                      </label>
                     )}
-                    <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} className="hidden" />
                     {uploading === 'logo' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
-                  </label>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-primary mb-2">Visiting Card (Front) *</label>
-                  <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
+                  <div className="border-2 border-dashed border-border rounded-xl p-3 text-center">
                     {vcFrontUrl ? (
-                      <img src={vcFrontUrl} alt="VC Front" className="w-full h-16 mx-auto rounded-lg object-contain" />
+                      <>
+                        <img src={vcFrontUrl} alt="VC Front" className="w-full h-16 mx-auto rounded-lg object-contain" />
+                        <div className="flex gap-2 justify-center mt-2">
+                          <button type="button" onClick={() => handleDeleteImage('vc_front')} className="flex items-center gap-1 px-2 py-1 text-[10px] text-red-500 border border-red-200 rounded-lg hover:bg-red-50">
+                            <X className="w-3 h-3" /> Remove
+                          </button>
+                          <label className="flex items-center gap-1 px-2 py-1 text-[10px] text-primary border border-primary/30 rounded-lg hover:bg-primary/5 cursor-pointer">
+                            <Upload className="w-3 h-3" /> Re-upload
+                            <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'vc_front')} className="hidden" />
+                          </label>
+                        </div>
+                      </>
                     ) : (
-                      <><Image className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Front</p></>
+                      <label className="cursor-pointer block">
+                        <Image className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                        <p className="text-[10px] text-text-secondary">Upload Front</p>
+                        <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'vc_front')} className="hidden" />
+                      </label>
                     )}
-                    <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'vc_front')} className="hidden" />
                     {uploading === 'vc_front' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
-                  </label>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-primary mb-2">Visiting Card (Back) <span className="text-text-secondary font-normal">optional</span></label>
-                  <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
+                  <div className="border-2 border-dashed border-border rounded-xl p-3 text-center">
                     {vcBackUrl ? (
-                      <img src={vcBackUrl} alt="VC Back" className="w-full h-16 mx-auto rounded-lg object-contain" />
+                      <>
+                        <img src={vcBackUrl} alt="VC Back" className="w-full h-16 mx-auto rounded-lg object-contain" />
+                        <div className="flex gap-2 justify-center mt-2">
+                          <button type="button" onClick={() => handleDeleteImage('vc_back')} className="flex items-center gap-1 px-2 py-1 text-[10px] text-red-500 border border-red-200 rounded-lg hover:bg-red-50">
+                            <X className="w-3 h-3" /> Remove
+                          </button>
+                          <label className="flex items-center gap-1 px-2 py-1 text-[10px] text-primary border border-primary/30 rounded-lg hover:bg-primary/5 cursor-pointer">
+                            <Upload className="w-3 h-3" /> Re-upload
+                            <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'vc_back')} className="hidden" />
+                          </label>
+                        </div>
+                      </>
                     ) : (
-                      <><Image className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Back</p></>
+                      <label className="cursor-pointer block">
+                        <Image className="w-5 h-5 text-gray-400 mx-auto mb-1" />
+                        <p className="text-[10px] text-text-secondary">Upload Back</p>
+                        <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'vc_back')} className="hidden" />
+                      </label>
                     )}
-                    <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'vc_back')} className="hidden" />
                     {uploading === 'vc_back' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
-                  </label>
+                  </div>
                 </div>
               </div>
             </>

@@ -52,6 +52,14 @@ export function Login() {
         setErrorMsg(error.message || 'Login failed. Please try again.')
       }
     } else {
+      // Check if account is blocked before navigating
+      const { data: prof } = await supabase.from('profiles').select('account_status').eq('email', email).maybeSingle()
+      if (prof?.account_status === 'suspended') {
+        await supabase.auth.signOut()
+        setErrorMsg('Your account has been blocked by the admin. Please contact us at abgspb3@gmail.com for assistance.')
+        setLoading(false)
+        return
+      }
       navigate('/profile')
     }
     setLoading(false)

@@ -36,7 +36,7 @@ export function EditBusiness() {
 
   useEffect(() => {
     if (!id) return
-    supabase.from('business_directory').select('*').eq('id', id).single().then(({ data }) => {
+    supabase.from('business_directory').select('*').eq('id', id).single().then(async ({ data }) => {
       if (data) {
         const b = data as any
         setListing(data as BusinessListing)
@@ -56,8 +56,27 @@ export function EditBusiness() {
         })
         setBranches(b.branches || [])
         setLogoUrl(b.logo_url || null)
-        setVcFrontUrl(b.visiting_card_front || null)
-        setVcBackUrl(b.visiting_card_back || null)
+
+        // Load VC fields — prefer business_directory, fallback to business_details
+        let vcFront = b.visiting_card_front || null
+        let vcBack = b.visiting_card_back || null
+        if (!vcFront || !vcBack) {
+          const { data: detail } = await supabase.from('business_details').select('visiting_card_front, visiting_card_back, logo_url').eq('user_id', b.user_id).maybeSingle()
+          if (detail) {
+            if (!vcFront) vcFront = (detail as any).visiting_card_front || null
+            if (!vcBack) vcBack = (detail as any).visiting_card_back || null
+            if (!b.logo_url && (detail as any).logo_url) setLogoUrl((detail as any).logo_url)
+            // Sync missing fields to business_directory
+            const patch: any = {}
+            if (!b.visiting_card_front && vcFront) patch.visiting_card_front = vcFront
+            if (!b.visiting_card_back && vcBack) patch.visiting_card_back = vcBack
+            if (Object.keys(patch).length > 0) {
+              await supabase.from('business_directory').update(patch).eq('id', id)
+            }
+          }
+        }
+        setVcFrontUrl(vcFront)
+        setVcBackUrl(vcBack)
       }
       setLoading(false)
     })
@@ -71,18 +90,51 @@ export function EditBusiness() {
     setShowBranch(false)
   }
 
+  function getStoragePath(url: string): string | null {
+    const marker = '/profile-photos/'
+    const idx = url.indexOf(marker)
+    return idx !== -1 ? url.slice(idx + marker.length) : null
+  }
+
+  async function handleDelete(type: 'logo' | 'vc_front' | 'vc_back') {
+    if (!listing) return
+    const currentUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
+    if (currentUrl) {
+      const p = getStoragePath(currentUrl)
+      if (p) await supabase.storage.from('profile-photos').remove([p])
+    }
+    const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
+    await supabase.from('business_directory').update({ [field]: null }).eq('id', id!)
+    await supabase.from('business_details').update({ [field]: null }).eq('user_id', listing.user_id)
+    if (type === 'logo') setLogoUrl(null)
+    else if (type === 'vc_front') setVcFrontUrl(null)
+    else setVcBackUrl(null)
+    toast.success('Removed')
+  }
+
   async function handleUpload(file: File, type: 'logo' | 'vc_front' | 'vc_back') {
     if (!listing) return
     if (file.size > 2 * 1024 * 1024) { toast.error('File must be under 2MB'); return }
     setUploadingField(type)
+    // Delete old file from storage
+    const oldUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
+    if (oldUrl) {
+      const oldPath = getStoragePath(oldUrl)
+      if (oldPath) await supabase.storage.from('profile-photos').remove([oldPath])
+    }
     const ext = file.name.split('.').pop()
-    const path = `business/${listing.user_id}/${type}.${ext}`
-    const { error } = await supabase.storage.from('profile-photos').upload(path, file, { upsert: true })
+    const path = `business/${listing.user_id}/${type}_${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('profile-photos').upload(path, file)
     if (error) { toast.error('Upload failed'); setUploadingField(''); return }
     const { data } = supabase.storage.from('profile-photos').getPublicUrl(path)
-    if (type === 'logo') setLogoUrl(data.publicUrl)
-    else if (type === 'vc_front') setVcFrontUrl(data.publicUrl)
-    else setVcBackUrl(data.publicUrl)
+    const url = data.publicUrl
+    const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
+    // Save immediately to both tables
+    await supabase.from('business_directory').update({ [field]: url }).eq('id', id!)
+    await supabase.from('business_details').update({ [field]: url }).eq('user_id', listing.user_id)
+    if (type === 'logo') setLogoUrl(url)
+    else if (type === 'vc_front') setVcFrontUrl(url)
+    else setVcBackUrl(url)
     toast.success('Uploaded!')
     setUploadingField('')
   }
@@ -106,6 +158,8 @@ export function EditBusiness() {
       website: form.has_website ? (form.website || null) : null,
       branches,
       logo_url: logoUrl,
+      visiting_card_front: vcFrontUrl,
+      visiting_card_back: vcBackUrl,
     }).eq('id', id!)
 
     if (error) { toast.error('Failed'); setSaving(false); return }
@@ -224,43 +278,39 @@ export function EditBusiness() {
 
             {/* Logo & Visiting Card */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-2">Business Logo</label>
-                <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="Logo" className="w-16 h-16 mx-auto rounded-lg object-contain" />
-                  ) : (
-                    <><Upload className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Logo</p></>
-                  )}
-                  <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'logo')} className="hidden" />
-                  {uploadingField === 'logo' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
-                </label>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-2">Visiting Card (Front)</label>
-                <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
-                  {vcFrontUrl ? (
-                    <img src={vcFrontUrl} alt="VC Front" className="w-full h-16 mx-auto rounded-lg object-contain" />
-                  ) : (
-                    <><Image className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Front</p></>
-                  )}
-                  <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'vc_front')} className="hidden" />
-                  {uploadingField === 'vc_front' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
-                </label>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-2">Visiting Card (Back) <span className="text-text-secondary font-normal">optional</span></label>
-                <label className="block border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/30 transition-colors">
-                  {vcBackUrl ? (
-                    <img src={vcBackUrl} alt="VC Back" className="w-full h-16 mx-auto rounded-lg object-contain" />
-                  ) : (
-                    <><Image className="w-5 h-5 text-gray-400 mx-auto mb-1" /><p className="text-[10px] text-text-secondary">Upload Back</p></>
-                  )}
-                  <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], 'vc_back')} className="hidden" />
-                  {uploadingField === 'vc_back' && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
-                </label>
-              </div>
-            </div>
+              {(['logo', 'vc_front', 'vc_back'] as const).map((type) => {
+                const url = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
+                const label = type === 'logo' ? 'Business Logo' : type === 'vc_front' ? 'Visiting Card (Front)' : 'Visiting Card (Back)'
+                const optional = type === 'vc_back'
+                return (
+                  <div key={type}>
+                    <p className="block text-xs font-medium text-text-primary mb-2">{label}{optional && <span className="text-text-secondary font-normal ml-1">optional</span>}</p>
+                    <div className="border-2 border-dashed border-border rounded-xl p-3 text-center">
+                      {url ? (
+                        <>
+                          <img src={url} alt={label} className={`mx-auto rounded-lg object-contain ${type === 'logo' ? 'w-16 h-16' : 'w-full h-16'}`} />
+                          <div className="flex gap-2 justify-center mt-2">
+                            <button type="button" onClick={() => handleDelete(type)} className="flex items-center gap-1 px-2 py-1 text-[10px] text-red-500 border border-red-200 rounded-lg hover:bg-red-50">
+                              <X className="w-3 h-3" /> Remove
+                            </button>
+                            <label className="flex items-center gap-1 px-2 py-1 text-[10px] text-primary border border-primary/30 rounded-lg hover:bg-primary/5 cursor-pointer">
+                              <Upload className="w-3 h-3" /> Re-upload
+                              <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], type)} className="hidden" />
+                            </label>
+                          </div>
+                        </>
+                      ) : (
+                        <label className="cursor-pointer block">
+                          {type === 'logo' ? <Upload className="w-5 h-5 text-gray-400 mx-auto mb-1" /> : <Image className="w-5 h-5 text-gray-400 mx-auto mb-1" />}
+                          <p className="text-[10px] text-text-secondary">Upload {type === 'logo' ? 'Logo' : type === 'vc_front' ? 'Front' : 'Back'}</p>
+                          <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], type)} className="hidden" />
+                        </label>
+                      )}
+                      {uploadingField === type && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
+                    </div>
+                  </div>
+                )
+              })}</div>
 
             <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
               {saving ? '...' : 'Save Changes'}

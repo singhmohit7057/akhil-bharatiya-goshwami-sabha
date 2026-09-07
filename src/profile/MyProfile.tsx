@@ -277,25 +277,30 @@ export function MyProfile() {
       {business && (
         <div className="bg-white rounded-xl border border-border p-5">
           <h2 className="font-semibold text-text-primary mb-4">{t('businessDetails.title')}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            {business.is_employed ? (
-              <>
-                <InfoRow label={t('businessDetails.employerName')} value={business.employer_name} />
-                <InfoRow label={t('businessDetails.designation')} value={business.designation} />
-                <InfoRow label={t('businessDetails.sector')} value={business.sector} />
-              </>
-            ) : (
-              <>
-                <InfoRow label={t('businessDetails.businessName')} value={business.business_name} />
-                <InfoRow label={t('businessDetails.sector')} value={business.sector} />
-                <InfoRow label={t('businessDetails.designation')} value={business.designation} />
-                <InfoRow label="GST Number" value={business.gst_number} />
-              </>
-            )}
+          <div className="space-y-3 text-sm">
+            {/* Type */}
+            <InfoRow label="Type" value={business.is_employed ? 'Employed' : 'Business / Self-Employed'} />
+            {/* Business Name | Sector */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <InfoRow label={business.is_employed ? t('businessDetails.employerName') : t('businessDetails.businessName')} value={business.is_employed ? business.employer_name : business.business_name} />
+              <InfoRow label={t('businessDetails.sector')} value={business.sector} />
+            </div>
+            {/* Designation | GST */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <InfoRow label={t('businessDetails.designation')} value={business.designation} />
+              <InfoRow label="GST Number" value={business.gst_number} />
+            </div>
+            {/* Phone | Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <InfoRow label="Phone" value={business.phone} />
+              <InfoRow label="Email" value={(business as any).email} />
+            </div>
+            {/* Description */}
+            <InfoRow label="Description" value={business.description} />
+            {/* Address */}
             <InfoRow label={t('businessDetails.location')} value={business.location} />
-            <InfoRow label="Phone" value={business.phone} />
-            {(business as any).email && <InfoRow label="Email" value={(business as any).email} />}
-            {business.website && <InfoRow label="Website" value={business.website} />}
+            {/* Website */}
+            {business.website && business.has_website && <InfoRow label="Website" value={business.website} />}
           </div>
         </div>
       )}
@@ -303,14 +308,14 @@ export function MyProfile() {
   )
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon?: React.ElementType; label: string; value: string | null | undefined }) {
-  if (!value) return null
+function InfoRow({ icon: Icon, label, value, required }: { icon?: React.ElementType; label: string; value: string | null | undefined; required?: boolean }) {
+  if (!value && !required) return null
   return (
     <div className="flex items-start gap-2">
       {Icon && <Icon className="w-4 h-4 text-text-secondary mt-0.5" />}
       <div>
         <p className="text-xs text-text-secondary">{label}</p>
-        <p className="text-text-primary">{value}</p>
+        <p className={value ? 'text-text-primary' : 'text-text-secondary'}>{value || '—'}</p>
       </div>
     </div>
   )

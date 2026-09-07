@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Search, Shield, Edit2, Eye, User, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
@@ -11,8 +12,9 @@ import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
 
 export function AllMembers() {
-  const { isViewer, isSuperAdmin } = useAuth()
+  const { isViewer, isSuperAdmin, isAdmin } = useAuth()
   const superAdmin = isSuperAdmin()
+  const canBlock = isAdmin() || superAdmin
   const { t, i18n } = useTranslation('admin')
   const { designations } = useDesignations()
   const lang = i18n.language
@@ -21,6 +23,7 @@ export function AllMembers() {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [memberType, setMemberType] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [idSort, setIdSort] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
@@ -31,10 +34,21 @@ export function AllMembers() {
     const { data } = await supabase
       .from('profiles')
       .select('*')
-      .eq('account_status', 'active')
+      .in('account_status', ['active', 'suspended'])
       .order('full_name')
     setMembers((data as Profile[]) || [])
     setLoading(false)
+  }
+
+  async function toggleBlock(m: Profile) {
+    const isBlocked = m.account_status === 'suspended'
+    const { error } = await supabase
+      .from('profiles')
+      .update({ account_status: isBlocked ? 'active' : 'suspended' })
+      .eq('id', m.id)
+    if (error) { toast.error('Failed to update status'); return }
+    toast.success(`${m.full_name} ${isBlocked ? 'unblocked' : 'blocked'}`)
+    fetchMembers()
   }
 
   const filtered = members
@@ -42,7 +56,8 @@ export function AllMembers() {
       const matchSearch = !search || m.full_name.toLowerCase().includes(search.toLowerCase()) || m.email?.toLowerCase().includes(search.toLowerCase())
       const matchRole = !roleFilter || m.role === roleFilter
       const matchType = !memberType || (memberType === 'executive' ? m.is_executive_member : !m.is_executive_member)
-      return matchSearch && matchRole && matchType
+      const matchStatus = !statusFilter || (statusFilter === 'blocked' ? m.account_status === 'suspended' : m.account_status === 'active')
+      return matchSearch && matchRole && matchType && matchStatus
     })
     .sort((a, b) => {
       const aNum = parseInt(a.member_id?.split('/')?.[1] || '9999')
@@ -104,6 +119,12 @@ export function AllMembers() {
           <option value="executive">Executive Members</option>
           <option value="regular">Members</option>
         </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="blocked">Blocked</option>
+        </select>
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
           className="px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">All Roles</option>
@@ -132,12 +153,31 @@ export function AllMembers() {
                 {m.is_executive_member && <Shield className="w-3 h-3 text-amber-500 shrink-0" />}
               </div>
               <p className="text-[10px] text-text-secondary">{m.member_id || 'No ID'} · {m.phone || '—'}</p>
-              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{getRoleLabel(m.role)}</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{getRoleLabel(m.role)}</span>
+                {m.account_status === 'suspended' && (
+                  <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">Blocked</span>
+                )}
+              </div>
             </div>
-            <Link to={`/admin/members/${m.member_id ? m.member_id.replace('/', '-') : m.id}`}
-              className="text-primary text-xs font-medium shrink-0 px-2 py-1 bg-primary/10 rounded-lg">
-              {isViewer() ? 'View' : 'Edit'}
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              {canBlock && (
+                <button
+                  onClick={() => toggleBlock(m)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
+                    m.account_status === 'suspended' ? 'bg-red-400' : 'bg-green-500'
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                    m.account_status === 'suspended' ? 'translate-x-0' : 'translate-x-4'
+                  }`} />
+                </button>
+              )}
+              <Link to={`/admin/members/${m.member_id ? m.member_id.replace('/', '-') : m.id}`}
+                className="text-primary text-xs font-medium shrink-0 px-2 py-1 bg-primary/10 rounded-lg">
+                {isViewer() ? 'View' : 'Edit'}
+              </Link>
+            </div>
           </div>
         ))}
       </div>
@@ -147,17 +187,18 @@ export function AllMembers() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border bg-gray-50 text-left">
-                <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.name')}</th>
+              <tr className="border-b border-border bg-gray-50 text-center">
+                <th className="px-4 py-3 font-medium text-text-secondary text-left">{t('common:labels.name')}</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">
                   <button onClick={() => setIdSort(s => s === 'asc' ? 'desc' : 'asc')}
-                    className="flex items-center gap-1 hover:text-primary transition-colors">
+                    className="inline-flex items-center gap-1 hover:text-primary transition-colors">
                     Member ID <span className="text-primary text-sm">{idSort === 'asc' ? '↑' : '↓'}</span>
                   </button>
                 </th>
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.phone')}</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.role')}</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">Membership Valid Till</th>
+                {canBlock && <th className="px-4 py-3 font-medium text-text-secondary">Block / Unblock</th>}
                 <th className="px-4 py-3 font-medium text-text-secondary">{t('common:labels.actions')}</th>
               </tr>
             </thead>
@@ -175,16 +216,34 @@ export function AllMembers() {
                       </div>
                       <span className="font-medium text-text-primary">{m.full_name}</span>
                       {m.is_executive_member && <Shield className="w-3.5 h-3.5 text-amber-500" />}
+                      {m.account_status === 'suspended' && (
+                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">Blocked</span>
+                      )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-text-secondary">{m.member_id || '—'}</td>
-                  <td className="px-4 py-3 text-text-secondary">{m.phone || '—'}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-xs text-text-secondary text-center">{m.member_id || '—'}</td>
+                  <td className="px-4 py-3 text-text-secondary text-center">{m.phone || '—'}</td>
+                  <td className="px-4 py-3 text-center">
                     <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{getRoleLabel(m.role)}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-text-secondary">{(m as any).membership_end_date || (m.is_executive_member ? 'Active' : '—')}</td>
-                  <td className="px-4 py-3">
-                    <Link to={`/admin/members/${m.member_id ? m.member_id.replace('/', '-') : m.id}`} className="text-primary hover:underline flex items-center gap-1 text-xs">
+                  <td className="px-4 py-3 text-xs text-text-secondary text-center">{(m as any).membership_end_date || (m.is_executive_member ? 'Active' : '—')}</td>
+                  {canBlock && (
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => toggleBlock(m)}
+                        title={m.account_status === 'suspended' ? 'Click to unblock' : 'Click to block'}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                          m.account_status === 'suspended' ? 'bg-red-400' : 'bg-green-500'
+                        }`}
+                      >
+                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ${
+                          m.account_status === 'suspended' ? 'translate-x-0' : 'translate-x-4'
+                        }`} />
+                      </button>
+                    </td>
+                  )}
+                  <td className="px-4 py-3 text-center">
+                    <Link to={`/admin/members/${m.member_id ? m.member_id.replace('/', '-') : m.id}`} className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
                       {isViewer() ? <Eye className="w-3.5 h-3.5" /> : <Edit2 className="w-3.5 h-3.5" />} {isViewer() ? 'View' : 'Edit'}
                     </Link>
                   </td>
