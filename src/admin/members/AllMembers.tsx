@@ -53,7 +53,12 @@ export function AllMembers() {
 
   const filtered = members
     .filter((m) => {
-      const matchSearch = !search || m.full_name.toLowerCase().includes(search.toLowerCase()) || m.email?.toLowerCase().includes(search.toLowerCase())
+      const q = search.toLowerCase()
+      const matchSearch = !search
+        || m.full_name.toLowerCase().includes(q)
+        || m.email?.toLowerCase().includes(q)
+        || m.member_id?.toLowerCase().includes(q)
+        || m.phone?.toLowerCase().includes(q)
       const matchRole = !roleFilter || m.role === roleFilter
       const matchType = !memberType || (memberType === 'executive' ? m.is_executive_member : !m.is_executive_member)
       const matchStatus = !statusFilter || (statusFilter === 'blocked' ? m.account_status === 'suspended' : m.account_status === 'active')
@@ -99,7 +104,14 @@ export function AllMembers() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">{t('members.all')}</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">{t('members.all')}</h1>
+          <p className="text-sm text-text-secondary mt-0.5">
+            {filtered.length === members.length
+              ? <>{members.length} member{members.length !== 1 ? 's' : ''}</>
+              : <>{filtered.length} of {members.length} member{members.length !== 1 ? 's' : ''}</>}
+          </p>
+        </div>
         {superAdmin && (
           <button onClick={exportToExcel} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
             <Download className="w-4 h-4" /> Export Excel
@@ -110,7 +122,7 @@ export function AllMembers() {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-          <input type="text" placeholder="Search members..." value={search} onChange={(e) => setSearch(e.target.value)}
+          <input type="text" placeholder="Search by name, member ID, phone, email..." value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30" />
         </div>
         <select value={memberType} onChange={(e) => setMemberType(e.target.value)}

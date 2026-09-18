@@ -129,7 +129,7 @@ export function Donate() {
                   <p className="text-base text-text-secondary mb-6">{t('thankYouDesc')}</p>
                   <div className="bg-surface rounded-xl p-5 text-left mb-6">
                     <p className="text-sm font-semibold text-text-primary mb-3">{t('directTransfer')}</p>
-                    <p className="text-sm text-text-secondary">• UPI: <strong className="text-text-primary">abgspb@bank</strong></p>
+                    <p className="text-sm text-text-secondary">• UPI: <strong className="text-text-primary">akhil98310129@barodampay</strong></p>
                     <p className="text-sm text-text-secondary">• {t('bankDetailsLeft')}</p>
                     <p className="text-sm text-text-secondary mt-3">{t('afterPayment')}</p>
                     <p className="text-sm text-text-secondary mt-1">• Email: <a href="mailto:abgspb3@gmail.com" className="text-primary font-medium hover:underline">abgspb3@gmail.com</a></p>
