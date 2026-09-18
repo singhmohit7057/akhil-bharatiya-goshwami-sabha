@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Heart, Shield, Eye, Building2, QrCode, Mail, User, Phone, CreditCard, IndianRupee } from 'lucide-react'
+import { Heart, Shield, Eye, Building2, QrCode, Mail, User, Phone, CreditCard, IndianRupee, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
@@ -12,6 +12,7 @@ export function Donate() {
   const [showCustom, setShowCustom] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '', email: '', pan: '' })
   const [submitted, setSubmitted] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
 
   function selectAmount(val: number) {
     setAmount(val)
@@ -99,10 +100,32 @@ export function Donate() {
 
               <hr className="my-4 border-border" />
 
-              <h3 className="text-sm font-bold text-text-primary flex items-center gap-2 mb-2">
-                <QrCode className="w-4 h-4 text-primary" /> {t('upiId')}
-              </h3>
-              <p className="text-sm text-primary font-medium">abgspb@bank</p>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-bold text-text-primary flex items-center gap-2 mb-1">
+                    <QrCode className="w-4 h-4 text-primary" /> {t('upiId')}
+                  </h3>
+                  <p className="text-sm text-primary font-semibold">akhil98310129@barodampay</p>
+                </div>
+                <button onClick={() => setQrOpen(true)} className="flex flex-col items-center gap-1 p-2 bg-gray-50 border border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-colors shrink-0 group">
+                  <img src="/UPI.png" alt="UPI QR" className="w-14 h-14 object-contain" />
+                  <span className="text-[10px] text-text-secondary group-hover:text-primary font-medium">Tap to scan</span>
+                </button>
+              </div>
+
+              {/* QR Popup */}
+              {qrOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setQrOpen(false)}>
+                  <div className="relative bg-white rounded-2xl p-4 shadow-2xl max-w-xs w-full" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => setQrOpen(false)} className="absolute top-3 right-3 p-1 text-text-secondary hover:text-text-primary">
+                      <X className="w-5 h-5" />
+                    </button>
+                    <p className="text-sm font-semibold text-text-primary text-center mb-3">Scan to Pay via UPI</p>
+                    <img src="/UPI.png" alt="UPI QR Code" className="w-full rounded-xl object-contain" />
+                    <p className="text-xs text-center text-primary font-medium mt-3">akhil98310129@barodampay</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
