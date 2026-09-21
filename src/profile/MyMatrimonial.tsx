@@ -50,10 +50,12 @@ export function MyMatrimonial() {
   const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<MatrimonialEntry | null>(null)
+  const [profileFor, setProfileFor] = useState<'self' | 'family'>('family')
   const profilePhotoRef = useRef<HTMLInputElement>(null)
   const additionalPhotoRef = useRef<HTMLInputElement>(null)
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null)
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null)
+  const [existingProfilePhotoUrl, setExistingProfilePhotoUrl] = useState<string | null>(null)
   const [additionalPhotoFiles, setAdditionalPhotoFiles] = useState<File[]>([])
   const [additionalPhotoPreviews, setAdditionalPhotoPreviews] = useState<string[]>([])
   const [existingPhotos, setExistingPhotos] = useState<MatrimonialPhoto[]>([])
@@ -105,11 +107,44 @@ export function MyMatrimonial() {
     setForm({ candidate_name: '', candidate_relation: '', candidate_gender: '', date_of_birth: '', height: '', education: '', occupation: '', income_range: '', marital_status: 'unmarried', about_en: '', preferences_en: '', gotra: '', city: '', caste: '', manglik: '' })
     setProfilePhotoFile(null)
     setProfilePhotoPreview(null)
+    setExistingProfilePhotoUrl(null)
     setAdditionalPhotoFiles([])
     setAdditionalPhotoPreviews([])
     setExistingPhotos([])
     setEditing(null)
     setShowForm(false)
+    setProfileFor('family')
+  }
+
+  async function selectSelf() {
+    if (!profile) return
+    // Fetch business details for occupation
+    const { data: biz } = await supabase
+      .from('business_details')
+      .select('is_employed, designation, employer_name, business_name, sector')
+      .eq('user_id', profile.id)
+      .maybeSingle()
+
+    const occupation = biz
+      ? biz.is_employed
+        ? [biz.designation, biz.sector].filter(Boolean).join(', ')
+        : [biz.business_name, biz.designation].filter(Boolean).join(' · ')
+      : ''
+
+    setForm({
+      ...form,
+      candidate_name: profile.full_name || '',
+      candidate_relation: 'self',
+      candidate_gender: profile.gender || '',
+      date_of_birth: profile.date_of_birth || '',
+      gotra: profile.gotra || '',
+      city: profile.city || '',
+      caste: (profile as any).caste || '',
+      marital_status: ['unmarried', 'divorced', 'widowed'].includes((profile as any).marital_status) ? (profile as any).marital_status : 'unmarried',
+      occupation: occupation || '',
+    })
+    setProfilePhotoPreview(profile.profile_photo_url || null)
+    setExistingProfilePhotoUrl(profile.profile_photo_url || null)
   }
 
   function selectFamilyMember(memberId: string) {
@@ -123,6 +158,8 @@ export function MyMatrimonial() {
         date_of_birth: fm.date_of_birth || '',
         gotra: profile?.gotra || '',
         city: profile?.city || '',
+        caste: (profile as any)?.caste || '',
+        occupation: fm.occupation || '',
       })
     }
   }
@@ -165,6 +202,18 @@ export function MyMatrimonial() {
     if (!profile) return
     setSaving(true)
 
+    // Duplicate check — one profile per candidate name per user
+    if (!editing) {
+      const duplicate = entries.find(
+        (en) => en.candidate_name?.toLowerCase().trim() === form.candidate_name?.toLowerCase().trim()
+      )
+      if (duplicate) {
+        toast.error(`A matrimonial profile for "${form.candidate_name}" already exists.`)
+        setSaving(false)
+        return
+      }
+    }
+
     const payload = {
       user_id: profile.id,
       candidate_name: form.candidate_name || null,
@@ -192,8 +241,13 @@ export function MyMatrimonial() {
       entryId = editing.id
     } else {
       const { data, error } = await supabase.from('matrimonial_profiles').insert({ ...payload, is_active: true, is_approved: true }).select('id').single()
-      if (error || !data) { toast.error('Failed to create'); setSaving(false); return }
+      if (error || !data) { toast.error(error?.message || 'Failed to create'); setSaving(false); return }
       entryId = data.id
+    }
+
+    // If no new file but we have an existing URL (self pre-fill), save it directly
+    if (!profilePhotoFile && existingProfilePhotoUrl && !editing) {
+      await supabase.from('matrimonial_photos').insert({ matrimonial_id: entryId, photo_url: existingProfilePhotoUrl, is_primary: true })
     }
 
     if (profilePhotoFile) {
@@ -224,7 +278,7 @@ export function MyMatrimonial() {
       }
     }
 
-    toast.success(editing ? 'Profile updated' : 'Profile added (pending admin approval)')
+    toast.success(editing ? 'Profile updated' : 'Profile added successfully')
 
     const { data: refreshed } = await supabase.from('matrimonial_profiles').select('*').eq('user_id', profile.id)
     setEntries((refreshed as MatrimonialEntry[]) || [])
@@ -336,6 +390,10 @@ export function MyMatrimonial() {
     ['son', 'daughter', 'brother', 'sister'].includes(fm.relation)
   )
 
+  const isDuplicate = !editing && !!form.candidate_name && entries.some(
+    (en) => en.candidate_name?.toLowerCase().trim() === form.candidate_name?.toLowerCase().trim()
+  )
+
   const inputClass = 'w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm'
 
   return (
@@ -360,16 +418,45 @@ export function MyMatrimonial() {
               <button onClick={resetForm}><X className="w-4 h-4 text-text-secondary" /></button>
             </div>
 
-            {!editing && eligibleMembers.length > 0 && (
+            {!editing && (
               <div className="mb-4">
-                <label className="block text-xs font-medium text-text-primary mb-1">Select from your family members</label>
-                <select onChange={(e) => selectFamilyMember(e.target.value)} className={`${inputClass} bg-white`}>
-                  <option value="">Choose a family member...</option>
-                  {eligibleMembers.map((fm) => (
-                    <option key={fm.id} value={fm.id}>{fm.name} ({fm.relation})</option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-text-secondary mt-1">Or fill details manually below</p>
+                <label className="block text-xs font-medium text-text-primary mb-2">Profile For *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setProfileFor('self'); selectSelf() }}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-colors ${profileFor === 'self' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-secondary hover:border-primary/30'}`}
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="text-xs font-medium">Self ({profile?.full_name})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setProfileFor('family'); setForm(f => ({ ...f, candidate_name: '', candidate_relation: '', candidate_gender: '' })); setProfilePhotoFile(null); setProfilePhotoPreview(null); setExistingProfilePhotoUrl(null) }}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-colors ${profileFor === 'family' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-secondary hover:border-primary/30'}`}
+                  >
+                    <Heart className="w-5 h-5" />
+                    <span className="text-xs font-medium">Family Member</span>
+                  </button>
+                </div>
+                {profileFor === 'family' && eligibleMembers.length > 0 && (
+                  <div className="mt-3">
+                    <select onChange={(e) => selectFamilyMember(e.target.value)} className={`${inputClass} bg-white`}>
+                      <option value="">Choose a family member to pre-fill...</option>
+                      {eligibleMembers.map((fm) => (
+                        <option key={fm.id} value={fm.id}>{fm.name} ({fm.relation})</option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-text-secondary mt-1">Or fill details manually below</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isDuplicate && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <span>⚠️</span>
+                <span><strong>{form.candidate_name}</strong> already has a matrimonial profile. Please edit the existing one.</span>
               </div>
             )}
 
@@ -522,7 +609,7 @@ export function MyMatrimonial() {
                 <textarea placeholder="What kind of match are you looking for..." value={form.preferences_en} onChange={(e) => setForm({ ...form, preferences_en: e.target.value })} rows={3} className={inputClass} />
               </div>
 
-              <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
+              <button type="submit" disabled={saving || isDuplicate} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">
                 {saving ? '...' : editing ? 'Update Profile' : 'Add Profile'}
               </button>
             </form>

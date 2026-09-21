@@ -17,7 +17,7 @@ interface TxRow {
   member?: string
 }
 
-const YEARS = ['2023', '2024', '2025', '2026']
+const YEARS = Array.from({ length: new Date().getFullYear() - 2023 + 1 }, (_, i) => String(2023 + i))
 
 export function Reports() {
   const { isSuperAdmin } = useAuth()

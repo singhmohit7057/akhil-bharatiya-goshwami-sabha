@@ -96,7 +96,8 @@ export function BulkPayment() {
   const [results, setResults] = useState<PaymentResult[]>([])
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
-  const years = ['2023', '2024', '2025', '2026', '2027']
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: currentYear - 2023 + 2 }, (_, i) => String(2023 + i))
 
   // Donation
   const donFileRef = useRef<HTMLInputElement>(null)

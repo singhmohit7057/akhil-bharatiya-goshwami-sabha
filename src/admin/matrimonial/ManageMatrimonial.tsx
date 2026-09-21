@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
-import { Check, X, Eye, Edit2, Search, User } from 'lucide-react'
+import { Check, X, Eye, Edit2, Search, User, Trash2 } from 'lucide-react'
 
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/adminLog'
@@ -35,6 +35,15 @@ export function ManageMatrimonial() {
       .order('created_at', { ascending: false })
     setProfiles((data as MpWithProfile[]) || [])
     setLoading(false)
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Permanently delete this matrimonial profile?')) return
+    await supabase.from('matrimonial_photos').delete().eq('matrimonial_id', id)
+    await supabase.from('matrimonial_profiles').delete().eq('id', id)
+    logAction('delete', 'matrimonial', id, id)
+    toast.success('Profile deleted')
+    fetchProfiles()
   }
 
   async function handleToggleActive(id: string, currentActive: boolean) {
@@ -214,6 +223,9 @@ export function ManageMatrimonial() {
                               <button onClick={() => handleToggleActive(mp.id, mp.is_active)}
                                 className={`flex items-center gap-1 text-xs ${mp.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}>
                                 {mp.is_active ? <><X className="w-3.5 h-3.5" /> Hide</> : <><Check className="w-3.5 h-3.5" /> Show</>}
+                              </button>
+                              <button onClick={() => handleDelete(mp.id)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
                               </button>
                             </>
                           )}

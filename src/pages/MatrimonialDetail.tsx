@@ -205,8 +205,8 @@ export function MatrimonialDetail() {
             </h2>
             <p className="text-xs text-text-secondary mb-3">Relationship from {candidateName}'s perspective</p>
             <div className="space-y-2">
-              {/* Parent (the user who created the listing) */}
-              {profile && (
+              {/* Parent (account owner) — only show if profile is NOT for self */}
+              {profile && mp.candidate_relation !== 'self' && (
                 <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary overflow-hidden shrink-0">
@@ -229,7 +229,10 @@ export function MatrimonialDetail() {
               {family
                 .filter((fm) => fm.name !== candidateName)
                 .map((fm) => {
-                  const rel = getRelationFromPerspective(fm.relation, mp.candidate_gender || profile?.gender, fm.gender)
+                  // For self profiles, show the stored relation as-is (no perspective flip needed)
+                  const rel = mp.candidate_relation === 'self'
+                    ? fm.relation
+                    : getRelationFromPerspective(fm.relation, mp.candidate_gender || profile?.gender, fm.gender)
                   return (
                     <div key={fm.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
                       <div className="flex items-center gap-3">
