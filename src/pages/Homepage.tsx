@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 
 import { localized, formatDate, getRoleLabel } from '../lib/utils'
 import type { Event, Profile } from '../types'
+import { SEO } from '../components/SEO'
 
 export function Homepage() {
   const { t, i18n } = useTranslation('home')
@@ -103,7 +104,13 @@ export function Homepage() {
   ]
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Akhil Bharatiya Goswami Sabha Paschim Bangal | Official Website"
+        description="Official website of Akhil Bharatiya Goswami Sabha Paschim Bangal – uniting the Goswami community of West Bengal through culture, religious events, and social welfare."
+        canonical="/"
+      />
+      <div>
       {/* Hero Video */}
       <section className="relative h-[500px] md:h-[600px] overflow-hidden">
         <video
@@ -111,6 +118,8 @@ export function Homepage() {
           muted
           loop
           playsInline
+          preload="none"
+          poster="/logo.png"
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source src="/hero.mp4" type="video/mp4" />
@@ -447,6 +456,7 @@ export function Homepage() {
         </div>
       </section>
     </div>
+    </>
   )
 }
 

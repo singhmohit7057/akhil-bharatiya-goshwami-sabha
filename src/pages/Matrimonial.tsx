@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, GraduationCap, Briefcase, MapPin, LogIn } from 'lucide-react'
+import { User, GraduationCap, Briefcase, MapPin, LogIn, Heart } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 import { useAuth } from '../hooks/useAuth'
 import { localized, calculateAge } from '../lib/utils'
 import type { MatrimonialProfile, Profile } from '../types'
@@ -39,6 +40,13 @@ export function Matrimonial() {
   })
 
   return (
+    <>
+    <SEO
+      title="Matrimonial | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+      description="Browse matrimonial profiles of Goswami community members on Akhil Bharatiya Goswami Sabha Paschim Bangal. For executive members only."
+      canonical="/matrimonial"
+      noindex={true}
+    />
     <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -74,9 +82,9 @@ export function Matrimonial() {
             onChange={(e) => setGenderFilter(e.target.value)}
             className="px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
-            <option value="">{t('filters.all')}</option>
-            <option value="male">{t('common:labels.male')}</option>
-            <option value="female">{t('common:labels.female')}</option>
+            <option value="">All</option>
+            <option value="male">Groom</option>
+            <option value="female">Bride</option>
           </select>
         </div>
 
@@ -85,49 +93,83 @@ export function Matrimonial() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-text-secondary">{t('noProfiles')}</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((mp) => (
-              <Link
-                key={mp.id}
-                to={`/matrimonial/${(mp as any).profile_code ? (mp as any).profile_code.replace('/', '-') : mp.id}`}
-                className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-md transition-shadow"
-              >
-                <div className="p-5">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                      {(mp as any).matrimonial_photos?.[0]?.photo_url ? (
-                        <img src={(mp as any).matrimonial_photos[0].photo_url} alt="" className="w-16 h-16 rounded-full object-cover" />
-                      ) : (
-                        <User className="w-8 h-8 text-primary" />
-                      )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((mp) => {
+              const photo = [...((mp as any).matrimonial_photos || [])].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0]?.photo_url
+              const name = (mp as any).candidate_name || mp.profiles?.full_name || ''
+              const dob = (mp as any).date_of_birth || mp.profiles?.date_of_birth
+              const age = dob ? calculateAge(dob) : null
+              const city = (mp as any).city || mp.profiles?.city
+              const gender = (mp as any).candidate_gender || mp.profiles?.gender
+              const profileCode = (mp as any).profile_code
+              const href = `/matrimonial/${profileCode ? profileCode.replace('/', '-') : mp.id}`
+
+              return (
+                <Link key={mp.id} to={href} className="group bg-white rounded-2xl border border-border overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                  {/* Photo */}
+                  <div className="relative h-56 bg-gradient-to-br from-primary/20 to-primary/5 overflow-hidden">
+                    {photo ? (
+                      <img src={photo} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="w-16 h-16 text-primary/30" />
+                      </div>
+                    )}
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    {/* Name + age on photo */}
+                    <div className="absolute bottom-3 left-4 right-4">
+                      <h3 className="text-white font-bold text-lg leading-tight">{name}</h3>
+                      {age && <p className="text-white/80 text-sm">{age} years</p>}
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-text-primary">{(mp as any).candidate_name || mp.profiles?.full_name}</h3>
-                      {((mp as any).date_of_birth || mp.profiles?.date_of_birth) && (
-                        <p className="text-sm text-text-secondary">{calculateAge((mp as any).date_of_birth || mp.profiles?.date_of_birth)} years</p>
-                      )}
-                    </div>
+                    {/* Gender badge */}
+                    {gender && (
+                      <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-[10px] font-semibold flex items-center gap-1 ${
+                        gender === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        <Heart className="w-3 h-3" />
+                        {gender === 'female' ? 'Bride' : 'Groom'}
+                      </div>
+                    )}
+                    {/* Profile code */}
+                    {profileCode && (
+                      <div className="absolute top-3 left-3 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                        {profileCode}
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-2 text-sm text-text-secondary">
+
+                  {/* Details */}
+                  <div className="p-4 space-y-2">
+                    {city && (
+                      <p className="flex items-center gap-2 text-sm text-text-secondary">
+                        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" /> {city}
+                      </p>
+                    )}
                     {mp.education && (
-                      <p className="flex items-center gap-2"><GraduationCap className="w-4 h-4" /> {mp.education}</p>
+                      <p className="flex items-center gap-2 text-sm text-text-secondary">
+                        <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" /> {mp.education}
+                      </p>
                     )}
                     {mp.occupation && (
-                      <p className="flex items-center gap-2"><Briefcase className="w-4 h-4" /> {mp.occupation}</p>
+                      <p className="flex items-center gap-2 text-sm text-text-secondary">
+                        <Briefcase className="w-3.5 h-3.5 text-primary shrink-0" /> {mp.occupation}
+                      </p>
                     )}
-                    {mp.profiles?.city && (
-                      <p className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {mp.profiles.city}</p>
+                    {(mp.about_en || mp.about_hi) && (
+                      <p className="text-xs text-text-secondary line-clamp-2 pt-1 border-t border-border/50">
+                        {localized(mp.about_en, mp.about_hi, lang)}
+                      </p>
                     )}
+                    <p className="text-xs text-primary font-medium pt-1 group-hover:underline">View Profile →</p>
                   </div>
-                  <p className="text-sm text-text-secondary mt-3 line-clamp-2">
-                    {localized(mp.about_en, mp.about_hi, lang)}
-                  </p>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         )}
       </section>}
     </div>
+    </>
   )
 }

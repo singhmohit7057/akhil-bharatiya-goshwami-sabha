@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 
 export function Login() {
   const { t } = useTranslation('auth')
@@ -66,7 +67,14 @@ export function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center bg-surface py-12 px-4">
+    <>
+      <SEO
+        title="Login | ABGSPB"
+        description="Sign in to your Akhil Bharatiya Goswami Sabha Paschim Bangal account."
+        canonical="/login"
+        noindex={true}
+      />
+      <div className="flex items-center justify-center bg-surface py-12 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="ABGSPB" className="w-16 h-16 mx-auto mb-3 rounded-full object-cover" />
@@ -105,6 +113,7 @@ export function Login() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
               >
                 {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
@@ -143,5 +152,6 @@ export function Login() {
         </p>
       </div>
     </div>
+    </>
   )
 }

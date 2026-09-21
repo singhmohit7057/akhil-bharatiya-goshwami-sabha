@@ -87,7 +87,7 @@ export function YearlyPlanner() {
         <div className="bg-white rounded-xl border border-border p-5 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-medium text-text-primary">New Event</h3>
-            <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-text-secondary" /></button>
+            <button onClick={() => setShowForm(false)} aria-label="Close form"><X className="w-4 h-4 text-text-secondary" /></button>
           </div>
           <form onSubmit={handleAdd} className="space-y-3">
             <div>

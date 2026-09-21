@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { CheckCircle, Clock, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 
 export function Register() {
   const { t } = useTranslation('auth')
@@ -113,7 +114,14 @@ export function Register() {
   const inputClass = 'w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm'
 
   return (
-    <div className="flex items-center justify-center bg-surface py-12 px-4 py-6">
+    <>
+      <SEO
+        title="Register | ABGSPB"
+        description="Register for a new Akhil Bharatiya Goswami Sabha Paschim Bangal membership account."
+        canonical="/register"
+        noindex={true}
+      />
+      <div className="flex items-center justify-center bg-surface py-12 px-4 py-6">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center mb-5">
           <img src="/logo.png" alt="ABGSPB" className="w-14 h-14 mx-auto mb-2 rounded-full object-cover" />
@@ -144,7 +152,7 @@ export function Register() {
             <label className="block text-xs font-medium text-text-primary mb-1">{t('register.password')} *</label>
             <div className="relative">
               <input type={showPassword ? 'text' : 'password'} required minLength={6} value={form.password} onChange={(e) => updateField('password', e.target.value)} className={`${inputClass} pr-10`} />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -191,5 +199,6 @@ export function Register() {
         </p>
       </div>
     </div>
+    </>
   )
 }

@@ -79,7 +79,7 @@ export function MemberSelect({ members, value, onChange, placeholder = 'Choose m
         )}
         <div className="flex items-center gap-1 shrink-0">
           {selected && (
-            <span onClick={(e) => { e.stopPropagation(); onChange('') }}
+            <span role="button" aria-label="Clear selection" tabIndex={0} onClick={(e) => { e.stopPropagation(); onChange('') }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onChange('') } }}
               className="p-0.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600">
               <X className="w-3.5 h-3.5" />
             </span>

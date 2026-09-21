@@ -41,7 +41,7 @@ export function PromoPopup() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={handleClose}>
       <div className="relative w-full max-w-md bg-white rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in" onClick={(e) => e.stopPropagation()}>
-        <button onClick={handleClose} className="absolute top-3 right-3 z-10 w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors">
+        <button onClick={handleClose} aria-label="Close popup" className="absolute top-3 right-3 z-10 w-8 h-8 min-h-[44px] min-w-[44px] bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors">
           <X className="w-4 h-4" />
         </button>
 

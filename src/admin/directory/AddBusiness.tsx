@@ -306,7 +306,7 @@ export function AddBusiness() {
             <form onSubmit={addBranch} className="bg-surface rounded-lg p-3 mb-3 space-y-2">
               <div className="flex justify-between items-center">
                 <p className="text-xs font-medium text-text-primary">New Branch</p>
-                <button type="button" onClick={() => setShowBranch(false)}><X className="w-3.5 h-3.5 text-text-secondary" /></button>
+                <button type="button" onClick={() => setShowBranch(false)} aria-label="Close branch form"><X className="w-3.5 h-3.5 text-text-secondary" /></button>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <input type="text" required placeholder="Branch Name *" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} className={inputClass} />

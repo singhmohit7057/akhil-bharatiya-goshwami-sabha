@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { SEO } from '../components/SEO'
 import { Target, Eye, BookOpen, Landmark, Users, Home, ScrollText, Sparkles, MapPin } from 'lucide-react'
 
 export function About() {
@@ -13,7 +14,13 @@ export function About() {
   const tenOrders = t('goswami.tenOrders.orders').split(', ')
 
   return (
-    <div>
+    <>
+      <SEO
+        title="About Us | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Learn about Akhil Bharatiya Goswami Sabha Paschim Bangal – our mission, history, and governing body leading the Goswami community of West Bengal."
+        canonical="/about"
+      />
+      <div>
       {/* Hero */}
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -172,5 +179,6 @@ export function About() {
       </section>
 
     </div>
+    </>
   )
 }

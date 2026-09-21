@@ -237,7 +237,7 @@ export function Souvenir() {
         <div className="bg-white rounded-xl border border-border p-5 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-sm font-semibold text-text-primary">{editingId ? 'Edit Souvenir' : 'Create Souvenir'}</h3>
-            <button onClick={resetForm}><X className="w-4 h-4 text-text-secondary" /></button>
+            <button onClick={resetForm} aria-label="Close form"><X className="w-4 h-4 text-text-secondary" /></button>
           </div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -362,7 +362,7 @@ export function Souvenir() {
             <div className="bg-surface rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-3">
                 <h4 className="text-xs font-semibold text-text-primary">{editingSponsorId ? 'Edit Sponsor' : 'Add Sponsor'}</h4>
-                <button onClick={resetSponsorForm}><X className="w-3.5 h-3.5 text-text-secondary" /></button>
+                <button onClick={resetSponsorForm} aria-label="Close sponsor form"><X className="w-3.5 h-3.5 text-text-secondary" /></button>
               </div>
               <form onSubmit={handleAddSponsor} className="space-y-3">
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

@@ -112,7 +112,7 @@ export function Designations() {
         <div className="bg-white rounded-xl border border-border p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-text-primary">{editing ? 'Edit Designation' : 'Add Designation'}</h2>
-            <button onClick={resetForm}><X className="w-4 h-4 text-text-secondary" /></button>
+            <button onClick={resetForm} aria-label="Close form"><X className="w-4 h-4 text-text-secondary" /></button>
           </div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -173,8 +173,8 @@ export function Designations() {
             </span>
             {superAdmin && (
               <div className="flex gap-2 shrink-0">
-                <button onClick={() => startEdit(d)} className="text-primary hover:text-primary-dark"><Edit2 className="w-4 h-4" /></button>
-                <button onClick={() => handleDelete(d.id)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => startEdit(d)} aria-label="Edit designation" className="text-primary hover:text-primary-dark"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(d.id)} aria-label="Delete designation" className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>
             )}
           </div>

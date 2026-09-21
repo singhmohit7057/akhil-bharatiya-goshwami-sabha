@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 import { localized } from '../lib/utils'
 import { Spinner } from '../components/ui/Spinner'
 
@@ -48,7 +49,18 @@ export function GalleryAlbum() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
   if (!album) return <div className="text-center py-20 text-text-secondary">Album not found</div>
 
+  const albumTitle = album.title_en || 'Gallery Album'
+  const albumCover = photos[0]?.photo_url || null
+
   return (
+    <>
+    <SEO
+      title={`${albumTitle} | Gallery | Akhil Bharatiya Goswami Sabha Paschim Bangal`}
+      description={album.description || `Photos from ${albumTitle} – Akhil Bharatiya Goswami Sabha Paschim Bangal gallery.`}
+      canonical={`/gallery/${id}`}
+      ogImage={albumCover || '/logo.png'}
+      ogType="article"
+    />
     <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -111,5 +123,6 @@ export function GalleryAlbum() {
         </div>
       )}
     </div>
+    </>
   )
 }

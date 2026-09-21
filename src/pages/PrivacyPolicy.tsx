@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { SEO } from '../components/SEO'
 
 export function PrivacyPolicy() {
   const { t } = useTranslation('legal')
@@ -11,7 +12,13 @@ export function PrivacyPolicy() {
   ]
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
+    <>
+      <SEO
+        title="Privacy Policy | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Privacy policy for the official website of Akhil Bharatiya Goswami Sabha Paschim Bangal."
+        canonical="/privacy-policy"
+      />
+      <div className="max-w-3xl mx-auto px-4 py-16">
       <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-4">Legal Framework</p>
       <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mb-4">{t('privacy.title')}</h1>
       <p className="text-sm text-text-secondary mb-8">Last Updated: September 2026</p>
@@ -28,5 +35,6 @@ export function PrivacyPolicy() {
         ))}
       </div>
     </div>
+    </>
   )
 }

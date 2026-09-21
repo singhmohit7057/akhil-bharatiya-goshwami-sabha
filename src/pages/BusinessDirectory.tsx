@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { localized } from '../lib/utils'
 import type { BusinessListing } from '../types'
+import { SEO } from '../components/SEO'
 
 export function BusinessDirectory() {
   const { t, i18n } = useTranslation('directory')
@@ -51,7 +52,13 @@ export function BusinessDirectory() {
   })
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Business Directory | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Explore businesses and services by Goswami community members across West Bengal."
+        canonical="/businesses"
+      />
+      <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">{t('tagline')}</p>
@@ -188,5 +195,6 @@ export function BusinessDirectory() {
         )}
       </section>}
     </div>
+    </>
   )
 }

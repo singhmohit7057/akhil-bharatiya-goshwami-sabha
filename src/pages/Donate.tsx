@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { Heart, Shield, Eye, Building2, QrCode, Mail, User, Phone, CreditCard, IndianRupee, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 
 const PRESET_AMOUNTS = [500, 1000, 2500, 5000]
 
@@ -37,7 +38,13 @@ export function Donate() {
   }
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Donate | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Support the Goswami community. Donate to Akhil Bharatiya Goswami Sabha Paschim Bangal – 80G tax exemption available on all donations."
+        canonical="/donate"
+      />
+      <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('tagline')}</p>
@@ -117,7 +124,7 @@ export function Donate() {
               {qrOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setQrOpen(false)}>
                   <div className="relative bg-white rounded-2xl p-4 shadow-2xl max-w-xs w-full" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => setQrOpen(false)} className="absolute top-3 right-3 p-1 text-text-secondary hover:text-text-primary">
+                    <button onClick={() => setQrOpen(false)} aria-label="Close QR code" className="absolute top-3 right-3 p-1 min-h-[44px] min-w-[44px] flex items-center justify-center text-text-secondary hover:text-text-primary">
                       <X className="w-5 h-5" />
                     </button>
                     <p className="text-sm font-semibold text-text-primary text-center mb-3">Scan to Pay via UPI</p>
@@ -263,5 +270,6 @@ export function Donate() {
         </div>
       </section>
     </div>
+    </>
   )
 }

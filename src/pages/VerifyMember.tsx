@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { getRoleLabel, formatDate } from '../lib/utils'
 import type { Profile } from '../types'
 import { Spinner } from '../components/ui/Spinner'
+import { SEO } from '../components/SEO'
 
 export function VerifyMember() {
   const { t, i18n } = useTranslation('verify')
@@ -105,7 +106,13 @@ export function VerifyMember() {
   const isActive = profile.account_status === 'active'
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4 py-12">
+    <>
+      <SEO
+        title="Verify Member | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Verify the authenticity of an Akhil Bharatiya Goswami Sabha Paschim Bangal membership using the member ID."
+        canonical="/verify"
+      />
+      <div className="min-h-[60vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Verification badge */}
         <div className="text-center mb-6">
@@ -191,5 +198,6 @@ export function VerifyMember() {
         </div>
       </div>
     </div>
+    </>
   )
 }

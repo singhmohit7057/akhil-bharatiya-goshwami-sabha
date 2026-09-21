@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 
 import { localized, formatDate } from '../lib/utils'
 import type { Event } from '../types'
+import { SEO } from '../components/SEO'
 
 export function Events() {
   const { t, i18n } = useTranslation('events')
@@ -38,7 +39,13 @@ export function Events() {
   }, [tab])
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Events | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Upcoming and past cultural, religious, and community events organized by Akhil Bharatiya Goswami Sabha Paschim Bangal."
+        canonical="/events"
+      />
+      <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">{t('tagline')}</p>
@@ -123,5 +130,6 @@ export function Events() {
         )}
       </section>
     </div>
+    </>
   )
 }

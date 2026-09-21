@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { MapPin, Phone, Mail, Send } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 
 export function Contact() {
   const { t } = useTranslation('contact')
@@ -26,7 +27,13 @@ export function Contact() {
   const inputClass = 'w-full px-4 py-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary'
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Contact Us | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Contact Akhil Bharatiya Goswami Sabha Paschim Bangal for membership enquiries, events, and community support."
+        canonical="/contact"
+      />
+      <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('tagline')}</p>
@@ -174,5 +181,6 @@ export function Contact() {
         </div>
       </section>
     </div>
+    </>
   )
 }

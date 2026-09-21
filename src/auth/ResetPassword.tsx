@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { KeyRound, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 
 export function ResetPassword() {
   const navigate = useNavigate()
@@ -87,7 +88,14 @@ export function ResetPassword() {
   }
 
   return (
-    <div className="flex items-center justify-center bg-surface px-4 py-12">
+    <>
+      <SEO
+        title="Reset Password | ABGSPB"
+        description="Set a new password for your Akhil Bharatiya Goswami Sabha Paschim Bangal account."
+        canonical="/reset-password"
+        noindex={true}
+      />
+      <div className="flex items-center justify-center bg-surface px-4 py-12">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="ABGSPB" className="w-16 h-16 mx-auto mb-3 rounded-full object-cover" />
@@ -111,7 +119,7 @@ export function ResetPassword() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 pr-11 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+              <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -139,5 +147,6 @@ export function ResetPassword() {
         </form>
       </div>
     </div>
+    </>
   )
 }

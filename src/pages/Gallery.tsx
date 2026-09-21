@@ -5,6 +5,7 @@ import { Images, Camera } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { localized } from '../lib/utils'
 import { Spinner } from '../components/ui/Spinner'
+import { SEO } from '../components/SEO'
 
 interface Album {
   id: string
@@ -39,7 +40,13 @@ export function Gallery() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Gallery | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Photo gallery of events, celebrations, and community activities of Akhil Bharatiya Goswami Sabha Paschim Bangal."
+        canonical="/gallery"
+      />
+      <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('tagline')}</p>
@@ -83,5 +90,6 @@ export function Gallery() {
         )}
       </section>
     </div>
+    </>
   )
 }

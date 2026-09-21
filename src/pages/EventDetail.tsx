@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { localized, formatDate } from '../lib/utils'
 import type { Event } from '../types'
 import { Spinner } from '../components/ui/Spinner'
+import { SEO } from '../components/SEO'
 
 export function EventDetail() {
   const { id } = useParams()
@@ -26,25 +27,6 @@ export function EventDetail() {
     })
   }, [id])
 
-  useEffect(() => {
-    if (!event) return
-    const title = localized(event.title_en, event.title_hi, lang)
-    document.title = `${title} - ABGSPB`
-    const setMeta = (property: string, content: string) => {
-      let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null
-      if (!el) {
-        el = document.createElement('meta')
-        el.setAttribute('property', property)
-        document.head.appendChild(el)
-      }
-      el.setAttribute('content', content)
-    }
-    setMeta('og:title', title)
-    setMeta('og:description', localized(event.description_en, event.description_hi, lang)?.substring(0, 160) || '')
-    if (event.image_url) setMeta('og:image', event.image_url)
-    setMeta('og:type', 'article')
-    return () => { document.title = 'Akhil Bharatiya Goswami Sabha' }
-  }, [event, lang])
 
   if (loading) {
     return (
@@ -77,8 +59,19 @@ export function EventDetail() {
   const time = `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`
   const isPast = new Date(`${dateStr}T${timeStr}:00`) < new Date()
 
+  const eventTitle = localized(event.title_en, event.title_hi, lang)
+  const eventDesc = localized(event.description_en, event.description_hi, lang)?.substring(0, 160) || 'Community event by Akhil Bharatiya Goswami Sabha Paschim Bangal.'
+
   return (
-    <div>
+    <>
+      <SEO
+        title={`${eventTitle} | ABGSPB`}
+        description={eventDesc}
+        canonical={`/events/${id}`}
+        ogType="article"
+        ogImage={event.image_url || '/logo.png'}
+      />
+      <div>
       {/* Header */}
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -186,5 +179,6 @@ export function EventDetail() {
         </div>
       </div>
     </div>
+    </>
   )
 }

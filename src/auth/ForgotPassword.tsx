@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { KeyRound } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { SEO } from '../components/SEO'
 
 export function ForgotPassword() {
   const { t } = useTranslation('auth')
@@ -24,7 +25,14 @@ export function ForgotPassword() {
   }
 
   return (
-    <div className="flex items-center justify-center bg-surface px-4 py-12">
+    <>
+      <SEO
+        title="Forgot Password | ABGSPB"
+        description="Reset your Akhil Bharatiya Goswami Sabha Paschim Bangal account password."
+        canonical="/forgot-password"
+        noindex={true}
+      />
+      <div className="flex items-center justify-center bg-surface px-4 py-12">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
           <div className="mx-auto w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -62,5 +70,6 @@ export function ForgotPassword() {
         </p>
       </div>
     </div>
+    </>
   )
 }

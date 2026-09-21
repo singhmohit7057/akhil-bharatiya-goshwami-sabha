@@ -679,7 +679,7 @@ export function MemberDetail() {
           <div className="bg-surface rounded-lg p-4 mb-4">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-semibold text-text-primary">{editingFamily ? 'Edit Family Member' : 'Add Family Member'}</h3>
-              <button onClick={resetFamilyForm}><X className="w-4 h-4 text-text-secondary" /></button>
+              <button onClick={resetFamilyForm} aria-label="Close form"><X className="w-4 h-4 text-text-secondary" /></button>
             </div>
             <form onSubmit={handleFamilySave} className="space-y-3">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

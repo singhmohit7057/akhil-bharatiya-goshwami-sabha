@@ -6,6 +6,7 @@ import { getRoleLabel } from '../lib/utils'
 import type { Profile } from '../types'
 import { useDesignations } from '../hooks/useDesignations'
 import { Spinner } from '../components/ui/Spinner'
+import { SEO } from '../components/SEO'
 
 export function Members() {
   const { designations } = useDesignations()
@@ -45,7 +46,13 @@ export function Members() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Members | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Browse members of Akhil Bharatiya Goswami Sabha Paschim Bangal – our community directory of Goswami families across West Bengal."
+        canonical="/members"
+      />
+      <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('tagline')}</p>
@@ -122,5 +129,6 @@ export function Members() {
         )}
       </section>
     </div>
+    </>
   )
 }

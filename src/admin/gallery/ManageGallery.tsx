@@ -248,7 +248,7 @@ export function ManageGallery() {
         <div className="bg-white rounded-xl border border-border p-5 mb-6">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm font-semibold text-text-primary">{editingAlbum ? 'Edit Album' : 'Create Album'}</h3>
-            <button onClick={() => setShowForm(false)}><X className="w-4 h-4 text-text-secondary" /></button>
+            <button onClick={() => setShowForm(false)} aria-label="Close form"><X className="w-4 h-4 text-text-secondary" /></button>
           </div>
           <form onSubmit={handleCreateAlbum} className="space-y-3">
             <div>
@@ -304,10 +304,10 @@ export function ManageGallery() {
                   <p className="text-sm font-medium text-text-primary truncate">{localized(album.title_en, album.title_hi, lang)}</p>
                   <p className="text-xs text-text-secondary">{album.photo_count} photos</p>
                 </div>
-                <button onClick={(e) => startEditAlbum(album, e)} className="p-1.5 text-text-secondary hover:text-primary shrink-0">
+                <button onClick={(e) => startEditAlbum(album, e)} aria-label="Edit album" className="p-1.5 text-text-secondary hover:text-primary shrink-0">
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); handleDeleteAlbum(album.id) }} className="p-1.5 text-text-secondary hover:text-red-500 shrink-0">
+                <button onClick={(e) => { e.stopPropagation(); handleDeleteAlbum(album.id) }} aria-label="Delete album" className="p-1.5 text-text-secondary hover:text-red-500 shrink-0">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>

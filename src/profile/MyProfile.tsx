@@ -130,12 +130,17 @@ export function MyProfile() {
 
               {/* White body */}
               <div className="flex-1 px-5 py-3 flex gap-4">
-                {/* Photo with saffron border */}
-                <div className="w-[76px] h-[92px] rounded-lg border-2 border-[#FF9933] flex items-center justify-center overflow-hidden shrink-0 bg-gray-50">
-                  {profile.profile_photo_url ? (
-                    <img src={profile.profile_photo_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-8 h-8 text-gray-300" />
+                {/* Photo with saffron border + city below */}
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <div className="w-[76px] h-[86px] rounded-lg border-2 border-[#FF9933] flex items-center justify-center overflow-hidden bg-gray-50">
+                    {profile.profile_photo_url ? (
+                      <img src={profile.profile_photo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-8 h-8 text-gray-300" />
+                    )}
+                  </div>
+                  {profile.city && (
+                    <p className="text-[9px] font-semibold text-gray-600 text-center leading-tight max-w-[76px] truncate">{profile.city}</p>
                   )}
                 </div>
 
@@ -168,10 +173,10 @@ export function MyProfile() {
                         <p className="text-[10px] font-semibold text-gray-700">{profile.gotra}</p>
                       </div>
                     )}
-                    {profile.city && (
+                    {(profile as any).caste && (
                       <div>
-                        <p className="text-[8px] text-gray-400 uppercase">City</p>
-                        <p className="text-[10px] font-semibold text-gray-700">{profile.city}</p>
+                        <p className="text-[8px] text-gray-400 uppercase">Caste</p>
+                        <p className="text-[10px] font-semibold text-gray-700">{(profile as any).caste}</p>
                       </div>
                     )}
                     {profile.phone && (

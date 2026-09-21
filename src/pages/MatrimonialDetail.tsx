@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { localized, calculateAge } from '../lib/utils'
 import type { Profile, FamilyMember } from '../types'
 import { Spinner } from '../components/ui/Spinner'
+import { SEO } from '../components/SEO'
 
 export function MatrimonialDetail() {
   const { id } = useParams()
@@ -14,6 +15,8 @@ export function MatrimonialDetail() {
   const [mp, setMp] = useState<any>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [family, setFamily] = useState<FamilyMember[]>([])
+  const [familyPhotos, setFamilyPhotos] = useState<Record<string, { photo?: string; occupation?: string }>>({})
+  const [profileOccupation, setProfileOccupation] = useState<string | null>(null)
   const [photos, setPhotos] = useState<string[]>([])
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -32,9 +35,42 @@ export function MatrimonialDetail() {
         const allPhotos = (data.matrimonial_photos || []).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         setPhotos(allPhotos.slice(1).map((p: any) => p.photo_url))
         const { data: prof } = await supabase.from('profiles').select('*').eq('id', data.user_id).single()
-        if (prof) setProfile(prof as Profile)
+        if (prof) {
+          setProfile(prof as Profile)
+          // Fetch occupation from business_details
+          const { data: biz } = await supabase.from('business_details').select('is_employed, designation, employer_name, business_name, sector').eq('user_id', data.user_id).maybeSingle()
+          if (biz) {
+            const b = biz as any
+            if (b.is_employed) {
+              setProfileOccupation([b.designation, b.sector].filter(Boolean).join(', ') || null)
+            } else {
+              setProfileOccupation([b.business_name, b.designation].filter(Boolean).join(' · ') || null)
+            }
+          }
+        }
         const { data: fam } = await supabase.from('family_members').select('*').eq('user_id', data.user_id)
-        if (fam) setFamily(fam as FamilyMember[])
+        if (fam) {
+          setFamily(fam as FamilyMember[])
+          // Look up profile photos & occupations for family members who are registered members
+          const allNames = (fam as FamilyMember[]).map(f => f.name.trim())
+          if (allNames.length > 0) {
+            const { data: linkedProfiles } = await supabase
+              .from('profiles')
+              .select('full_name, profile_photo_url, role')
+              .or(allNames.map(n => `full_name.ilike.${n}`).join(','))
+            if (linkedProfiles) {
+              const map: Record<string, { photo?: string; occupation?: string }> = {}
+              for (const p of linkedProfiles as any[]) {
+                const key = p.full_name?.trim()
+                if (key) map[key] = {
+                  photo: p.profile_photo_url || undefined,
+                  occupation: p.role || undefined,
+                }
+              }
+              setFamilyPhotos(map)
+            }
+          }
+        }
         setLoading(false)
       })
   }, [id])
@@ -67,6 +103,14 @@ export function MatrimonialDetail() {
   const candidatePhoto = allPhotos[0]?.photo_url || null
 
   return (
+    <>
+    <SEO
+      title={`${candidateName} | Matrimonial | ABGSPB`}
+      description={`Matrimonial profile of ${candidateName} on Akhil Bharatiya Goswami Sabha Paschim Bangal.`}
+      canonical={`/matrimonial/${id}`}
+      noindex={true}
+      ogImage={candidatePhoto || '/logo.png'}
+    />
     <div className="max-w-4xl mx-auto px-4 py-10">
       <Link to="/matrimonial" className="flex items-center gap-1 text-sm text-primary hover:underline mb-6">
         <ArrowLeft className="w-4 h-4" /> {t('common:buttons.back')}
@@ -165,14 +209,21 @@ export function MatrimonialDetail() {
               {profile && (
                 <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {profile.full_name.charAt(0)}
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary overflow-hidden shrink-0">
+                      {profile.profile_photo_url ? (
+                        <img src={profile.profile_photo_url} alt={profile.full_name} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        profile.full_name.charAt(0)
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-medium text-text-primary">{profile.full_name}</p>
                       <p className="text-xs text-primary font-medium">{profile.gender === 'female' ? 'Mother' : 'Father'}</p>
                     </div>
                   </div>
+                  {profileOccupation && (
+                    <p className="text-xs text-text-secondary">{profileOccupation}</p>
+                  )}
                 </div>
               )}
               {family
@@ -182,16 +233,20 @@ export function MatrimonialDetail() {
                   return (
                     <div key={fm.id} className="flex items-center justify-between p-3 bg-surface rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                          {fm.name.charAt(0)}
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary overflow-hidden shrink-0">
+                          {(fm.photo_url || familyPhotos[fm.name.trim()]?.photo) ? (
+                            <img src={fm.photo_url || familyPhotos[fm.name.trim()]?.photo} alt={fm.name} className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            fm.name.charAt(0)
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-text-primary">{fm.name}</p>
                           <p className="text-xs text-primary font-medium capitalize">{rel}</p>
                         </div>
                       </div>
-                      {fm.occupation && (
-                        <p className="text-xs text-text-secondary">{fm.occupation}</p>
+                      {(fm.occupation || familyPhotos[fm.name.trim()]?.occupation) && (
+                        <p className="text-xs text-text-secondary capitalize">{fm.occupation || familyPhotos[fm.name.trim()]?.occupation}</p>
                       )}
                     </div>
                   )
@@ -201,5 +256,6 @@ export function MatrimonialDetail() {
         )}
       </div>
     </div>
+    </>
   )
 }

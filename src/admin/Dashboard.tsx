@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import {
   UserCheck, Users, Calendar, IndianRupee, Crown, Briefcase, Heart,
-  Plus, UserPlus, CalendarPlus, CreditCard, Store,
+  Plus, UserPlus, CalendarPlus, CreditCard, Store, Receipt,
   Check, X, MapPin, Clock, User,
   MessageSquare, Mail, MailX, Lightbulb,
 } from 'lucide-react'
@@ -117,8 +117,9 @@ export function AdminDashboard() {
 
   const quickActions = [
     { icon: UserPlus, label: 'Add Member', to: '/admin/members/add', gradient: 'from-blue-500 to-indigo-600' },
-    { icon: CalendarPlus, label: 'Add Event', to: '/admin/yearly-planner/add', gradient: 'from-green-500 to-teal-600' },
     { icon: CreditCard, label: 'Record Payment', to: '/admin/payments/add', gradient: 'from-purple-500 to-violet-600' },
+    { icon: Receipt, label: 'Record Expense', to: '/admin/expenses/add', gradient: 'from-red-500 to-orange-500' },
+    { icon: CalendarPlus, label: 'Add Event', to: '/admin/yearly-planner/add', gradient: 'from-green-500 to-teal-600' },
     { icon: Store, label: 'Add Business', to: '/admin/business/add', gradient: 'from-cyan-500 to-blue-600' },
     { icon: Heart, label: 'Add Matrimonial', to: '/admin/matrimonial/add', gradient: 'from-pink-500 to-rose-600' },
   ]
@@ -202,10 +203,10 @@ export function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
-                    <button onClick={() => handleApprove(m)} className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100" title="Approve">
+                    <button onClick={() => handleApprove(m)} aria-label="Approve member" className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100" title="Approve">
                       <Check className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleReject(m)} className="p-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100" title="Reject">
+                    <button onClick={() => handleReject(m)} aria-label="Reject member" className="p-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100" title="Reject">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>

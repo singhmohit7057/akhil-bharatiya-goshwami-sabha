@@ -3,6 +3,7 @@ import { BookOpen, FileText, Download } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { Spinner } from '../components/ui/Spinner'
+import { SEO } from '../components/SEO'
 
 interface SouvenirItem {
   id: string
@@ -33,7 +34,13 @@ export function Souvenirs() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
   return (
-    <div>
+    <>
+      <SEO
+        title="Souvenirs | Akhil Bharatiya Goswami Sabha Paschim Bangal"
+        description="Browse souvenir magazines and event publications by Akhil Bharatiya Goswami Sabha Paschim Bangal."
+        canonical="/souvenirs"
+      />
+      <div>
       <section className="bg-surface py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('tagline')}</p>
@@ -79,5 +86,6 @@ export function Souvenirs() {
         )}
       </section>
     </div>
+    </>
   )
 }
