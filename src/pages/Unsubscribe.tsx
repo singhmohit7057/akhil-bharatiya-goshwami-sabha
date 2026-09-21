@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { MailX, CheckCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { SEO } from '../components/SEO'
 
 export function Unsubscribe() {
   const [email, setEmail] = useState('')
@@ -19,6 +20,8 @@ export function Unsubscribe() {
   }
 
   return (
+    <>
+    <SEO title="Unsubscribe | ABGSPB" description="Unsubscribe from Akhil Bharatiya Goswami Sabha Paschim Bangal newsletters." canonical="/unsubscribe" noindex={true} />
     <div className="flex items-center justify-center bg-surface py-16 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
         {success ? (
@@ -63,5 +66,6 @@ export function Unsubscribe() {
         )}
       </div>
     </div>
+    </>
   )
 }

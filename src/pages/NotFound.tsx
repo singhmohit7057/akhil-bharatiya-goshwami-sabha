@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { SEO } from '../components/SEO'
 
 export function NotFound() {
   const { t } = useTranslation('common')
 
   return (
+    <>
+    <SEO title="Page Not Found | ABGSPB" description="The page you are looking for does not exist." canonical="/404" noindex={true} />
     <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
       <p className="text-7xl font-bold text-primary mb-4">404</p>
       <p className="text-xl text-text-primary mb-2">Page Not Found</p>
@@ -13,5 +16,6 @@ export function NotFound() {
         {t('nav.home')}
       </Link>
     </div>
+    </>
   )
 }
