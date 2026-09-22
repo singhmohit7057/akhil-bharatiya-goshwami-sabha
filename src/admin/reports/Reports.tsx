@@ -9,12 +9,13 @@ import { Spinner } from '../../components/ui/Spinner'
 interface TxRow {
   id: string
   date: string
-  type: 'in' | 'out'
+  type: 'in' | 'out' | 'bank'
   category: string
   description: string
   amount: number
   mode: string | null
   member?: string
+  bankType?: 'deposit' | 'withdraw'
 }
 
 const YEARS = Array.from({ length: new Date().getFullYear() - 2023 + 1 }, (_, i) => String(2023 + i))
@@ -25,8 +26,9 @@ export function Reports() {
   const [year, setYear] = useState(new Date().getFullYear().toString())
   const [loading, setLoading] = useState(true)
   const [transactions, setTransactions] = useState<TxRow[]>([])
+  const [bankTransactions, setBankTransactions] = useState<any[]>([])
   const [categoryFilter, setCategoryFilter] = useState('')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'in' | 'out'>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'in' | 'out' | 'bank'>('all')
 
   useEffect(() => { fetchAll() }, [year])
 
@@ -35,14 +37,16 @@ export function Reports() {
     const start = `${year}-01-01`
     const end   = `${year}-12-31`
 
-    const [donRes, expRes, suvRes] = await Promise.all([
-      supabase.from('donations').select('id, amount, donation_date, purpose, payment_method, profiles!donations_user_id_fkey(full_name)')
+    const [donRes, expRes, suvRes, bankRes] = await Promise.all([
+      supabase.from('donations').select('id, amount, donation_date, purpose, payment_method, donor_name, profiles!donations_user_id_fkey(full_name)')
         .gte('donation_date', start).lte('donation_date', end).order('donation_date', { ascending: false }),
       supabase.from('expenses').select('id, amount, expense_date, category, title, payment_mode, paid_to')
         .gte('expense_date', start).lte('expense_date', end).order('expense_date', { ascending: false }),
       supabase.from('souvenir_sponsors').select('id, amount, created_at, sponsor_name, payment_mode')
         .eq('is_paid', true)
         .gte('created_at', `${year}-01-01T00:00:00`).lte('created_at', `${year}-12-31T23:59:59`),
+      supabase.from('bank_transactions').select('id, type, amount, transaction_date, bank_name, purpose, profiles!bank_transactions_by_who_fkey(full_name)')
+        .gte('transaction_date', start).lte('transaction_date', end).order('transaction_date', { ascending: false }),
     ])
 
     const rows: TxRow[] = []
@@ -55,7 +59,7 @@ export function Reports() {
         description: d.purpose || 'General Donation',
         amount: Number(d.amount),
         mode: d.payment_method,
-        member: d.profiles?.full_name,
+        member: d.donor_name || d.profiles?.full_name,
       })
     }
 
@@ -83,6 +87,21 @@ export function Reports() {
       })
     }
 
+    // Bank transactions
+    const bankData = (bankRes.data || []) as any[]
+    setBankTransactions(bankData)
+    for (const b of bankData) {
+      rows.push({
+        id: b.id, date: b.transaction_date, type: 'bank',
+        category: b.type === 'deposit' ? 'Cash Deposit' : 'Cash Withdraw',
+        description: b.purpose || (b.type === 'deposit' ? 'Cash Deposit' : 'Cash Withdrawal'),
+        amount: Number(b.amount),
+        mode: b.bank_name || null,
+        member: (b.profiles as any)?.full_name,
+        bankType: b.type,
+      })
+    }
+
     // Sort by date desc
     rows.sort((a, b) => b.date.localeCompare(a.date))
     setTransactions(rows)
@@ -95,8 +114,12 @@ export function Reports() {
   const offlineOut = transactions.filter((t) => t.type === 'out' && t.mode?.toLowerCase() === 'offline').reduce((s, t) => s + t.amount, 0)
   const onlineIn   = transactions.filter((t) => t.type === 'in'  && t.mode?.toLowerCase() === 'online').reduce((s, t) => s + t.amount, 0)
   const onlineOut  = transactions.filter((t) => t.type === 'out' && t.mode?.toLowerCase() === 'online').reduce((s, t) => s + t.amount, 0)
-  const netOffline = offlineIn - offlineOut
-  const netOnline  = onlineIn  - onlineOut
+
+  const totalDeposited  = bankTransactions.filter(b => b.type === 'deposit').reduce((s, b) => s + Number(b.amount), 0)
+  const totalWithdrawn  = bankTransactions.filter(b => b.type === 'withdraw').reduce((s, b) => s + Number(b.amount), 0)
+
+  const netOffline = offlineIn - offlineOut - totalDeposited + totalWithdrawn  // cash in hand
+  const netOnline  = onlineIn  - onlineOut  + totalDeposited - totalWithdrawn  // bank balance
 
   const membershipTotal = transactions.filter((t) => t.category === 'Membership').reduce((s, t) => s + t.amount, 0)
   const donationTotal   = transactions.filter((t) => t.category === 'Donation').reduce((s, t) => s + t.amount, 0)
@@ -105,9 +128,11 @@ export function Reports() {
 
   const filtered = transactions.filter((t) => {
     const matchType = typeFilter === 'all' || t.type === typeFilter
-    const matchCat  = !categoryFilter || (
-      categoryFilter === 'Expense' ? t.type === 'out' : t.category === categoryFilter
-    )
+    let matchCat = true
+    if (categoryFilter) {
+      if (categoryFilter === 'Expense') matchCat = t.type === 'out'
+      else matchCat = t.category === categoryFilter
+    }
     return matchType && matchCat
   })
 
@@ -116,17 +141,20 @@ export function Reports() {
     const end   = `${year}-12-31`
 
     // Fetch fresh full data for export
-    const [donRes, expRes, suvRes] = await Promise.all([
+    const [donRes, expRes, suvRes, bankExportRes] = await Promise.all([
       supabase.from('donations')
-        .select('amount, donation_date, purpose, payment_method, transaction_id, profiles!donations_user_id_fkey(full_name)')
+        .select('amount, donation_date, purpose, payment_method, transaction_id, donor_name, profiles!donations_user_id_fkey(full_name), reference_member:profiles!donations_reference_member_id_fkey(full_name)')
         .gte('donation_date', start).lte('donation_date', end).order('donation_date', { ascending: false }),
       supabase.from('expenses')
-        .select('title, category, amount, expense_date, payment_mode, paid_to, notes')
+        .select('title, category, amount, expense_date, payment_mode, paid_to, notes, profiles!expenses_paid_by_fkey(full_name)')
         .gte('expense_date', start).lte('expense_date', end).order('expense_date', { ascending: false }),
       supabase.from('souvenir_sponsors')
         .select('sponsor_name, company_name, phone, created_at, ad_size, amount, payment_mode, notes, souvenirs(title)')
         .eq('is_paid', true)
         .gte('created_at', `${year}-01-01T00:00:00`).lte('created_at', `${year}-12-31T23:59:59`),
+      supabase.from('bank_transactions')
+        .select('type, amount, transaction_date, bank_name, purpose, notes, profiles!bank_transactions_by_who_fkey(full_name)')
+        .gte('transaction_date', start).lte('transaction_date', end).order('transaction_date', { ascending: false }),
     ])
 
     const wb = XLSX.utils.book_new()
@@ -144,11 +172,14 @@ export function Reports() {
       ['By Payment Mode', ''],
       ['Offline Income', offlineIn],
       ['Offline Expense', offlineOut],
-      ['Net Offline', netOffline],
+      ['Net Offline (Cash in Hand)', netOffline],
       [],
       ['Online Income', onlineIn],
       ['Online Expense', onlineOut],
-      ['Net Online', netOnline],
+      ['Net Online (Bank Balance)', netOnline],
+      [],
+      ['Cash Deposited to Bank', totalDeposited],
+      ['Cash Withdrawn from Bank', totalWithdrawn],
       [],
       ['Income Breakdown', ''],
       ['Total Membership', membershipTotal],
@@ -162,7 +193,7 @@ export function Reports() {
     const memberships = ((donRes.data || []) as any[])
       .filter(d => d.purpose === 'Executive Membership')
       .map(d => ({
-        'Member':           d.profiles?.full_name || '',
+        'Member':           d.donor_name || d.profiles?.full_name || '',
         'Payment Date':     d.donation_date,
         'Membership Date':  d.donation_date,
         'Amount (₹)':       Number(d.amount),
@@ -173,20 +204,36 @@ export function Reports() {
     wsM['!cols'] = [col(26), col(16), col(16), col(12), col(12), col(24)]
     XLSX.utils.book_append_sheet(wb, wsM, 'Membership')
 
-    // Sheet 3: Donations
-    const donations = ((donRes.data || []) as any[])
-      .filter(d => d.purpose !== 'Executive Membership')
+    // Sheet 3a: Member Donations
+    const memberDonations = ((donRes.data || []) as any[])
+      .filter(d => d.purpose !== 'Executive Membership' && !d.donor_name)
       .map(d => ({
-        'Member':      d.profiles?.full_name || '',
-        'Date':        d.donation_date,
-        'Description': d.purpose || 'General Donation',
-        'Amount (₹)':  Number(d.amount),
-        'Mode':        d.payment_method || '',
-        'Remark':      d.transaction_id || '',
+        'Member':       d.profiles?.full_name || '',
+        'Date':         d.donation_date,
+        'Description':  d.purpose || 'General Donation',
+        'Amount (₹)':   Number(d.amount),
+        'Mode':         d.payment_method || '',
+        'Remark':       d.transaction_id || '',
       }))
-    const wsD = XLSX.utils.json_to_sheet(donations.length ? donations : [{ Note: 'No data' }])
-    wsD['!cols'] = [col(26), col(16), col(28), col(12), col(12), col(24)]
-    XLSX.utils.book_append_sheet(wb, wsD, 'Donations')
+    const wsMD = XLSX.utils.json_to_sheet(memberDonations.length ? memberDonations : [{ Note: 'No data' }])
+    wsMD['!cols'] = [col(26), col(16), col(28), col(12), col(12), col(24)]
+    XLSX.utils.book_append_sheet(wb, wsMD, 'Member Donations')
+
+    // Sheet 3b: Outsider Donations
+    const outsiderDonations = ((donRes.data || []) as any[])
+      .filter(d => d.purpose !== 'Executive Membership' && d.donor_name)
+      .map(d => ({
+        'Donor Name':       d.donor_name || '',
+        'Reference Member': (d.reference_member as any)?.full_name || '',
+        'Date':             d.donation_date,
+        'Description':      d.purpose || 'General Donation',
+        'Amount (₹)':       Number(d.amount),
+        'Mode':             d.payment_method || '',
+        'Remark':           d.transaction_id || '',
+      }))
+    const wsOD = XLSX.utils.json_to_sheet(outsiderDonations.length ? outsiderDonations : [{ Note: 'No data' }])
+    wsOD['!cols'] = [col(26), col(26), col(16), col(28), col(12), col(12), col(24)]
+    XLSX.utils.book_append_sheet(wb, wsOD, 'Outsider Donations')
 
     // Sheet 4: Souvenir
     const souvenirs = ((suvRes.data || []) as any[]).map(s => ({
@@ -205,17 +252,32 @@ export function Reports() {
 
     // Sheet 5: Expenses
     const expenses = ((expRes.data || []) as any[]).map(e => ({
-      'Date':        e.expense_date,
-      'Title':       e.title,
-      'Category':    e.category || '',
-      'Paid To':     e.paid_to || '',
-      'Amount (₹)':  Number(e.amount),
-      'Mode':        e.payment_mode || '',
-      'Remark':      e.notes || '',
+      'Date':             e.expense_date,
+      'Title':            e.title,
+      'Category':         e.category || '',
+      'Paid To':          e.paid_to || '',
+      'Payment Done By':  (e.profiles as any)?.full_name || '',
+      'Amount (₹)':       Number(e.amount),
+      'Mode':             e.payment_mode || '',
+      'Remark':           e.notes || '',
     }))
     const wsE = XLSX.utils.json_to_sheet(expenses.length ? expenses : [{ Note: 'No data' }])
-    wsE['!cols'] = [col(14), col(28), col(18), col(22), col(12), col(12), col(24)]
+    wsE['!cols'] = [col(14), col(28), col(18), col(22), col(22), col(12), col(12), col(24)]
     XLSX.utils.book_append_sheet(wb, wsE, 'Expenses')
+
+    // Sheet 6: Bank Transactions
+    const bankExportData = ((bankExportRes.data || []) as any[]).map(b => ({
+      'Type':         b.type === 'deposit' ? 'Cash Deposit' : 'Cash Withdrawal',
+      'Date':         b.transaction_date,
+      'Amount (₹)':   Number(b.amount),
+      'By Who':       (b.profiles as any)?.full_name || '',
+      'Bank':         b.bank_name || '',
+      'Purpose':      b.purpose || '',
+      'Remark':       b.notes || '',
+    }))
+    const wsBk = XLSX.utils.json_to_sheet(bankExportData.length ? bankExportData : [{ Note: 'No data' }])
+    wsBk['!cols'] = [col(18), col(14), col(12), col(24), col(20), col(24), col(24)]
+    XLSX.utils.book_append_sheet(wb, wsBk, 'Bank Transactions')
 
     XLSX.writeFile(wb, `ABGSPB_Financial_Report_${year}.xlsx`)
   }
@@ -281,8 +343,9 @@ export function Reports() {
                   <p className="text-base font-bold text-red-500">₹{offlineOut.toLocaleString()}</p>
                 </div>
                 <div className={`rounded-lg p-3 ${netOffline >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <p className="text-[10px] text-text-secondary mb-1">Net Offline</p>
+                  <p className="text-[10px] text-text-secondary mb-0.5">Net Offline <span className="opacity-60">(Cash in Hand)</span></p>
                   <p className={`text-base font-bold ${netOffline >= 0 ? 'text-green-700' : 'text-red-600'}`}>{netOffline >= 0 ? '+' : ''}₹{netOffline.toLocaleString()}</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Inc − Exp − Dep + Wdr</p>
                 </div>
                 {/* Online row */}
                 <div className="bg-blue-50 rounded-lg p-3">
@@ -294,8 +357,24 @@ export function Reports() {
                   <p className="text-base font-bold text-orange-600">₹{onlineOut.toLocaleString()}</p>
                 </div>
                 <div className={`rounded-lg p-3 ${netOnline >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <p className="text-[10px] text-text-secondary mb-1">Net Online</p>
+                  <p className="text-[10px] text-text-secondary mb-0.5">Net Online <span className="opacity-60">(Bank Balance)</span></p>
                   <p className={`text-base font-bold ${netOnline >= 0 ? 'text-green-700' : 'text-red-600'}`}>{netOnline >= 0 ? '+' : ''}₹{netOnline.toLocaleString()}</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Inc − Exp + Dep − Wdr</p>
+                </div>
+                {/* Cash deposit/withdraw — informational transfer row */}
+                <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-300">
+                  <p className="text-[10px] text-text-secondary mb-1">Cash Deposited to Bank</p>
+                  <p className="text-base font-bold text-gray-600">₹{totalDeposited.toLocaleString()}</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Added to Net Online ↑</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-300">
+                  <p className="text-[10px] text-text-secondary mb-1">Cash Withdrawn from Bank</p>
+                  <p className="text-base font-bold text-gray-600">₹{totalWithdrawn.toLocaleString()}</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Added to Net Offline ↑</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-300">
+                  <p className="text-[10px] text-text-secondary mb-1">Transfer (internal)</p>
+                  <p className="text-xs text-gray-400 italic mt-1">Does not affect Net Balance</p>
                 </div>
               </div>
             </div>
@@ -318,6 +397,7 @@ export function Reports() {
                 <p className="text-[9px] text-text-secondary mt-0.5">{transactions.filter(t=>t.category==='Souvenir').length} sponsors</p>
               </div>
             </div>
+
           </div>
 
           {/* Expense by category */}
@@ -341,10 +421,10 @@ export function Reports() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="flex gap-1.5">
-              {(['all','in','out'] as const).map((t) => (
+              {(['all','in','out','bank'] as const).map((t) => (
                 <button key={t} onClick={() => setTypeFilter(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${typeFilter===t ? (t==='in'?'bg-green-600 text-white':t==='out'?'bg-red-600 text-white':'bg-primary text-white') : 'bg-white border border-border text-text-secondary hover:bg-gray-50'}`}>
-                  {t==='all'?'All':t==='in'?'↑ Income':'↓ Expense'}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${typeFilter===t ? (t==='in'?'bg-green-600 text-white':t==='out'?'bg-red-600 text-white':t==='bank'?'bg-blue-600 text-white':'bg-primary text-white') : 'bg-white border border-border text-text-secondary hover:bg-gray-50'}`}>
+                  {t==='all'?'All':t==='in'?'↑ Income':t==='out'?'↓ Expense':'🏦 Bank'}
                 </button>
               ))}
             </div>
@@ -355,6 +435,8 @@ export function Reports() {
               <option value="Donation">Donation</option>
               <option value="Souvenir">Souvenir</option>
               <option value="Expense">Expense</option>
+              <option value="Cash Deposit">Cash Deposit</option>
+              <option value="Cash Withdraw">Cash Withdraw</option>
             </select>
             <p className="text-xs text-text-secondary self-center ml-auto">{filtered.length} transactions · ₹{filtered.reduce((s,t)=>s+(t.type==='in'?t.amount:0),0).toLocaleString()} in · ₹{filtered.reduce((s,t)=>s+(t.type==='out'?t.amount:0),0).toLocaleString()} out</p>
           </div>
@@ -368,8 +450,8 @@ export function Reports() {
               ) : filtered.map((t) => (
                 <div key={t.id + t.date} className="px-4 py-3 flex items-center gap-3">
                   <div className="shrink-0">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
-                      {t.type === 'in' ? '↑IN' : '↓OUT'}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600') : 'bg-red-50 text-red-600'}`}>
+                      {t.type === 'in' ? '↑IN' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'DEP' : 'WDR') : '↓OUT'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -380,13 +462,13 @@ export function Reports() {
                     <p className="text-xs text-text-primary truncate mt-0.5">{t.description}</p>
                     {t.member && (
                       <p className="text-[10px] text-text-secondary">
-                        <span className={`font-medium ${t.type === 'in' ? 'text-green-600' : 'text-red-500'}`}>{t.type === 'in' ? 'By ' : 'To '}</span>
+                        <span className={`font-medium ${t.type === 'in' || t.type === 'bank' ? 'text-green-600' : 'text-red-500'}`}>{t.type === 'in' || t.type === 'bank' ? 'By ' : 'To '}</span>
                         {t.member}
                       </p>
                     )}
                   </div>
-                  <p className={`text-sm font-semibold shrink-0 ${t.type === 'in' ? 'text-green-600' : 'text-red-500'}`}>
-                    {t.type === 'in' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                  <p className={`text-sm font-semibold shrink-0 ${t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? 'text-green-600' : 'text-red-500'}`}>
+                    {t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? '+' : '-'}₹{t.amount.toLocaleString()}
                   </p>
                 </div>
               ))}
@@ -412,8 +494,8 @@ export function Reports() {
                     <tr key={t.id + t.date} className="border-b border-border hover:bg-gray-50">
                       <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{formatDate(t.date, 'en')}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
-                          {t.type === 'in' ? '↑ IN' : '↓ OUT'}
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600') : 'bg-red-50 text-red-600'}`}>
+                          {t.type === 'in' ? '↑ IN' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'DEP' : 'WDR') : '↓ OUT'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -423,16 +505,16 @@ export function Reports() {
                       <td className="px-4 py-3 text-xs">
                         {t.member ? (
                           <span className="text-text-primary">
-                            <span className={`text-[10px] font-medium mr-1 ${t.type === 'in' ? 'text-green-600' : 'text-red-500'}`}>
-                              {t.type === 'in' ? 'By' : 'To'}
+                            <span className={`text-[10px] font-medium mr-1 ${t.type === 'in' || t.type === 'bank' ? 'text-green-600' : 'text-red-500'}`}>
+                              {t.type === 'in' || t.type === 'bank' ? 'By' : 'To'}
                             </span>
                             {t.member}
                           </span>
                         ) : '—'}
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">{t.mode || '—'}</td>
-                      <td className={`px-4 py-3 font-semibold text-right ${t.type === 'in' ? 'text-green-600' : 'text-red-500'}`}>
-                        {t.type === 'in' ? '+' : '-'}₹{t.amount.toLocaleString()}
+                      <td className={`px-4 py-3 font-semibold text-right ${t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? 'text-green-600' : 'text-red-500'}`}>
+                        {t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? '+' : '-'}₹{t.amount.toLocaleString()}
                       </td>
                     </tr>
                   ))}

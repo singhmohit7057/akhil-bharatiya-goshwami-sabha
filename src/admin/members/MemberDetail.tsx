@@ -74,7 +74,7 @@ export function MemberDetail() {
       setMember(m)
       setSelectedRole(m.role)
       fetchFamilyMembers(m.id)
-      supabase.from('donations').select('*').eq('user_id', m.id).order('donation_date', { ascending: false })
+      supabase.from('donations').select('*, ref:profiles!donations_reference_member_id_fkey(full_name)').eq('user_id', m.id).order('donation_date', { ascending: false })
         .then(({ data }) => setMemberPayments(data || []))
       supabase.from('business_details').select('*').eq('user_id', m.id).maybeSingle()
         .then(({ data }) => setBusinessDetail(data as BusinessDetail | null))
@@ -292,7 +292,7 @@ export function MemberDetail() {
               villageAddress: (member as any).village_address || undefined,
               photoUrl: member.profile_photo_url || undefined,
               familyMembers: familyMembers.map((fm) => ({ name: fm.name, relation: fm.relation, gender: fm.gender || undefined, dob: fm.date_of_birth || undefined, photoUrl: fm.photo_url || undefined })),
-              payments: memberPayments.map((p: any) => ({ date: p.donation_date, purpose: p.purpose || 'General Donation', amount: Number(p.amount), mode: p.payment_method })),
+              payments: memberPayments.map((p: any) => ({ date: p.donation_date, purpose: p.purpose || 'General Donation', amount: Number(p.amount), mode: p.payment_method, donorName: p.donor_name || undefined, refName: p.ref?.full_name || undefined, remark: p.transaction_id || undefined })),
               business: businessDetail ? {
                 isEmployed: businessDetail.is_employed,
                 businessName: businessDetail.business_name || undefined,
@@ -850,7 +850,18 @@ export function MemberDetail() {
                     : <IndianRupee className="w-4 h-4 text-green-600" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary">{p.purpose || 'General Donation'}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-text-primary">{p.purpose || 'General Donation'}</p>
+                    {p.donor_name ? (
+                      <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                        by {p.donor_name}{p.ref?.full_name ? ` · ref: ${p.ref.full_name}` : ''}
+                      </span>
+                    ) : p.purpose !== 'Executive Membership' && (
+                      <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
+                        Donation
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-text-secondary">{formatDate(p.donation_date, lang)} {p.payment_method ? `· ${p.payment_method}` : ''}</p>
                 </div>
                 <p className={`text-sm font-semibold shrink-0 ${p.purpose === 'Executive Membership' ? 'text-amber-600' : 'text-green-600'}`}>

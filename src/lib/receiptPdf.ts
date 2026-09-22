@@ -16,8 +16,10 @@ interface ReceiptData {
   payment_method: string | null
   transaction_id: string | null
   memberName: string
+  nameLabel?: string
   memberId?: string
   memberEmail?: string
+  referenceName?: string
 }
 
 function getExpiryDate(dateStr: string): string {
@@ -72,8 +74,9 @@ export function generatePaymentReceiptPdf(data: ReceiptData) {
   // Detail rows
   const rows: [string, string][] = [
     ...(data.memberId ? [['Member ID', data.memberId] as [string, string]] : []),
-    ['Member Name', data.memberName],
+    [data.nameLabel || 'Member Name', data.memberName],
     ...(data.memberEmail ? [['Email', data.memberEmail] as [string, string]] : []),
+    ...(data.referenceName ? [['Reference', data.referenceName] as [string, string]] : []),
     ['Date', date],
     ['Purpose', data.purpose || 'General Donation'],
     ['Payment Mode', data.payment_method || 'N/A'],
@@ -175,7 +178,7 @@ interface MemberProfileData {
     vcFrontUrl?: string
     vcBackUrl?: string
   } | null
-  payments?: { date: string; purpose: string; amount: number; mode?: string | null }[]
+  payments?: { date: string; purpose: string; amount: number; mode?: string | null; donorName?: string; refName?: string; remark?: string }[]
 }
 
 export async function generateMemberProfilePdf(data: MemberProfileData) {
@@ -457,25 +460,49 @@ export async function generateMemberProfilePdf(data: MemberProfileData) {
   } else {
     doc.setFillColor(245, 245, 245); doc.setDrawColor(220, 220, 220)
     doc.rect(mx, y, W - mx * 2, 7, 'FD')
-    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 100, 100)
+    doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 100, 100)
     doc.text('Date', mx + 2, y + 5)
-    doc.text('Purpose', mx + 28, y + 5)
-    doc.text('Mode', mx + 82, y + 5)
+    doc.text('Purpose', mx + 26, y + 5)
+    doc.text('Type', mx + 72, y + 5)
+    doc.text('Mode', mx + 93, y + 5)
     doc.text('Amount', W - mx - 2, y + 5, { align: 'right' })
     y += 8
 
     let total = 0
     payments.forEach((p, i) => {
+      const extraLines = (p.remark ? 1 : 0) + (p.donorName ? 1 : 0)
+      const rowH = extraLines > 0 ? 7 + extraLines * 4.5 : 7
       if (i % 2 === 0) { doc.setFillColor(252, 252, 252) } else { doc.setFillColor(255, 255, 255) }
-      doc.rect(mx, y - 1, W - mx * 2, 7, 'F')
-      doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60)
+      doc.rect(mx, y - 1, W - mx * 2, rowH, 'F')
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60)
       doc.text(fmtDate(p.date), mx + 2, y + 4)
-      doc.text(doc.splitTextToSize(p.purpose || 'General Donation', 50)[0], mx + 28, y + 4)
-      doc.text(p.mode || '—', mx + 82, y + 4)
+      // Purpose
+      const purposeLabel = p.purpose === 'Executive Membership' ? 'Exec. Membership' : (p.purpose || 'General Donation')
+      doc.text(doc.splitTextToSize(purposeLabel, 42)[0], mx + 26, y + 4)
+      // Sub-line: remark, then donor info (below purpose)
+      let subY = y + 9
+      if (p.remark) {
+        doc.setFontSize(6); doc.setTextColor(120, 120, 120)
+        doc.text(doc.splitTextToSize(p.remark, 42)[0], mx + 26, subY)
+        subY += 4.5
+      }
+      if (p.donorName) {
+        doc.setFontSize(6); doc.setTextColor(30, 90, 200)
+        doc.text(`by ${p.donorName}${p.refName ? ` (${p.refName})` : ''}`, mx + 26, subY)
+      }
+      // Type
+      const typeLabel = p.purpose === 'Executive Membership' ? 'Membership' : p.donorName ? 'Outsider' : 'Donation'
+      const typeColor: [number,number,number] = p.purpose === 'Executive Membership' ? [180,120,0] : p.donorName ? [30,90,200] : [30,140,80]
+      doc.setFontSize(6.5); doc.setTextColor(...typeColor)
+      doc.text(typeLabel, mx + 72, y + 4)
+      // Mode
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(80, 80, 80)
+      doc.text(p.mode || '—', mx + 93, y + 4)
+      // Amount
       doc.setFont('helvetica', 'bold'); doc.setTextColor(p.purpose === 'Executive Membership' ? 180 : 30, p.purpose === 'Executive Membership' ? 120 : 30, 0)
       doc.text(`Rs.${Number(p.amount).toLocaleString('en-IN')}`, W - mx - 2, y + 4, { align: 'right' })
       total += Number(p.amount)
-      y += 7
+      y += rowH
     })
 
     y += 2

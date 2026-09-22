@@ -20,6 +20,7 @@ export function AddPayment() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [paymentType, setPaymentType] = useState<'donation' | 'membership'>('donation')
+  const [donorType, setDonorType] = useState<'member' | 'other'>('member')
   const [form, setForm] = useState({
     user_id: '',
     amount: '',
@@ -28,6 +29,8 @@ export function AddPayment() {
     purpose: '',
     payment_method: '',
     transaction_id: '',
+    donor_name: '',
+    reference_member_id: '',
   })
 
   useEffect(() => {
@@ -55,8 +58,11 @@ export function AddPayment() {
               purpose: p.purpose === 'Executive Membership' ? '' : (p.purpose || ''),
               payment_method: p.payment_method || '',
               transaction_id: p.transaction_id || '',
+              donor_name: (p as any).donor_name || '',
+              reference_member_id: (p as any).reference_member_id || '',
             })
             setPaymentType(p.purpose === 'Executive Membership' ? 'membership' : 'donation')
+            if (p.donor_name) setDonorType('other')
           }
         }
         setLoading(false)
@@ -72,14 +78,23 @@ export function AddPayment() {
     const purpose = paymentType === 'membership' ? 'Executive Membership' : (form.purpose || 'General Donation')
     const amount = parseFloat(form.amount)
 
-    const payload = {
-      user_id: form.user_id,
+    if (donorType === 'other' && !form.donor_name.trim()) {
+      toast.error('Please enter the donor name'); setSaving(false); return
+    }
+    if (donorType === 'member' && !form.user_id) {
+      toast.error('Please select a member'); setSaving(false); return
+    }
+
+    const payload: any = {
+      user_id: donorType === 'member' ? form.user_id : (form.reference_member_id || null),
       amount,
       donation_date: form.donation_date,
       purpose,
       payment_method: form.payment_method || null,
       transaction_id: form.transaction_id || null,
       recorded_by: user?.id,
+      donor_name: donorType === 'other' ? form.donor_name.trim() : null,
+      reference_member_id: donorType === 'other' && form.reference_member_id ? form.reference_member_id : null,
     }
 
     if (editId) {
@@ -159,32 +174,73 @@ export function AddPayment() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">Select Member *</label>
-            <MemberSelect
-              members={members.map(m => ({ id: m.id, full_name: m.full_name, role: m.role, email: (m as any).email, phone: (m as any).phone }))}
-              value={form.user_id}
-              onChange={(id) => setForm({ ...form, user_id: id })}
-              required
-            />
-          </div>
 
-          {selected && (
-            <div className="flex items-center gap-3 p-3 bg-surface rounded-lg">
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                {selected.profile_photo_url ? (
-                  <img src={selected.profile_photo_url} alt="" className="w-9 h-9 rounded-full object-cover" />
-                ) : (
-                  <User className="w-4 h-4 text-primary" />
-                )}
+          {/* Donor type — only for donation */}
+          {paymentType === 'donation' && (
+            <div>
+              <label className="block text-xs font-medium text-text-primary mb-2">Donor Type</label>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { setDonorType('member'); setForm(f => ({ ...f, donor_name: '', reference_member_id: '' })) }}
+                  className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${donorType === 'member' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-secondary hover:border-primary/30'}`}>
+                  Member
+                </button>
+                <button type="button" onClick={() => { setDonorType('other'); setForm(f => ({ ...f, user_id: '' })) }}
+                  className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${donorType === 'other' ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-secondary hover:border-primary/30'}`}>
+                  Other (Outsider)
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Member selector */}
+          {(paymentType === 'membership' || donorType === 'member') && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Select Member *</label>
+                <MemberSelect
+                  members={members.map(m => ({ id: m.id, full_name: m.full_name, role: m.role, email: (m as any).email, phone: (m as any).phone }))}
+                  value={form.user_id}
+                  onChange={(id) => setForm({ ...form, user_id: id })}
+                  required={paymentType === 'membership' || donorType === 'member'}
+                />
+              </div>
+              {selected && (
+                <div className="flex items-center gap-3 p-3 bg-surface rounded-lg">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {selected.profile_photo_url ? (
+                      <img src={selected.profile_photo_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4 text-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">{selected.full_name}</p>
+                    <p className="text-xs text-text-secondary">{selected.email} · {selected.city || ''}</p>
+                  </div>
+                  {selected.is_executive_member && (
+                    <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full ml-auto">Executive</span>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Outsider donor fields */}
+          {paymentType === 'donation' && donorType === 'other' && (
+            <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Donor Name *</label>
+                <input type="text" required placeholder="Full name of the donor" value={form.donor_name} onChange={(e) => setForm({ ...form, donor_name: e.target.value })} className={inputClass} />
               </div>
               <div>
-                <p className="text-sm font-medium text-text-primary">{selected.full_name}</p>
-                <p className="text-xs text-text-secondary">{selected.email} · {selected.city || ''}</p>
+                <label className="block text-xs font-medium text-text-primary mb-1">Reference Member <span className="text-text-secondary font-normal">(whose reference brought this donor)</span></label>
+                <MemberSelect
+                  members={members.map(m => ({ id: m.id, full_name: m.full_name, role: m.role, email: (m as any).email, phone: (m as any).phone }))}
+                  value={form.reference_member_id}
+                  onChange={(id) => setForm({ ...form, reference_member_id: id })}
+                  placeholder="Select reference member (optional)..."
+                />
               </div>
-              {selected.is_executive_member && (
-                <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full ml-auto">Executive</span>
-              )}
             </div>
           )}
 

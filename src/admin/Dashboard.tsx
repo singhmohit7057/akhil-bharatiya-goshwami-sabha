@@ -20,7 +20,7 @@ interface DonationWithProfile extends Donation {
 export function AdminDashboard() {
   const { t } = useTranslation('admin')
   const { user } = useAuth()
-  const [stats, setStats] = useState({ pending: 0, total: 0, executive: 0, events: 0, donations: 0, businesses: 0, matrimonial: 0, newThisMonth: 0 })
+  const [stats, setStats] = useState({ pending: 0, total: 0, executive: 0, governing: 0, regularMembers: 0, events: 0, donations: 0, outsiderDonations: 0, membershipAmount: 0, businesses: 0, matrimonial: 0, newThisMonth: 0 })
   const [formStats, setFormStats] = useState({ contacts: 0, donations: 0, suggestions: 0, subscribers: 0, unsubscribed: 0 })
   const [pendingMembers, setPendingMembers] = useState<Profile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
@@ -36,21 +36,36 @@ export function AdminDashboard() {
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active'),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_executive_member', true),
       supabase.from('events').select('id', { count: 'exact', head: true }),
-      supabase.from('donations').select('amount'),
+      supabase.from('donations').select('amount, donor_name, purpose'),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').eq('is_executive_member', false),
       supabase.from('business_directory').select('id', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('matrimonial_profiles').select('id', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('profiles').select('*').eq('account_status', 'pending_approval').order('created_at', { ascending: false }).limit(5),
       supabase.from('events').select('*').gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(3),
-      supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name)').order('donation_date', { ascending: false }).limit(5),
+      supabase.from('donations').select('*, donor_name, profiles!donations_user_id_fkey(full_name)').order('donation_date', { ascending: false }).limit(5),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').gte('created_at', monthStart.toISOString()),
-    ]).then(([pendingRes, totalRes, execRes, eventsRes, donationsRes, bizRes, matRes, pendingList, eventList, paymentList, newMonthRes]) => {
-      const totalDonations = (donationsRes.data || []).reduce((sum: number, d: { amount: number }) => sum + Number(d.amount), 0)
+      supabase.from('designations').select('slug').eq('is_admin_role', true),
+    ]).then(async ([pendingRes, totalRes, execRes, eventsRes, donationsRes, regularRes, bizRes, matRes, pendingList, eventList, paymentList, newMonthRes, desigRes]) => {
+      const allDonations = (donationsRes.data || []) as any[]
+      const totalDonations = allDonations.filter((d: any) => !d.donor_name && d.purpose !== 'Executive Membership').reduce((sum: number, d: any) => sum + Number(d.amount), 0)
+      const outsiderDonations = allDonations.filter((d: any) => d.donor_name).reduce((sum: number, d: any) => sum + Number(d.amount), 0)
+      const membershipAmount = allDonations.filter((d: any) => d.purpose === 'Executive Membership').reduce((sum: number, d: any) => sum + Number(d.amount), 0)
+      const governingSlugs = (desigRes.data || []).map((d: any) => d.slug).filter(Boolean)
+      let governingCount = 0
+      if (governingSlugs.length > 0) {
+        const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'active').in('role', governingSlugs)
+        governingCount = count || 0
+      }
       setStats({
         pending: pendingRes.count || 0,
         total: totalRes.count || 0,
         executive: execRes.count || 0,
+        governing: governingCount,
+        regularMembers: regularRes.count || 0,
         events: eventsRes.count || 0,
         donations: totalDonations,
+        outsiderDonations,
+        membershipAmount,
         businesses: bizRes.count || 0,
         matrimonial: matRes.count || 0,
         newThisMonth: newMonthRes.count || 0,
@@ -105,14 +120,20 @@ export function AdminDashboard() {
   }
 
   const statCards = [
+    // Row 1
     { icon: UserCheck, label: t('dashboard.pendingApprovals'), value: stats.pending, to: '/admin/members/pending', gradient: 'from-orange-500 to-red-500' },
     { icon: Users, label: t('dashboard.totalMembers'), value: stats.total, to: '/admin/members', gradient: 'from-blue-500 to-indigo-600' },
+    { icon: UserCheck, label: 'Governing Members', value: stats.governing, to: '/admin/members', gradient: 'from-violet-500 to-purple-600' },
     { icon: Crown, label: 'Executive Members', value: stats.executive, to: '/admin/members', gradient: 'from-amber-400 to-orange-500' },
-    { icon: Calendar, label: t('dashboard.totalEvents'), value: stats.events, to: '/admin/yearly-planner', gradient: 'from-green-500 to-teal-600' },
-    { icon: IndianRupee, label: t('dashboard.totalDonations'), value: `₹${stats.donations.toLocaleString()}`, to: '/admin/payments', gradient: 'from-purple-500 to-violet-600' },
+    { icon: Users, label: 'Members', value: stats.regularMembers, to: '/admin/members', gradient: 'from-sky-500 to-blue-600' },
+    { icon: Plus, label: 'New This Month', value: stats.newThisMonth, to: '/admin/members', gradient: 'from-emerald-500 to-green-600' },
+    // Row 2
+    { icon: IndianRupee, label: 'Member Donation', value: `₹${stats.donations.toLocaleString()}`, to: '/admin/payments', gradient: 'from-purple-500 to-violet-600' },
+    { icon: IndianRupee, label: 'Non-Member Donation', value: `₹${stats.outsiderDonations.toLocaleString()}`, to: '/admin/payments', gradient: 'from-teal-500 to-cyan-600' },
+    { icon: Crown, label: 'Total Membership', value: `₹${stats.membershipAmount.toLocaleString()}`, to: '/admin/payments', gradient: 'from-amber-500 to-yellow-600' },
     { icon: Briefcase, label: 'Business Listings', value: stats.businesses, to: '/admin/business', gradient: 'from-cyan-500 to-blue-600' },
     { icon: Heart, label: 'Matrimonial Profiles', value: stats.matrimonial, to: '/admin/matrimonial', gradient: 'from-pink-500 to-rose-600' },
-    { icon: Plus, label: 'New This Month', value: stats.newThisMonth, to: '/admin/members', gradient: 'from-emerald-500 to-green-600' },
+    { icon: Calendar, label: t('dashboard.totalEvents'), value: stats.events, to: '/admin/yearly-planner', gradient: 'from-green-500 to-teal-600' },
   ]
 
   const quickActions = [
@@ -129,7 +150,7 @@ export function AdminDashboard() {
       <h1 className="text-3xl font-extrabold text-text-primary mb-4">{t('title')}</h1>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
         {statCards.map((card) => (
           <Link key={card.label} to={card.to} className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 hover:shadow-lg hover:scale-[1.02] transition-all flex flex-col items-center justify-center gap-2 text-center`}>
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -144,7 +165,7 @@ export function AdminDashboard() {
       {/* Quick Actions */}
       <div className="bg-white rounded-xl border border-border p-4 mb-6">
         <h2 className="text-sm font-semibold text-text-primary mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {quickActions.map((action) => (
             <Link key={action.label} to={action.to} className="flex flex-col items-center gap-3 py-5 bg-white border border-border rounded-xl hover:shadow-md hover:scale-[1.02] transition-all">
               <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-sm`}>
@@ -271,14 +292,20 @@ export function AdminDashboard() {
                 <tbody>
                   {recentPayments.map((p) => (
                     <tr key={p.id} className="border-b border-border/50">
-                      <td className="py-2 font-medium text-text-primary">{p.profiles?.full_name}</td>
+                      <td className="py-2 font-medium text-text-primary">
+                        {(p as any).donor_name
+                          ? <>{(p as any).donor_name} <span className="text-[10px] text-text-secondary font-normal">(outsider)</span></>
+                          : p.profiles?.full_name}
+                      </td>
                       <td className="py-2 font-semibold text-text-primary">₹{Number(p.amount).toLocaleString()}</td>
                       <td className="py-2 text-text-secondary">{formatDate(p.donation_date, 'en')}</td>
                       <td className="py-2">
                         {p.purpose === 'Executive Membership' ? (
                           <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-full text-[10px] flex items-center gap-0.5 w-fit"><Crown className="w-2.5 h-2.5" /> Membership</span>
+                        ) : p.purpose?.toLowerCase().includes('souvenir') ? (
+                          <span className="bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded-full text-[10px]">Souvenir</span>
                         ) : (
-                          <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full text-[10px]">{p.purpose || 'Donation'}</span>
+                          <span className="bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full text-[10px]">Donation</span>
                         )}
                       </td>
                       <td className="py-2 text-text-secondary">{p.payment_method || '—'}</td>

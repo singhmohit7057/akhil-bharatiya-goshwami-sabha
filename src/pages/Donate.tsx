@@ -98,11 +98,11 @@ export function Donate() {
                 <Building2 className="w-4 h-4 text-primary" /> {t('bankTransfer')}
               </h3>
               <div className="space-y-2 text-sm">
-                <p><span className="font-medium text-text-primary">A/C Name:</span> <span className="text-text-secondary">AKHIL BHARATIYA GOSWAMI SABHA</span></p>
-                <p><span className="font-medium text-text-primary">A/C Number:</span> <span className="text-text-secondary">[Account Number]</span></p>
-                <p><span className="font-medium text-text-primary">Bank Name:</span> <span className="text-text-secondary">[Bank Name]</span></p>
-                <p><span className="font-medium text-text-primary">IFSC Code:</span> <span className="text-text-secondary">[IFSC Code]</span></p>
-                <p><span className="font-medium text-text-primary">Branch:</span> <span className="text-text-secondary">[Branch Name]</span></p>
+                <p><span className="font-medium text-text-primary">A/C Name:</span> <span className="text-text-secondary">Akhil Bharatiya Goswami Sabha Paschim Bangal</span></p>
+                <p><span className="font-medium text-text-primary">A/C Number:</span> <span className="text-text-secondary">00260100024129</span></p>
+                <p><span className="font-medium text-text-primary">Bank Name:</span> <span className="text-text-secondary">Bank of Baroda</span></p>
+                <p><span className="font-medium text-text-primary">IFSC Code:</span> <span className="text-text-secondary">BARB0BRABOU</span></p>
+                <p><span className="font-medium text-text-primary">Branch:</span> <span className="text-text-secondary">Brabourne Road</span></p>
               </div>
 
               <hr className="my-4 border-border" />

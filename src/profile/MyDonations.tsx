@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Download, Crown, IndianRupee, Calendar } from 'lucide-react'
+import { Download, Crown, IndianRupee } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { formatDate } from '../lib/utils'
@@ -41,8 +41,9 @@ export function MyDonations() {
   const { profile } = useAuth()
   const [donations, setDonations] = useState<Donation[]>([])
   const [membershipPayments, setMembershipPayments] = useState<MembershipPayment[]>([])
+  const [referralPayments, setReferralPayments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'donations' | 'membership'>('donations')
+  const [tab, setTab] = useState<'donations' | 'membership' | 'referral'>('donations')
 
   useEffect(() => {
     if (!profile) return
@@ -50,6 +51,7 @@ export function MyDonations() {
       .from('donations')
       .select('*')
       .eq('user_id', profile.id)
+      .is('donor_name', null)
       .order('donation_date', { ascending: false })
       .then(({ data }) => {
         const all = (data as Donation[]) || []
@@ -66,14 +68,26 @@ export function MyDonations() {
           }))
         setDonations(general)
         setMembershipPayments(membership)
-        setLoading(false)
+        // Fetch referral payments (outsider donations where this member was the reference)
+        supabase.from('donations')
+          .select('*')
+          .eq('reference_member_id', profile.id)
+          .order('donation_date', { ascending: false })
+          .then(({ data: refData }) => {
+            setReferralPayments((refData as any[]) || [])
+            setLoading(false)
+          })
+        if (!profile.id) setLoading(false)
       })
   }, [profile])
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
   const membershipTotal = membershipPayments.reduce((sum, m) => sum + Number(m.amount), 0)
-  const totalDonations = donations.reduce((sum, d) => sum + Number(d.amount), 0) + membershipTotal
+  const donationTotal = donations.reduce((sum, d) => sum + Number(d.amount), 0)
+  const referralTotal = referralPayments.reduce((sum, d) => sum + Number(d.amount), 0)
+  // totalDonations kept for potential future use
+  const _totalDonations = donationTotal + membershipTotal; void _totalDonations
 
   return (
     <div className="space-y-6">
@@ -82,23 +96,26 @@ export function MyDonations() {
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <IndianRupee className="w-4 h-4 text-primary" />
-            <p className="text-xs text-text-secondary">Total Contribution</p>
+            <p className="text-xs text-text-secondary">Total Donation</p>
           </div>
-          <p className="text-xl font-bold text-text-primary">&#8377;{totalDonations.toLocaleString()}</p>
+          <p className="text-xl font-bold text-text-primary">&#8377;{donationTotal.toLocaleString()}</p>
+          <p className="text-[10px] text-text-secondary mt-0.5">{donations.length} donation{donations.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Calendar className="w-4 h-4 text-primary" />
-            <p className="text-xs text-text-secondary">Donation</p>
+            <IndianRupee className="w-4 h-4 text-green-600" />
+            <p className="text-xs text-text-secondary">Referral Contribution</p>
           </div>
-          <p className="text-xl font-bold text-text-primary">{donations.length}</p>
+          <p className="text-xl font-bold text-green-700">&#8377;{referralTotal.toLocaleString()}</p>
+          <p className="text-[10px] text-text-secondary mt-0.5">{referralPayments.length} outsider payment{referralPayments.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="bg-white rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-1">
             <Crown className="w-4 h-4 text-amber-500" />
-            <p className="text-xs text-text-secondary">Membership Payment</p>
+            <p className="text-xs text-text-secondary">Membership Contribution</p>
           </div>
-          <p className="text-xl font-bold text-text-primary">{membershipPayments.length}</p>
+          <p className="text-xl font-bold text-amber-600">&#8377;{membershipTotal.toLocaleString()}</p>
+          <p className="text-[10px] text-text-secondary mt-0.5">{membershipPayments.length} payment{membershipPayments.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
@@ -120,6 +137,16 @@ export function MyDonations() {
         >
           <Crown className="w-3.5 h-3.5" /> Membership History ({membershipPayments.length})
         </button>
+        {referralPayments.length > 0 && (
+          <button
+            onClick={() => setTab('referral')}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              tab === 'referral' ? 'bg-primary text-white' : 'bg-white border border-border text-text-secondary hover:border-primary/30'
+            }`}
+          >
+            <IndianRupee className="w-3.5 h-3.5" /> Referral Payments ({referralPayments.length})
+          </button>
+        )}
       </div>
 
       {/* Donations Tab */}
@@ -218,6 +245,64 @@ export function MyDonations() {
                   </div>
                 )
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Referral Payments Tab */}
+      {tab === 'referral' && (
+        <div className="bg-white rounded-xl border border-border p-5">
+          <h2 className="text-base font-semibold text-text-primary mb-1">Referral Payments</h2>
+          <p className="text-xs text-text-secondary mb-4">Outsider donations made through your reference</p>
+
+          {referralPayments.length === 0 ? (
+            <p className="text-text-secondary text-center py-8">No referral payments found.</p>
+          ) : (
+            <div className="space-y-3">
+              {referralPayments.map((d: any) => (
+                <div key={d.id} className="flex items-center justify-between p-4 bg-surface rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                      <IndianRupee className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">
+                        {d.donor_name || 'Unknown Donor'}
+                      </p>
+                      <p className="text-xs text-text-secondary">
+                        {d.purpose || 'General Donation'} · {d.payment_method || '—'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-green-600">₹{Number(d.amount).toLocaleString()}</p>
+                      <p className="text-xs text-text-secondary">{formatDate(d.donation_date, lang)}</p>
+                    </div>
+                    <button
+                      onClick={() => generatePaymentReceiptPdf({
+                        id: d.id,
+                        amount: d.amount,
+                        donation_date: d.donation_date,
+                        purpose: d.purpose,
+                        payment_method: d.payment_method,
+                        transaction_id: d.transaction_id || null,
+                        memberName: d.donor_name || 'Donor',
+                        nameLabel: 'Name',
+                        referenceName: profile?.full_name || undefined,
+                      })}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Receipt
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-between pt-2 border-t border-border text-xs text-text-secondary">
+                <span>Total via your reference</span>
+                <span className="font-semibold text-text-primary">₹{referralPayments.reduce((s, d) => s + Number(d.amount), 0).toLocaleString()}</span>
+              </div>
             </div>
           )}
         </div>

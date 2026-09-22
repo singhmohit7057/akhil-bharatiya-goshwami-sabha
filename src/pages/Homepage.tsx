@@ -131,8 +131,9 @@ export function Homepage() {
         {/* Content */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="max-w-4xl mx-auto text-center px-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg">{t('hero.title')}</h1>
-            <p className="text-3xl md:text-4xl font-bold text-white/90 mb-2">{t('hero.subtitle')}</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg leading-tight">
+              {t('hero.title')}<br />{t('hero.subtitle')}
+            </h1>
             <p className="text-lg text-white/80 max-w-2xl mx-auto">{t('hero.description')}</p>
           </div>
         </div>
@@ -475,7 +476,7 @@ function AutoMemberSlide({ items, perSlide, slide, setSlide, totalSlides, curren
   if (currentItems.length === 0) return <p className="text-center text-sm text-text-secondary py-8">No members yet.</p>
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 min-h-[320px] content-start">
       {currentItems.map((member) => {
         const ring = boardSlugs.includes(member.id)
           ? 'ring-orange-300'

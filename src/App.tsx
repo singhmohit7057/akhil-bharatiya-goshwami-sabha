@@ -53,6 +53,7 @@ const PaymentHistory = lazy(() => import('./admin/members/PaymentHistory').then(
 const AddPayment = lazy(() => import('./admin/members/AddPayment').then((m) => ({ default: m.AddPayment })))
 const AddExpense = lazy(() => import('./admin/members/AddExpense').then((m) => ({ default: m.AddExpense })))
 const ExpenseHistory = lazy(() => import('./admin/members/ExpenseHistory').then((m) => ({ default: m.ExpenseHistory })))
+const Bank = lazy(() => import('./admin/members/Bank').then((m) => ({ default: m.Bank })))
 const BulkPayment = lazy(() => import('./admin/members/BulkPayment').then((m) => ({ default: m.BulkPayment })))
 const Reports = lazy(() => import('./admin/reports/Reports').then((m) => ({ default: m.Reports })))
 const AdminLogs = lazy(() => import('./admin/logs/AdminLogs').then((m) => ({ default: m.AdminLogs })))
@@ -189,6 +190,7 @@ export default function App() {
             <Route path="expenses" element={<ExpenseHistory />} />
             <Route path="expenses/add" element={<AddExpense />} />
             <Route path="expenses/edit/:id" element={<AddExpense />} />
+            <Route path="bank" element={<Bank />} />
             <Route path="payments/bulk" element={<BulkPayment />} />
             <Route path="reports" element={<Reports />} />
             <Route path="logs" element={<AdminLogs />} />

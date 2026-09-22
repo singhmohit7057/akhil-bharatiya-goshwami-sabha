@@ -15,8 +15,10 @@ interface Expense {
   expense_date: string
   payment_mode: string | null
   paid_to: string | null
+  paid_by: string | null
   notes: string | null
   created_at: string
+  profiles?: { full_name: string } | null
 }
 
 export function ExpenseHistory() {
@@ -30,7 +32,7 @@ export function ExpenseHistory() {
   useEffect(() => { fetchExpenses() }, [])
 
   async function fetchExpenses() {
-    const { data } = await supabase.from('expenses').select('*').order('expense_date', { ascending: false })
+    const { data } = await supabase.from('expenses').select('*, profiles!expenses_paid_by_fkey(full_name)').order('expense_date', { ascending: false })
     setExpenses((data as Expense[]) || [])
     setLoading(false)
   }
@@ -154,6 +156,7 @@ export function ExpenseHistory() {
                     <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Paid To</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Done By</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Mode</th>
                     {canEdit && <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>}
                   </tr>
@@ -173,6 +176,7 @@ export function ExpenseHistory() {
                       <td className="px-4 py-3 font-semibold text-red-600">₹{Number(e.amount).toLocaleString()}</td>
                       <td className="px-4 py-3 text-text-secondary">{formatDate(e.expense_date, 'en')}</td>
                       <td className="px-4 py-3 text-text-secondary">{e.paid_to || '—'}</td>
+                      <td className="px-4 py-3 text-text-secondary">{(e as any).profiles?.full_name || '—'}</td>
                       <td className="px-4 py-3 text-text-secondary">{e.payment_mode || '—'}</td>
                       {canEdit && (
                         <td className="px-4 py-3">

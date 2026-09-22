@@ -11,6 +11,8 @@ import { Spinner } from '../../components/ui/Spinner'
 
 interface PaymentWithProfile extends Donation {
   profiles: Pick<Profile, 'full_name' | 'email'> & { member_id?: string }
+  donor_name?: string | null
+  reference_member?: { full_name: string } | null
 }
 
 const MEMBERSHIP_FEE = 1100
@@ -40,7 +42,7 @@ export function PaymentHistory() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id)').order('donation_date', { ascending: false }),
+      supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name').eq('account_status', 'active').order('full_name'),
       supabase.from('souvenir_sponsors').select('*, souvenirs(title, event_name, year)').eq('is_paid', true).order('created_at', { ascending: false }),
     ]).then(([payRes, memRes, souvenirRes]) => {
@@ -78,6 +80,7 @@ export function PaymentHistory() {
   }
 
   function downloadReceipt(p: PaymentWithProfile) {
+    const isOutsider = !!(p as any).donor_name
     generatePaymentReceiptPdf({
       id: p.id,
       amount: p.amount,
@@ -85,17 +88,46 @@ export function PaymentHistory() {
       purpose: p.purpose,
       payment_method: p.payment_method,
       transaction_id: p.transaction_id,
-      memberName: p.profiles?.full_name || '',
-      memberId: p.profiles?.member_id || undefined,
-      memberEmail: p.profiles?.email || undefined,
+      memberName: isOutsider ? ((p as any).donor_name || '') : (p.profiles?.full_name || ''),
+      nameLabel: isOutsider ? 'Name' : undefined,
+      memberId: isOutsider ? undefined : (p.profiles?.member_id || undefined),
+      memberEmail: isOutsider ? undefined : (p.profiles?.email || undefined),
+      referenceName: isOutsider ? (p.profiles?.full_name || (p as any).reference_member?.full_name || undefined) : undefined,
     })
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this payment record?')) return
+    // Check if this is a membership payment before deleting
+    const deletingPayment = payments.find(p => p.id === id)
+    const isMemPayment = deletingPayment?.purpose === 'Executive Membership'
+    const memberId = deletingPayment?.user_id
+
     await supabase.from('donations').delete().eq('id', id)
-    toast.success('Payment deleted')
-    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id)').order('donation_date', { ascending: false })
+
+    // If it was a membership payment, check if any other membership payments remain
+    if (isMemPayment && memberId) {
+      const { data: remaining } = await supabase
+        .from('donations')
+        .select('id')
+        .eq('user_id', memberId)
+        .eq('purpose', 'Executive Membership')
+      // No remaining membership payments → revoke executive status
+      if (!remaining || remaining.length === 0) {
+        await supabase.from('profiles').update({
+          is_executive_member: false,
+          membership_start_date: null,
+          membership_end_date: null,
+        }).eq('id', memberId)
+        toast.success('Payment deleted — Executive status revoked (no remaining membership payments)')
+      } else {
+        toast.success('Payment deleted')
+      }
+    } else {
+      toast.success('Payment deleted')
+    }
+
+    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
     if (data) setPayments(data as PaymentWithProfile[])
   }
 
@@ -133,7 +165,7 @@ export function PaymentHistory() {
 
     resetForm()
     setSaving(false)
-    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id)').order('donation_date', { ascending: false })
+    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
     if (data) setPayments(data as PaymentWithProfile[])
   }
 
@@ -328,7 +360,11 @@ export function PaymentHistory() {
             {filtered.map((p) => (
               <div key={p.id} className="bg-white rounded-xl border border-border p-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-text-primary text-sm truncate">{p.profiles?.full_name}</p>
+                  <p className="font-medium text-text-primary text-sm truncate">
+                    {(p as any).donor_name
+                      ? <>{(p as any).donor_name}{(p as any).reference_member?.full_name && <span className="text-text-secondary font-normal"> ({(p as any).reference_member.full_name})</span>}</>
+                      : p.profiles?.full_name}
+                  </p>
                   <p className="text-xs text-text-secondary">{formatDate(p.donation_date, 'en')}</p>
                 </div>
                 <div className="shrink-0 text-right">
@@ -383,7 +419,11 @@ export function PaymentHistory() {
                 <tbody>
                   {filtered.map((p) => (
                     <tr key={p.id} className="border-b border-border/50 hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-text-primary">{p.profiles?.full_name}</td>
+                      <td className="px-4 py-3 font-medium text-text-primary">
+                        {(p as any).donor_name
+                          ? <>{(p as any).donor_name}{(p as any).reference_member?.full_name && <span className="text-xs text-text-secondary font-normal ml-1">({(p as any).reference_member.full_name})</span>}</>
+                          : p.profiles?.full_name}
+                      </td>
                       <td className="px-4 py-3 font-semibold text-text-primary">&#8377;{Number(p.amount).toLocaleString()}</td>
                       <td className="px-4 py-3 text-text-secondary">{formatDate(p.donation_date, 'en')}</td>
                       <td className="px-4 py-3">

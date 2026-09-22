@@ -7,7 +7,6 @@ import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { getRoleLabel } from '../../lib/utils'
 import type { Profile } from '../../types'
-import { useDesignations } from '../../hooks/useDesignations'
 import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
 
@@ -15,19 +14,19 @@ export function AllMembers() {
   const { isViewer, isSuperAdmin, isAdmin } = useAuth()
   const superAdmin = isSuperAdmin()
   const canBlock = isAdmin() || superAdmin
-  const { t, i18n } = useTranslation('admin')
-  const { designations } = useDesignations()
-  const lang = i18n.language
+  const { t } = useTranslation('admin')
   const [members, setMembers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState('')
   const [memberType, setMemberType] = useState('')
+  const [governingSlugs, setGoverningSlugs] = useState<string[]>([])
   const [statusFilter, setStatusFilter] = useState('')
   const [idSort, setIdSort] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
     fetchMembers()
+    supabase.from('designations').select('slug').eq('is_admin_role', true)
+      .then(({ data }) => setGoverningSlugs((data || []).map((d: any) => d.slug)))
   }, [])
 
   async function fetchMembers() {
@@ -59,10 +58,13 @@ export function AllMembers() {
         || m.email?.toLowerCase().includes(q)
         || m.member_id?.toLowerCase().includes(q)
         || m.phone?.toLowerCase().includes(q)
-      const matchRole = !roleFilter || m.role === roleFilter
-      const matchType = !memberType || (memberType === 'executive' ? m.is_executive_member : !m.is_executive_member)
+      const matchType = !memberType || (
+        memberType === 'executive' ? m.is_executive_member :
+        memberType === 'governing' ? governingSlugs.includes(m.role) :
+        !m.is_executive_member
+      )
       const matchStatus = !statusFilter || (statusFilter === 'blocked' ? m.account_status === 'suspended' : m.account_status === 'active')
-      return matchSearch && matchRole && matchType && matchStatus
+      return matchSearch && matchType && matchStatus
     })
     .sort((a, b) => {
       const aNum = parseInt(a.member_id?.split('/')?.[1] || '9999')
@@ -128,6 +130,7 @@ export function AllMembers() {
         <select value={memberType} onChange={(e) => setMemberType(e.target.value)}
           className="px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">All Members</option>
+          <option value="governing">Governing Members</option>
           <option value="executive">Executive Members</option>
           <option value="regular">Members</option>
         </select>
@@ -136,13 +139,6 @@ export function AllMembers() {
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="blocked">Blocked</option>
-        </select>
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-4 py-2.5 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30">
-          <option value="">All Roles</option>
-          {designations.map((d) => (
-            <option key={d.slug} value={d.slug}>{lang === 'hi' && d.name_hi ? d.name_hi : d.name_en}</option>
-          ))}
         </select>
       </div>
 

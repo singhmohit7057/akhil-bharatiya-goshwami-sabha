@@ -48,9 +48,9 @@ export function Footer() {
           {/* Contact */}
           <div className="flex flex-col items-center gap-1.5 mb-4">
             <div className="flex items-center justify-center gap-3">
-              <a href="tel:+919876543210" className="text-xs text-text-secondary flex items-center gap-1"><Phone className="w-3 h-3 text-primary" /> +91 98765 43210</a>
+              <a href="tel:+919331038940" className="text-xs text-text-secondary flex items-center gap-1"><Phone className="w-3 h-3 text-primary" /> +91 93310 38940</a>
               <span className="text-border">·</span>
-              <a href="mailto:info@akhilbharatiyagoswami.com" className="text-xs text-text-secondary flex items-center gap-1"><Mail className="w-3 h-3 text-primary" /> info@akhilbharatiyagoswami.com</a>
+              <a href="mailto:abgspb3@gmail.com" className="text-xs text-text-secondary flex items-center gap-1"><Mail className="w-3 h-3 text-primary" /> abgspb3@gmail.com</a>
             </div>
             <span className="text-xs text-text-secondary flex items-center gap-1"><MapPin className="w-3 h-3 text-primary" /> West Bengal, India</span>
           </div>
@@ -115,8 +115,8 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-text-primary mb-3">{t('footer.contact')}</h3>
             <ul className="space-y-2.5">
               <li className="flex items-start gap-2"><MapPin className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" /><p className="text-xs text-text-secondary">West Bengal, India</p></li>
-              <li className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-primary shrink-0" /><p className="text-xs text-text-secondary">+91 98765 43210</p></li>
-              <li className="flex items-center gap-2"><Mail className="w-3.5 h-3.5 text-primary shrink-0" /><p className="text-xs text-text-secondary">info@akhilbharatiyagoswami.com</p></li>
+              <li className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-primary shrink-0" /><a href="tel:+919331038940" className="text-xs text-text-secondary hover:text-primary">+91 93310 38940</a></li>
+              <li className="flex items-center gap-2"><Mail className="w-3.5 h-3.5 text-primary shrink-0" /><a href="mailto:abgspb3@gmail.com" className="text-xs text-text-secondary hover:text-primary">abgspb3@gmail.com</a></li>
             </ul>
           </div>
         </div>

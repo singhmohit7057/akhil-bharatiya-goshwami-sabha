@@ -6,6 +6,8 @@ import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
 import { DateInput } from '../../components/ui/DateInput'
+import { MemberSelect } from '../../components/ui/MemberSelect'
+import type { Profile } from '../../types'
 
 const CATEGORIES = [
   'Event Expense',
@@ -17,6 +19,7 @@ const CATEGORIES = [
   'Marketing',
   'Donation Given',
   'Miscellaneous',
+  'Other',
 ]
 
 export function AddExpense() {
@@ -24,6 +27,7 @@ export function AddExpense() {
   const { id: editId } = useParams()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [members, setMembers] = useState<Profile[]>([])
   const [form, setForm] = useState({
     title: '',
     category: '',
@@ -31,8 +35,14 @@ export function AddExpense() {
     expense_date: new Date().toISOString().split('T')[0],
     payment_mode: '',
     paid_to: '',
+    paid_by: '',
     notes: '',
   })
+
+  useEffect(() => {
+    supabase.from('profiles').select('id, full_name, role, email, phone').eq('account_status', 'active').order('full_name')
+      .then(({ data }) => setMembers((data as Profile[]) || []))
+  }, [])
 
   const inputClass = 'w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
 
@@ -46,6 +56,7 @@ export function AddExpense() {
         expense_date: data.expense_date,
         payment_mode: data.payment_mode || '',
         paid_to: data.paid_to || '',
+        paid_by: (data as any).paid_by || '',
         notes: data.notes || '',
       })
     })
@@ -61,6 +72,7 @@ export function AddExpense() {
       expense_date: form.expense_date,
       payment_mode: form.payment_mode || null,
       paid_to: form.paid_to || null,
+      paid_by: form.paid_by || null,
       notes: form.notes || null,
     }
     let error
@@ -124,10 +136,21 @@ export function AddExpense() {
             </div>
           </div>
 
-          {/* Paid To | Notes */}
-          <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">Paid To</label>
-            <input type="text" placeholder="Vendor / Person name" value={form.paid_to} onChange={(e) => setForm({ ...form, paid_to: e.target.value })} className={inputClass} />
+          {/* Paid By | Paid To */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-text-primary mb-1">Payment Done By</label>
+              <MemberSelect
+                members={members.map(m => ({ id: m.id, full_name: m.full_name, role: m.role, email: (m as any).email, phone: (m as any).phone }))}
+                value={form.paid_by}
+                onChange={(id) => setForm({ ...form, paid_by: id })}
+                placeholder="Select member..."
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-text-primary mb-1">Paid To</label>
+              <input type="text" placeholder="Vendor / Person name" value={form.paid_to} onChange={(e) => setForm({ ...form, paid_to: e.target.value })} className={inputClass} />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">Notes</label>

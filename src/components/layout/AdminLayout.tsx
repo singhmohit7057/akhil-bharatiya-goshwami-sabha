@@ -89,6 +89,7 @@ const sections: NavSection[] = [
           { to: '/admin/payments', label: 'Payment History' },
           { to: '/admin/expenses/add', label: 'Add Expense' },
           { to: '/admin/expenses', label: 'Expense History' },
+          { to: '/admin/bank', label: 'Bank' },
           { to: '/admin/payments/bulk', label: 'Bulk Payment Upload' },
         ],
       },
@@ -183,7 +184,7 @@ export function AdminLayout() {
       const viewerAllowed: Record<string, string[]> = {
         '':          ['/admin'],
         'MEMBERS':   ['/admin/members'],
-        'PAYMENTS':  ['/admin/payments', '/admin/expenses'],
+        'PAYMENTS':  ['/admin/payments', '/admin/expenses', '/admin/bank'],
         'REPORTS':   ['/admin/reports'],
         'COMMUNITY': ['/admin/matrimonial', '/admin/business', '/admin/yearly-planner'],
         'MEDIA & PROMOTIONS': ['/admin/forms', '/admin/subscribers'],
