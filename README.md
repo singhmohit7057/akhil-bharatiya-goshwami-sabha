@@ -53,10 +53,11 @@ src/
 │   │   ├── AddMember.tsx
 │   │   ├── MemberDetail.tsx         # Edit, photo, family, business, payments, PDF
 │   │   ├── PendingApprovals.tsx
-│   │   ├── PaymentHistory.tsx       # Donations, memberships, souvenir receipts
-│   │   ├── AddPayment.tsx
-│   │   ├── ExpenseHistory.tsx
-│   │   ├── AddExpense.tsx
+│   │   ├── PaymentHistory.tsx       # Donations, memberships, souvenir receipts; outsider donor support
+│   │   ├── AddPayment.tsx           # Member or outsider donation with reference member
+│   │   ├── ExpenseHistory.tsx       # With "Payment Done By" member field
+│   │   ├── AddExpense.tsx           # Expense categories + who paid
+│   │   ├── Bank.tsx                 # Cash deposits/withdrawals with net balance tracking
 │   │   └── BulkPayment.tsx          # Excel bulk upload for payments/expenses
 │   ├── promo-popups/
 │   │   └── PromoPopups.tsx
@@ -168,20 +169,24 @@ src/
 - Edit profile (father/mother name, caste, gotra, marital status, etc.)
 - Upload/manage profile photo
 - Family members management (with photos)
-- My Donations — list with PDF receipt download
+- My Donations — own donations + **Referral Payments** tab (outsider donations via member's reference)
+- Summary cards: Total Donation | Referral Contribution | Membership Contribution
 - Membership — executive membership status & history
 - Business Details — employed/self-employed, logo, visiting card (front/back) with delete/reupload
 - Matrimonial — create profiles for self or family members, with duplicate prevention
 
 ### Admin Panel
 - **3-tier roles**: `super_admin` / `admin` (configurable permissions) / `viewer` (read-only)
-- **Members**: list, add, edit, approve, block/unblock toggle, export Excel
-- **Payments**: record payments/memberships, bulk Excel upload, expense tracking
-- **Financial Reports**: year-wise income/expense breakdown by online/offline mode, Excel export
-- **Matrimonial**: add with photo/caste/manglik fields, delete, hide/show
+- **Members**: list (filter by governing/executive/regular/status), add, edit, approve, block/unblock toggle, export Excel
+- **Payments**: record member or outsider donations (with reference member), memberships, bulk Excel upload
+- **Expenses**: track with category, paid-to, and "payment done by" member
+- **Bank**: cash deposit/withdrawal tracking with net offline/online/balance calculations
+- **Financial Reports**: year-wise income/expense breakdown by online/offline mode, bank transactions, Excel export (6 sheets)
+- **Matrimonial**: add with photo/caste/manglik fields, delete, hide/show; duplicate prevention
 - **Gallery**: create albums, upload photos
 - **Souvenir**: upload PDFs, manage sponsors with receipts
 - **Admin Logs**: full activity tracking
+- **Dashboard**: 12 stat cards (governing/executive/member counts, donation/membership/outsider amounts)
 
 ### PDF Generation
 - Donation receipt (A5, branded)
@@ -257,6 +262,7 @@ src/
 | `/admin/expenses` | Expense History |
 | `/admin/expenses/add` | Add Expense |
 | `/admin/payments/bulk` | Bulk Payment Upload |
+| `/admin/bank` | Bank — Cash Deposits & Withdrawals |
 | `/admin/reports` | Financial Reports |
 | `/admin/matrimonial` | All Matrimonial Profiles |
 | `/admin/matrimonial/add` | Add Matrimonial Profile |
@@ -278,9 +284,9 @@ src/
 
 ## Stats
 
-- **88 source files** (`.tsx` / `.ts`)
-- **~18,350 lines of code**
-- **20 public pages** + **29 admin pages** + **7 profile pages** + **7 auth pages** + **2 utility pages** (404, Unsubscribe)
+- **89 source files** (`.tsx` / `.ts`)
+- **~19,000 lines of code**
+- **20 public pages** + **30 admin pages** + **7 profile pages** + **7 auth pages** + **2 utility pages** (404, Unsubscribe)
 - **100/100 SEO** · **94/100 Desktop Performance** · **96/100 Best Practices** *(Google PageSpeed)*
 
 ---
