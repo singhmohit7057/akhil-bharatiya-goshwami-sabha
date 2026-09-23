@@ -55,10 +55,10 @@ export function PromoPopups() {
     if (file.size > 2 * 1024 * 1024) { toast.error('Image must be under 2MB'); return }
     setUploading(true)
     const ext = file.name.split('.').pop()
-    const path = `popups/${crypto.randomUUID()}.${ext}`
-    const { error } = await supabase.storage.from('profile-photos').upload(path, file)
+    const path = `${crypto.randomUUID()}.${ext}`
+    const { error } = await supabase.storage.from('promo-popups').upload(path, file)
     if (error) { toast.error('Upload failed'); setUploading(false); return }
-    const { data } = supabase.storage.from('profile-photos').getPublicUrl(path)
+    const { data } = supabase.storage.from('promo-popups').getPublicUrl(path)
     setImageUrl(data.publicUrl)
     setUploading(false)
   }

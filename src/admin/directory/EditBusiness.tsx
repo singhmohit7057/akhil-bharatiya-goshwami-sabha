@@ -91,7 +91,7 @@ export function EditBusiness() {
   }
 
   function getStoragePath(url: string): string | null {
-    const marker = '/profile-photos/'
+    const marker = '/business-photos/'
     const idx = url.indexOf(marker)
     return idx !== -1 ? url.slice(idx + marker.length) : null
   }
@@ -101,7 +101,7 @@ export function EditBusiness() {
     const currentUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
     if (currentUrl) {
       const p = getStoragePath(currentUrl)
-      if (p) await supabase.storage.from('profile-photos').remove([p])
+      if (p) await supabase.storage.from('business-photos').remove([p])
     }
     const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
     await supabase.from('business_directory').update({ [field]: null }).eq('id', id!)
@@ -120,13 +120,13 @@ export function EditBusiness() {
     const oldUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
     if (oldUrl) {
       const oldPath = getStoragePath(oldUrl)
-      if (oldPath) await supabase.storage.from('profile-photos').remove([oldPath])
+      if (oldPath) await supabase.storage.from('business-photos').remove([oldPath])
     }
     const ext = file.name.split('.').pop()
-    const path = `business/${listing.user_id}/${type}_${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('profile-photos').upload(path, file)
+    const path = `${listing.user_id}/${type}_${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('business-photos').upload(path, file)
     if (error) { toast.error('Upload failed'); setUploadingField(''); return }
-    const { data } = supabase.storage.from('profile-photos').getPublicUrl(path)
+    const { data } = supabase.storage.from('business-photos').getPublicUrl(path)
     const url = data.publicUrl
     const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
     // Save immediately to both tables

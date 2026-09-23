@@ -112,7 +112,7 @@ export function Homepage() {
       />
       <div>
       {/* Hero Video */}
-      <section className="relative h-[500px] md:h-[600px] overflow-hidden">
+      <section className="relative aspect-video md:h-[600px] md:aspect-auto overflow-hidden">
         <video
           autoPlay
           muted
@@ -121,6 +121,7 @@ export function Homepage() {
           preload="none"
           poster="/logo.png"
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => (e.currentTarget.style.display = 'none')}
         >
           <source src="/hero.mp4" type="video/mp4" />
         </video>
@@ -131,10 +132,12 @@ export function Homepage() {
         {/* Content */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="max-w-4xl mx-auto text-center px-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-lg leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white mb-2 drop-shadow-lg leading-snug">
               {t('hero.title')}<br />{t('hero.subtitle')}
             </h1>
-            <p className="text-lg text-white/80 max-w-2xl mx-auto">{t('hero.description')}</p>
+            <p className="text-sm sm:text-base md:text-2xl text-white/90 max-w-2xl mx-auto font-medium">
+              {t('hero.descriptionLine1')}<br />{t('hero.descriptionLine2')}
+            </p>
           </div>
         </div>
       </section>
@@ -271,7 +274,7 @@ export function Homepage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {galleryImages.map((img) => (
                 <div key={img.id} className="aspect-[16/10] rounded-xl overflow-hidden">
-                  <img src={img.image_url} alt={img.caption || ''} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                  <img src={img.image_url} alt={img.caption || ''} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy" />
                 </div>
               ))}
             </div>
@@ -487,7 +490,7 @@ function AutoMemberSlide({ items, perSlide, slide, setSlide, totalSlides, curren
           <div key={member.id} className="flex items-center gap-3 bg-white rounded-xl p-3 border border-border hover:shadow-sm transition-shadow">
             <div className={`w-14 h-14 shrink-0 rounded-full overflow-hidden flex items-center justify-center ring-2 ${ring}`}>
               {member.profile_photo_url ? (
-                <img src={member.profile_photo_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+                <img src={member.profile_photo_url} alt="" className="w-14 h-14 rounded-full object-cover" loading="lazy" width="56" height="56" />
               ) : (
                 <User className="w-6 h-6 text-gray-300" />
               )}

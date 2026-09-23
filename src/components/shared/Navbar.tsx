@@ -35,7 +35,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-18">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="ABGSPB" className="w-14 h-14 object-contain" />
+            <img src="/logo.png" alt="ABGSPB" className="w-14 h-14 object-contain" width="56" height="56" />
             <div className="hidden sm:block">
               <p className="text-sm font-bold text-text-primary leading-tight">{t('orgName')}</p>
               <p className="text-xs text-text-secondary">{t('orgSubtitle')}</p>

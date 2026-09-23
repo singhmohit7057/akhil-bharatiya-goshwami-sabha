@@ -107,7 +107,7 @@ export function BusinessDetails() {
   }
 
   function getStoragePath(url: string): string | null {
-    const marker = '/profile-photos/'
+    const marker = '/business-photos/'
     const idx = url.indexOf(marker)
     return idx !== -1 ? url.slice(idx + marker.length) : null
   }
@@ -117,7 +117,7 @@ export function BusinessDetails() {
     const currentUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
     if (currentUrl) {
       const storagePath = getStoragePath(currentUrl)
-      if (storagePath) await supabase.storage.from('profile-photos').remove([storagePath])
+      if (storagePath) await supabase.storage.from('business-photos').remove([storagePath])
     }
     const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
     await supabase.from('business_details').update({ [field]: null }).eq('user_id', profile.id)
@@ -136,13 +136,13 @@ export function BusinessDetails() {
     const oldUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
     if (oldUrl) {
       const oldPath = getStoragePath(oldUrl)
-      if (oldPath) await supabase.storage.from('profile-photos').remove([oldPath])
+      if (oldPath) await supabase.storage.from('business-photos').remove([oldPath])
     }
     const ext = file.name.split('.').pop()
-    const path = `business/${profile.id}/${type}_${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('profile-photos').upload(path, file)
+    const path = `${profile.id}/${type}_${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('business-photos').upload(path, file)
     if (error) { toast.error('Upload failed'); setUploading(''); return }
-    const { data } = supabase.storage.from('profile-photos').getPublicUrl(path)
+    const { data } = supabase.storage.from('business-photos').getPublicUrl(path)
     const url = data.publicUrl
     if (type === 'logo') setLogoUrl(url)
     else if (type === 'vc_front') setVcFrontUrl(url)

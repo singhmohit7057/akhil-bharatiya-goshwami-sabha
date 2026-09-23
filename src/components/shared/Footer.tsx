@@ -14,7 +14,7 @@ export function Footer() {
         <div className="sm:hidden text-center">
           {/* Brand */}
           <div className="flex items-center justify-center gap-2 mb-5">
-            <img src="/logo.png" alt="ABGSPB" className="w-10 h-10 object-contain shrink-0" />
+            <img src="/logo.png" alt="ABGSPB" className="w-10 h-10 object-contain shrink-0" width="40" height="40" />
             <div className="text-left">
               <p className="text-xs font-bold text-text-primary leading-tight">{t('orgName')}</p>
               <p className="text-[10px] text-text-secondary">{t('orgSubtitle')}</p>
@@ -75,7 +75,7 @@ export function Footer() {
         <div className="hidden sm:grid grid-cols-5 gap-8">
           <div className="col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <img src="/logo.png" alt="ABGSPB" className="w-12 h-12 object-contain" />
+              <img src="/logo.png" alt="ABGSPB" className="w-12 h-12 object-contain" width="48" height="48" />
               <div>
                 <p className="text-sm font-bold text-text-primary leading-tight">{t('orgName')}</p>
                 <p className="text-[11px] text-text-secondary">{t('orgSubtitle')}</p>
