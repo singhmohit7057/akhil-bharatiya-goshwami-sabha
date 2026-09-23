@@ -146,17 +146,17 @@ export function Homepage() {
       <div className="bg-orange-50 border-b border-orange-100 py-4">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-center gap-6">
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
-            <img src="/instagram.png" alt="Instagram" className="w-5 h-5 rounded" />
+            <img src="/instagram.png" alt="" className="w-5 h-5 rounded" aria-hidden="true" />
             <span className="text-xs font-medium">Instagram</span>
           </a>
           <span className="text-text-secondary/30">|</span>
           <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
-            <img src="/facebook.png" alt="Facebook" className="w-5 h-5 rounded" />
+            <img src="/facebook.png" alt="" className="w-5 h-5 rounded" aria-hidden="true" />
             <span className="text-xs font-medium">Facebook</span>
           </a>
           <span className="text-text-secondary/30">|</span>
           <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
-            <img src="/youtube.png" alt="YouTube" className="w-5 h-5 rounded" />
+            <img src="/youtube.png" alt="" className="w-5 h-5 rounded" aria-hidden="true" />
             <span className="text-xs font-medium">YouTube</span>
           </a>
         </div>
@@ -209,7 +209,7 @@ export function Homepage() {
       <section className="min-h-[80vh] flex flex-col justify-center py-16 px-4 bg-white">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-10">
           <div className="md:w-2/5 shrink-0">
-            <img src="/swami.jpeg" alt="Swami Tribhuwan Puri" className="w-full max-w-sm mx-auto rounded-2xl shadow-lg" />
+            <img src="/swami.jpeg" alt="Swami Tribhuwan Puri" className="w-full max-w-sm mx-auto rounded-2xl shadow-lg" width="384" height="384" loading="lazy" />
           </div>
           <div className="md:w-3/5 text-center md:text-left">
             <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">{t('inspiration.tagline')}</p>
@@ -250,7 +250,8 @@ export function Homepage() {
                 <div className="flex justify-center gap-1.5 mt-6">
                   {Array.from({ length: totalSlides }).map((_, i) => (
                     <button key={i} onClick={() => setMemberSlide(i)}
-                      className={`w-2 h-2 rounded-full transition-colors ${i === memberSlide ? 'bg-primary' : 'bg-gray-300'}`} />
+                      aria-label={`Go to slide ${i + 1}`}
+                      className={`w-2 h-2 rounded-full transition-colors ${i === memberSlide ? 'bg-primary' : 'bg-gray-300'} relative before:absolute before:inset-[-10px]`} />
                   ))}
                 </div>
               )}

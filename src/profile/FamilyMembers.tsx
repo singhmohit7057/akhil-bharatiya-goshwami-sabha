@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Plus, Edit2, Trash2, X, Camera, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { compressImage } from '../lib/utils'
 import { supabase } from '../lib/supabase'
 
 import { FAMILY_RELATIONS } from '../types'
@@ -65,9 +66,9 @@ export function FamilyMembers() {
 
   async function uploadFamilyPhoto(memberId: string): Promise<string | null> {
     if (!photoFile) return photoPreview
-    const ext = photoFile.name.split('.').pop()
-    const path = `family/${memberId}.${ext}`
-    const { error } = await supabase.storage.from('profile-photos').upload(path, photoFile, { upsert: true })
+    const compressed = await compressImage(photoFile, 400, 0.85)
+    const path = `family/${memberId}.jpg`
+    const { error } = await supabase.storage.from('profile-photos').upload(path, compressed, { upsert: true })
     if (error) return null
     const { data } = supabase.storage.from('profile-photos').getPublicUrl(path)
     return data.publicUrl

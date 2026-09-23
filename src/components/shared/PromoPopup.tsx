@@ -45,9 +45,7 @@ export function PromoPopup() {
           <X className="w-4 h-4" />
         </button>
 
-        {popup.image_url && (
-          <img src={popup.image_url} alt="" className="w-full max-h-64 object-cover" />
-        )}
+        {popup.image_url && <img src={popup.image_url} alt="" className="w-full max-h-64 object-cover" />}
 
         <div className="p-6 text-center">
           <h2 className="text-xl font-bold text-text-primary mb-2">{popup.title}</h2>

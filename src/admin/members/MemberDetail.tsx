@@ -7,7 +7,7 @@ import { generateMemberProfilePdf } from '../../lib/receiptPdf'
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
-import { getRoleLabel, formatDate } from '../../lib/utils'
+import { getRoleLabel, formatDate, compressImage } from '../../lib/utils'
 import { transliterateToHindi } from '../../lib/transliterate'
 import type { Profile, MemberRole, FamilyMember, FamilyRelation, Gender, BusinessDetail } from '../../types'
 import { FAMILY_RELATIONS } from '../../types'
@@ -145,12 +145,12 @@ export function MemberDetail() {
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !member) return
-    if (file.size > 2 * 1024 * 1024) { toast.error('Photo must be under 2MB'); return }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Photo must be under 10MB'); return }
     setPhotoPreview(URL.createObjectURL(file))
     setUploadingPhoto(true)
-    const ext = file.name.split('.').pop()
-    const path = `${member.id}.${ext}`
-    const { error: uploadError } = await supabase.storage.from('profile-photos').upload(path, file, { upsert: true })
+    const compressed = await compressImage(file, 400, 0.85)
+    const path = `${member.id}.jpg`
+    const { error: uploadError } = await supabase.storage.from('profile-photos').upload(path, compressed, { upsert: true })
     if (uploadError) { toast.error('Failed to upload photo'); setPhotoPreview(null); setUploadingPhoto(false); return }
     const { data: urlData } = supabase.storage.from('profile-photos').getPublicUrl(path)
     await supabase.from('profiles').update({ profile_photo_url: urlData.publicUrl }).eq('id', member.id)

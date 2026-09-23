@@ -1,0 +1,19 @@
+{
+  "name": "Akhil Bharatiya Goswami Sabha Paschim Bangal",
+  "description": "Official community website for the Goswami community of West Bengal, India. Uniting members through culture, events, matrimonial services, and social welfare.",
+  "url": "https://akhilbharatiyagoswami.com",
+  "contact": {
+    "email": "abgspb3@gmail.com",
+    "phone": "+919331038940"
+  },
+  "resources": [
+    { "name": "Home", "url": "https://akhilbharatiyagoswami.com/" },
+    { "name": "About", "url": "https://akhilbharatiyagoswami.com/about" },
+    { "name": "Events", "url": "https://akhilbharatiyagoswami.com/events" },
+    { "name": "Members", "url": "https://akhilbharatiyagoswami.com/members" },
+    { "name": "Business Directory", "url": "https://akhilbharatiyagoswami.com/businesses" },
+    { "name": "Gallery", "url": "https://akhilbharatiyagoswami.com/gallery" },
+    { "name": "Donate", "url": "https://akhilbharatiyagoswami.com/donate" },
+    { "name": "Contact", "url": "https://akhilbharatiyagoswami.com/contact" }
+  ]
+}
