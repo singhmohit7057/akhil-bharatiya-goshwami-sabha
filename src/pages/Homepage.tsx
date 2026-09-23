@@ -251,7 +251,7 @@ export function Homepage() {
                   {Array.from({ length: totalSlides }).map((_, i) => (
                     <button key={i} onClick={() => setMemberSlide(i)}
                       aria-label={`Go to slide ${i + 1}`}
-                      className={`w-2 h-2 rounded-full transition-colors ${i === memberSlide ? 'bg-primary' : 'bg-gray-300'} relative before:absolute before:inset-[-10px]`} />
+                      className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${i === memberSlide ? 'bg-primary' : 'bg-gray-300'} relative before:absolute before:inset-[-10px]`} />
                   ))}
                 </div>
               )}
@@ -473,14 +473,14 @@ function AutoMemberSlide({ items, perSlide, slide, setSlide, totalSlides, curren
     if (items.length <= perSlide) return
     const timer = setInterval(() => {
       setSlide((slide + 1) % totalSlides)
-    }, 3500)
+    }, 5000)
     return () => clearInterval(timer)
   }, [items.length, totalSlides, perSlide, slide])
 
   if (currentItems.length === 0) return <p className="text-center text-sm text-text-secondary py-8">No members yet.</p>
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 min-h-[320px] content-start">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 min-h-[340px] content-start">
       {currentItems.map((member) => {
         const ring = boardSlugs.includes(member.id)
           ? 'ring-orange-300'
