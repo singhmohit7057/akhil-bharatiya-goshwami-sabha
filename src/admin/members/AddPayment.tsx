@@ -45,18 +45,8 @@ export function AddPayment() {
           const { data: payment } = await supabase.from('donations').select('*').eq('id', editId).single()
           if (payment) {
             const p = payment as any
-            let membershipStart = p.donation_date
-            if (p.purpose === 'Executive Membership') {
-              // Only use profile's membership_start_date if this is the LATEST membership payment
-              const { data: latestPay } = await supabase.from('donations')
-                .select('id').eq('user_id', p.user_id).eq('purpose', 'Executive Membership')
-                .order('donation_date', { ascending: false }).limit(1).single()
-              if (latestPay?.id === p.id) {
-                const { data: prof } = await supabase.from('profiles').select('membership_start_date').eq('id', p.user_id).single()
-                if (prof?.membership_start_date) membershipStart = prof.membership_start_date
-              }
-              // else: older payment — use donation_date as membership start (already set)
-            }
+            // Use per-payment membership_start_date; fall back to donation_date
+            const membershipStart = p.membership_start_date || p.donation_date
             setForm({
               user_id: p.user_id,
               amount: String(p.amount),
@@ -102,6 +92,7 @@ export function AddPayment() {
       recorded_by: user?.id,
       donor_name: donorType === 'other' ? form.donor_name.trim() : null,
       reference_member_id: donorType === 'other' && form.reference_member_id ? form.reference_member_id : null,
+      ...(paymentType === 'membership' ? { membership_start_date: form.membership_start_date } : {}),
     }
 
     if (editId) {
@@ -116,10 +107,13 @@ export function AddPayment() {
           const startDate = new Date(form.membership_start_date)
           const endDate = new Date(startDate)
           endDate.setFullYear(endDate.getFullYear() + 1)
+          const { data: memberData } = await supabase.from('profiles').select('role').eq('id', form.user_id).single()
+          const roleUpdate = memberData?.role === 'member' ? { role: 'executive_member' } : {}
           await supabase.from('profiles').update({
             is_executive_member: true,
             membership_start_date: form.membership_start_date,
             membership_end_date: endDate.toISOString().split('T')[0],
+            ...roleUpdate,
           }).eq('id', form.user_id)
         }
         // Older payment edit: only updates the donation record, not profile dates

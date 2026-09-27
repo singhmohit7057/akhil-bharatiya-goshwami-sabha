@@ -40,7 +40,9 @@ export function generatePaymentReceiptPdf(data: ReceiptData) {
   const badge = isMembership ? 'MEMBERSHIP PAYMENT RECEIPT' : 'DONATION RECEIPT'
   const membershipStart = isMembership ? (data.membershipStartDate ? fmtDate(data.membershipStartDate) : date) : null
   const validUntil = isMembership
-    ? (data.membershipEndDate ? fmtDate(data.membershipEndDate) : fmtDate(getExpiryDate(data.donation_date)))
+    ? (data.membershipEndDate
+        ? fmtDate(data.membershipEndDate)
+        : fmtDate(getExpiryDate(data.membershipStartDate || data.donation_date)))
     : null
 
   const W = 148, mx = 14

@@ -15,6 +15,7 @@ interface MembershipPayment {
   id: string
   amount: number
   donation_date: string
+  membership_start_date: string | null
   payment_method: string | null
   transaction_id: string | null
   valid_until: string
@@ -60,14 +61,19 @@ export function MyDonations() {
         const general = all.filter((d) => d.purpose !== 'Executive Membership')
         const membership = all
           .filter((d) => d.purpose === 'Executive Membership')
-          .map((d) => ({
-            id: d.id,
-            amount: Number(d.amount),
-            donation_date: d.donation_date,
-            payment_method: d.payment_method,
-            transaction_id: d.transaction_id,
-            valid_until: (() => { const dt = new Date(d.donation_date); dt.setFullYear(dt.getFullYear() + 1); return dt.toISOString().split('T')[0] })(),
-          }))
+          .map((d) => {
+            const startDate = (d as any).membership_start_date || d.donation_date
+            const dt = new Date(startDate); dt.setFullYear(dt.getFullYear() + 1)
+            return {
+              id: d.id,
+              amount: Number(d.amount),
+              donation_date: d.donation_date,
+              membership_start_date: (d as any).membership_start_date || null,
+              payment_method: d.payment_method,
+              transaction_id: d.transaction_id,
+              valid_until: dt.toISOString().split('T')[0],
+            }
+          })
         setDonations(general)
         setMembershipPayments(membership)
         // Fetch referral payments (outsider donations where this member was the reference)
@@ -222,7 +228,7 @@ export function MyDonations() {
                             )}
                           </div>
                           <p className="text-xs text-text-secondary mt-0.5">
-                            {formatDate(mp.donation_date, lang)} → {formatDate(mp.valid_until, lang)}
+                            {formatDate(mp.membership_start_date || mp.donation_date, lang)} → {formatDate(mp.valid_until, lang)}
                           </p>
                           <p className="text-xs text-text-secondary">
                             {mp.payment_method || 'Payment'} {mp.transaction_id ? `· ${mp.transaction_id}` : ''}
@@ -236,8 +242,8 @@ export function MyDonations() {
                           'membership',
                           profile?.member_id || undefined,
                           profile?.email || undefined,
-                          (profile as any).membership_start_date || undefined,
-                          (profile as any).membership_end_date || undefined,
+                          mp.membership_start_date || undefined,
+                          mp.valid_until,
                         )}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors shrink-0"
                       >

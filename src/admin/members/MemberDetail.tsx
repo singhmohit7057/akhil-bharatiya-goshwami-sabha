@@ -854,18 +854,25 @@ export function MemberDetail() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-text-primary">{p.purpose || 'General Donation'}</p>
-                    {p.donor_name ? (
+                    <p className="text-sm font-medium text-text-primary">
+                      {p.purpose === 'Executive Membership'
+                        ? 'Executive Membership'
+                        : p.donor_name
+                          ? 'Referral Donation'
+                          : 'Donation'}
+                    </p>
+                    {p.donor_name && (
                       <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
                         by {p.donor_name}{p.ref?.full_name ? ` · ref: ${p.ref.full_name}` : ''}
-                      </span>
-                    ) : p.purpose !== 'Executive Membership' && (
-                      <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
-                        Donation
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-text-secondary">{formatDate(p.donation_date, lang)} {p.payment_method ? `· ${p.payment_method}` : ''}</p>
+                  {(p.purpose || p.transaction_id) && p.purpose !== 'Executive Membership' && (
+                    <p className="text-xs text-text-secondary">
+                      {[p.purpose, p.transaction_id].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
                 </div>
                 <p className={`text-sm font-semibold shrink-0 ${p.purpose === 'Executive Membership' ? 'text-amber-600' : 'text-green-600'}`}>
                   ₹{Number(p.amount).toLocaleString()}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { IndianRupee, Crown, Search, Plus, X, Edit2, Trash2, BookOpen, FileDown } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { IndianRupee, Crown, Search, Plus, Edit2, Trash2, BookOpen, FileDown } from 'lucide-react'
 import { generatePaymentReceiptPdf, generateSouvenirReceiptPdf } from '../../lib/receiptPdf'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
@@ -15,53 +16,30 @@ interface PaymentWithProfile extends Donation {
   reference_member?: { full_name: string } | null
 }
 
-const MEMBERSHIP_FEE = 1100
-
 export function PaymentHistory() {
-  const { user, isSuperAdmin } = useAuth()
+  const { isSuperAdmin } = useAuth()
   const superAdmin = isSuperAdmin()
+  const navigate = useNavigate()
   const [payments, setPayments] = useState<PaymentWithProfile[]>([])
   const [souvenirPayments, setSouvenirPayments] = useState<any[]>([])
-  const [members, setMembers] = useState<Pick<Profile, 'id' | 'full_name'>[]>([])
   const [loading, setLoading] = useState(true)
   const [souvenirCollected, setSouvenirCollected] = useState(0)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [modeFilter, setModeFilter] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [paymentType, setPaymentType] = useState<'donation' | 'membership'>('donation')
-  const [saving, setSaving] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState({
-    user_id: '',
-    amount: '',
-    donation_date: new Date().toISOString().split('T')[0],
-    purpose: '',
-    payment_method: '',
-    transaction_id: '',
-  })
 
   useEffect(() => {
     Promise.all([
       supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id, membership_start_date, membership_end_date), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false }),
-      supabase.from('profiles').select('id, full_name').eq('account_status', 'active').order('full_name'),
       supabase.from('souvenir_sponsors').select('*, souvenirs(title, event_name, year)').eq('is_paid', true).order('created_at', { ascending: false }),
-    ]).then(([payRes, memRes, souvenirRes]) => {
+    ]).then(([payRes, souvenirRes]) => {
       setPayments((payRes.data as PaymentWithProfile[]) || [])
-      setMembers(memRes.data || [])
       const sData = (souvenirRes.data || []) as any[]
       setSouvenirPayments(sData)
       setSouvenirCollected(sData.reduce((sum, s) => sum + Number(s.amount), 0))
       setLoading(false)
     })
   }, [])
-
-  function resetForm() {
-    setForm({ user_id: '', amount: '', donation_date: new Date().toISOString().split('T')[0], purpose: '', payment_method: '', transaction_id: '' })
-    setShowForm(false)
-    setPaymentType('donation')
-    setEditingId(null)
-  }
 
   function downloadSouvenirReceipt(s: any) {
     generateSouvenirReceiptPdf({
@@ -94,28 +72,21 @@ export function PaymentHistory() {
       memberId: isOutsider ? undefined : (p.profiles?.member_id || undefined),
       memberEmail: isOutsider ? undefined : (p.profiles?.email || undefined),
       referenceName: isOutsider ? (p.profiles?.full_name || (p as any).reference_member?.full_name || undefined) : undefined,
-      membershipStartDate: p.purpose === 'Executive Membership' ? (p.profiles?.membership_start_date || undefined) : undefined,
-      membershipEndDate: p.purpose === 'Executive Membership' ? (p.profiles?.membership_end_date || undefined) : undefined,
+      membershipStartDate: p.purpose === 'Executive Membership' ? ((p as any).membership_start_date || undefined) : undefined,
+      membershipEndDate: undefined, // always calculated as start + 1 year
     })
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this payment record?')) return
-    // Check if this is a membership payment before deleting
     const deletingPayment = payments.find(p => p.id === id)
     const isMemPayment = deletingPayment?.purpose === 'Executive Membership'
     const memberId = deletingPayment?.user_id
 
     await supabase.from('donations').delete().eq('id', id)
 
-    // If it was a membership payment, check if any other membership payments remain
     if (isMemPayment && memberId) {
-      const { data: remaining } = await supabase
-        .from('donations')
-        .select('id')
-        .eq('user_id', memberId)
-        .eq('purpose', 'Executive Membership')
-      // No remaining membership payments → revoke executive status
+      const { data: remaining } = await supabase.from('donations').select('id').eq('user_id', memberId).eq('purpose', 'Executive Membership')
       if (!remaining || remaining.length === 0) {
         const { data: mProf } = await supabase.from('profiles').select('role').eq('id', memberId).single()
         const roleRevert = mProf?.role === 'executive_member' ? { role: 'member' } : {}
@@ -133,46 +104,6 @@ export function PaymentHistory() {
       toast.success('Payment deleted')
     }
 
-    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id, membership_start_date, membership_end_date), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
-    if (data) setPayments(data as PaymentWithProfile[])
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-
-    const purpose = paymentType === 'membership' ? 'Executive Membership' : (form.purpose || 'General Donation')
-    const amount = paymentType === 'membership' ? MEMBERSHIP_FEE : parseFloat(form.amount)
-
-    const payload = {
-      user_id: form.user_id,
-      amount,
-      donation_date: form.donation_date,
-      purpose,
-      payment_method: form.payment_method || null,
-      transaction_id: form.transaction_id || null,
-      recorded_by: user?.id,
-    }
-
-    if (editingId) {
-      const { error } = await supabase.from('donations').update(payload).eq('id', editingId)
-      if (error) { toast.error('Failed to update'); setSaving(false); return }
-      toast.success('Payment updated')
-    } else {
-      const { error } = await supabase.from('donations').insert(payload)
-      if (error) { toast.error('Failed to record payment'); setSaving(false); return }
-      if (paymentType === 'membership') {
-        const { data: mData } = await supabase.from('profiles').select('role').eq('id', form.user_id).single()
-        const roleUp = mData?.role === 'member' ? { role: 'executive_member' } : {}
-        await supabase.from('profiles').update({ is_executive_member: true, ...roleUp }).eq('id', form.user_id)
-        toast.success('Membership payment recorded & executive status activated')
-      } else {
-        toast.success('Donation recorded')
-      }
-    }
-
-    resetForm()
-    setSaving(false)
     const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id, membership_start_date, membership_end_date), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
     if (data) setPayments(data as PaymentWithProfile[])
   }
@@ -200,8 +131,6 @@ export function PaymentHistory() {
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
 
-  const inputClass = 'w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -209,107 +138,12 @@ export function PaymentHistory() {
           <h1 className="text-2xl font-bold text-text-primary">Payment History</h1>
           <p className="text-sm text-text-secondary mt-1">All donations and membership payments</p>
         </div>
-        {superAdmin && !showForm && (
-          <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark">
+        {superAdmin && (
+          <button onClick={() => navigate('/admin/payments/add')} className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark">
             <Plus className="w-4 h-4" /> Add Payment
           </button>
         )}
       </div>
-
-      {/* Add Payment Form */}
-      {showForm && superAdmin && (
-        <div className="bg-white rounded-xl border border-border p-5 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-semibold text-text-primary">{editingId ? 'Edit Payment' : 'Record Payment'}</h3>
-            <button onClick={resetForm} aria-label="Close form"><X className="w-4 h-4 text-text-secondary" /></button>
-          </div>
-
-          {/* Payment type toggle */}
-          <div className="flex gap-2 mb-4">
-            <button
-              type="button"
-              onClick={() => setPaymentType('donation')}
-              className={`flex-1 p-3 rounded-lg border text-center text-sm font-medium transition-colors ${
-                paymentType === 'donation' ? 'border-green-300 bg-green-50 text-green-700' : 'border-border text-text-secondary hover:border-green-200'
-              }`}
-            >
-              <IndianRupee className="w-4 h-4 mx-auto mb-1" />
-              Donation
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentType('membership')}
-              className={`flex-1 p-3 rounded-lg border text-center text-sm font-medium transition-colors ${
-                paymentType === 'membership' ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-border text-text-secondary hover:border-amber-200'
-              }`}
-            >
-              <Crown className="w-4 h-4 mx-auto mb-1" />
-              Membership (₹{MEMBERSHIP_FEE})
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">Select Member *</label>
-              <select required value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} className={`${inputClass} bg-white`}>
-                <option value="">Choose member...</option>
-                {members.map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {paymentType === 'donation' ? (
-                <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Amount (₹) *</label>
-                  <input type="number" required min="1" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={inputClass} />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-xs font-medium text-text-primary mb-1">Amount</label>
-                  <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm font-semibold text-amber-700">₹{MEMBERSHIP_FEE} (Fixed)</div>
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Payment Date *</label>
-                <input type="text" required placeholder="YYYY-MM-DD" value={form.donation_date} onChange={(e) => setForm({ ...form, donation_date: e.target.value })} className={inputClass} />
-              </div>
-            </div>
-
-            {paymentType === 'donation' && (
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Purpose</label>
-                <input type="text" placeholder="e.g. Annual Fund, Event Sponsorship" value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} className={inputClass} />
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Payment Method</label>
-                <select value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className={`${inputClass} bg-white`}>
-                  <option value="">Select</option>
-                  <option value="Online">Online</option>
-                  <option value="Offline">Offline</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Remark</label>
-                <input type="text" placeholder="Optional" value={form.transaction_id} onChange={(e) => setForm({ ...form, transaction_id: e.target.value })} className={inputClass} />
-              </div>
-            </div>
-
-            {paymentType === 'membership' && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
-                <Crown className="w-3.5 h-3.5 inline mr-1" />
-                This will automatically activate <strong>Executive Member</strong> status. Membership valid for 1 year from membership start date.
-              </div>
-            )}
-
-            <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
-              {saving ? '...' : editingId ? 'Update Payment' : paymentType === 'membership' ? 'Record & Activate Membership' : 'Record Donation'}
-            </button>
-          </form>
-        </div>
-      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

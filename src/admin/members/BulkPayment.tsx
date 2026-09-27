@@ -230,6 +230,7 @@ export function BulkPayment() {
           purpose: 'Executive Membership',
           payment_method: row.payment_mode || null,
           transaction_id: row.remark || null,
+          membership_start_date: row.membership_date || row.payment_date,
           recorded_by: user?.id,
         })
 
@@ -252,10 +253,13 @@ export function BulkPayment() {
           ? (new Date(member.membership_start_date) < newStart ? member.membership_start_date : membershipStart)
           : membershipStart
 
+        const { data: memRole } = await supabaseAdmin.from('profiles').select('role').eq('id', member.id).single()
+        const roleUpdate = memRole?.role === 'member' ? { role: 'executive_member' } : {}
         await supabase.from('profiles').update({
           is_executive_member: true,
           membership_start_date: memberSince,
           membership_end_date: newEnd.toISOString().split('T')[0],
+          ...roleUpdate,
         }).eq('id', member.id)
 
         results.push({ identifier, memberName: member.full_name, status: 'success', message: `Active until ${newEnd.toISOString().split('T')[0]}` })
