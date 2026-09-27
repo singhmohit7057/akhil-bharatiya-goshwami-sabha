@@ -10,7 +10,7 @@ import type { Donation, Profile } from '../../types'
 import { Spinner } from '../../components/ui/Spinner'
 
 interface PaymentWithProfile extends Donation {
-  profiles: Pick<Profile, 'full_name' | 'email'> & { member_id?: string }
+  profiles: Pick<Profile, 'full_name' | 'email'> & { member_id?: string; membership_start_date?: string; membership_end_date?: string }
   donor_name?: string | null
   reference_member?: { full_name: string } | null
 }
@@ -27,6 +27,7 @@ export function PaymentHistory() {
   const [souvenirCollected, setSouvenirCollected] = useState(0)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [modeFilter, setModeFilter] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [paymentType, setPaymentType] = useState<'donation' | 'membership'>('donation')
   const [saving, setSaving] = useState(false)
@@ -42,7 +43,7 @@ export function PaymentHistory() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false }),
+      supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id, membership_start_date, membership_end_date), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name').eq('account_status', 'active').order('full_name'),
       supabase.from('souvenir_sponsors').select('*, souvenirs(title, event_name, year)').eq('is_paid', true).order('created_at', { ascending: false }),
     ]).then(([payRes, memRes, souvenirRes]) => {
@@ -93,6 +94,8 @@ export function PaymentHistory() {
       memberId: isOutsider ? undefined : (p.profiles?.member_id || undefined),
       memberEmail: isOutsider ? undefined : (p.profiles?.email || undefined),
       referenceName: isOutsider ? (p.profiles?.full_name || (p as any).reference_member?.full_name || undefined) : undefined,
+      membershipStartDate: p.purpose === 'Executive Membership' ? (p.profiles?.membership_start_date || undefined) : undefined,
+      membershipEndDate: p.purpose === 'Executive Membership' ? (p.profiles?.membership_end_date || undefined) : undefined,
     })
   }
 
@@ -130,7 +133,7 @@ export function PaymentHistory() {
       toast.success('Payment deleted')
     }
 
-    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
+    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id, membership_start_date, membership_end_date), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
     if (data) setPayments(data as PaymentWithProfile[])
   }
 
@@ -170,18 +173,19 @@ export function PaymentHistory() {
 
     resetForm()
     setSaving(false)
-    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
+    const { data } = await supabase.from('donations').select('*, profiles!donations_user_id_fkey(full_name, email, member_id, membership_start_date, membership_end_date), donor_name, reference_member:profiles!donations_reference_member_id_fkey(full_name)').order('donation_date', { ascending: false })
     if (data) setPayments(data as PaymentWithProfile[])
   }
 
   const filteredDonations = typeFilter === 'souvenir' ? [] : payments.filter((p) => {
-    const matchSearch = !search || p.profiles?.full_name?.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = !search || p.profiles?.full_name?.toLowerCase().includes(search.toLowerCase()) || (p as any).donor_name?.toLowerCase().includes(search.toLowerCase())
     const matchType = !typeFilter
       ? true
       : typeFilter === 'membership'
         ? p.purpose === 'Executive Membership'
         : p.purpose !== 'Executive Membership'
-    return matchSearch && matchType
+    const matchMode = !modeFilter || p.payment_method?.toLowerCase() === modeFilter.toLowerCase()
+    return matchSearch && matchType && matchMode
   })
 
   const filteredSouvenirs = typeFilter === 'donation' || typeFilter === 'membership' ? [] :
@@ -352,6 +356,12 @@ export function PaymentHistory() {
           <option value="donation">Donation</option>
           <option value="membership">Membership</option>
           <option value="souvenir">Souvenir</option>
+        </select>
+        <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)}
+          className="px-4 py-2 border border-border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+          <option value="">All Modes</option>
+          <option value="Online">Online</option>
+          <option value="Offline">Offline</option>
         </select>
       </div>
 

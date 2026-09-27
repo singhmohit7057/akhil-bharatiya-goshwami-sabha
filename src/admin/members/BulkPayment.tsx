@@ -149,16 +149,21 @@ export function BulkPayment() {
         const wb = XLSX.read(ev.target?.result, { type: 'binary' })
         const ws = wb.Sheets[wb.SheetNames[0]]
         const raw = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' })
-        function toISO(raw: string): string {
-          const s = String(raw).trim()
-          if (/^\d{2}-\d{2}-\d{4}$/.test(s)) {
-            const [dd, mm, yyyy] = s.split('-')
-            return `${yyyy}-${mm}-${dd}`
+        function toISO(raw: string | number | Date | undefined | null): string {
+          if (raw instanceof Date) return raw.toISOString().split('T')[0]
+          const s = String(raw ?? '').trim()
+          if (!s) return ''
+          // DD-MM-YYYY or DD/MM/YYYY
+          if (/^\d{1,2}[-/]\d{1,2}[-/]\d{4}$/.test(s)) {
+            const [dd, mm, yyyy] = s.split(/[-/]/)
+            return `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`
           }
+          // YYYY-MM-DD already ISO
           if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-          // Excel date serial
-          if (!isNaN(Number(s)) && Number(s) > 0) {
-            const d = new Date((Number(s) - 25569) * 86400 * 1000)
+          // Excel date serial number
+          const n = Number(s)
+          if (!isNaN(n) && n > 1000) {
+            const d = new Date((n - 25569) * 86400 * 1000)
             return d.toISOString().split('T')[0]
           }
           return s
@@ -174,7 +179,7 @@ export function BulkPayment() {
             amount: parseFloat(String(r['Amount (₹)'] || r['amount'] || '0').replace(/[₹,]/g, '')) || 0,
             payment_date: toISO(r['Payment Date (DD-MM-YYYY)'] || r['payment_date'] || ''),
             membership_date: toISO(r['Membership Date (DD-MM-YYYY)'] || r['membership_date'] || ''),
-            payment_mode: String(r['Payment Mode'] || r['payment_mode'] || 'Cash').trim(),
+            payment_mode: (() => { const m = String(r['Payment Mode'] || r['payment_mode'] || '').trim().toLowerCase(); return m === 'online' ? 'Online' : m === 'offline' ? 'Offline' : '' })(),
             remark: String(r['Remark'] || r['remark'] || `Executive Membership ${selectedYear}`).trim(),
           }))
           .filter((r) => (r.email || r.phone || r.member_id) && r.amount > 0 && r.payment_date)

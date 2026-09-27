@@ -20,7 +20,7 @@ interface MembershipPayment {
   valid_until: string
 }
 
-function generateReceipt(donation: Donation, profileName: string, _type: 'donation' | 'membership', memberId?: string, memberEmail?: string) {
+function generateReceipt(donation: Donation, profileName: string, _type: 'donation' | 'membership', memberId?: string, memberEmail?: string, membershipStartDate?: string, membershipEndDate?: string) {
   generatePaymentReceiptPdf({
     id: donation.id,
     amount: donation.amount,
@@ -31,6 +31,8 @@ function generateReceipt(donation: Donation, profileName: string, _type: 'donati
     memberName: profileName,
     memberId,
     memberEmail,
+    membershipStartDate,
+    membershipEndDate,
   })
 }
 
@@ -220,9 +222,7 @@ export function MyDonations() {
                             )}
                           </div>
                           <p className="text-xs text-text-secondary mt-0.5">
-                            {(profile as any).membership_start_date
-                              ? `${formatDate((profile as any).membership_start_date, lang)} → ${formatDate((profile as any).membership_end_date, lang)}`
-                              : `${formatDate(mp.donation_date, lang)} → ${formatDate(mp.valid_until, lang)}`}
+                            {formatDate(mp.donation_date, lang)} → {formatDate(mp.valid_until, lang)}
                           </p>
                           <p className="text-xs text-text-secondary">
                             {mp.payment_method || 'Payment'} {mp.transaction_id ? `· ${mp.transaction_id}` : ''}
@@ -236,6 +236,8 @@ export function MyDonations() {
                           'membership',
                           profile?.member_id || undefined,
                           profile?.email || undefined,
+                          (profile as any).membership_start_date || undefined,
+                          (profile as any).membership_end_date || undefined,
                         )}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors shrink-0"
                       >

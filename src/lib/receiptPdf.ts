@@ -20,6 +20,8 @@ interface ReceiptData {
   memberId?: string
   memberEmail?: string
   referenceName?: string
+  membershipStartDate?: string
+  membershipEndDate?: string
 }
 
 function getExpiryDate(dateStr: string): string {
@@ -36,9 +38,9 @@ export function generatePaymentReceiptPdf(data: ReceiptData) {
   const date = fmtDate(data.donation_date)
   const amount = `Rs. ${Number(data.amount).toLocaleString('en-IN')}`
   const badge = isMembership ? 'MEMBERSHIP PAYMENT RECEIPT' : 'DONATION RECEIPT'
-  const membershipStart = isMembership ? date : null
+  const membershipStart = isMembership ? (data.membershipStartDate ? fmtDate(data.membershipStartDate) : date) : null
   const validUntil = isMembership
-    ? fmtDate(getExpiryDate(data.donation_date))
+    ? (data.membershipEndDate ? fmtDate(data.membershipEndDate) : fmtDate(getExpiryDate(data.donation_date)))
     : null
 
   const W = 148, mx = 14

@@ -29,6 +29,7 @@ export function Reports() {
   const [bankTransactions, setBankTransactions] = useState<any[]>([])
   const [categoryFilter, setCategoryFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'in' | 'out' | 'bank'>('all')
+  const [modeFilter, setModeFilter] = useState('')
 
   useEffect(() => { fetchAll() }, [year])
 
@@ -133,7 +134,8 @@ export function Reports() {
       if (categoryFilter === 'Expense') matchCat = t.type === 'out'
       else matchCat = t.category === categoryFilter
     }
-    return matchType && matchCat
+    const matchMode = !modeFilter || t.mode?.toLowerCase() === modeFilter.toLowerCase()
+    return matchType && matchCat && matchMode
   })
 
   async function exportReport() {
@@ -437,6 +439,12 @@ export function Reports() {
               <option value="Expense">Expense</option>
               <option value="Cash Deposit">Cash Deposit</option>
               <option value="Cash Withdraw">Cash Withdraw</option>
+            </select>
+            <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)}
+              className="px-3 py-1.5 border border-border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+              <option value="">All Modes</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
             </select>
             <p className="text-xs text-text-secondary self-center ml-auto">{filtered.length} transactions · ₹{filtered.reduce((s,t)=>s+(t.type==='in'?t.amount:0),0).toLocaleString()} in · ₹{filtered.reduce((s,t)=>s+(t.type==='out'?t.amount:0),0).toLocaleString()} out</p>
           </div>
