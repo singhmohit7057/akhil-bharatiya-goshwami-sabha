@@ -66,6 +66,7 @@ const sections: NavSection[] = [
           { to: '/admin/members/add', label: 'Add Member' },
           { to: '/admin/members', label: 'All Members' },
           { to: '/admin/members/pending', label: 'Pending Approvals' },
+          { to: '/admin/members/outsiders', label: 'Outsider Donors' },
         ],
       },
       {

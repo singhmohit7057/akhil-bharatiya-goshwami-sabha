@@ -53,12 +53,13 @@ src/
 │   │   ├── AddMember.tsx
 │   │   ├── MemberDetail.tsx         # Edit, photo, family, business, payments, PDF
 │   │   ├── PendingApprovals.tsx
-│   │   ├── PaymentHistory.tsx       # Donations, memberships, souvenir receipts; outsider donor support
-│   │   ├── AddPayment.tsx           # Member or outsider donation with reference member
+│   │   ├── OutsiderDonors.tsx       # Non-member donations by donor name + reference; top referrers
+│   │   ├── PaymentHistory.tsx       # Donations, memberships, souvenir receipts
+│   │   ├── AddPayment.tsx           # Member or outsider donation with reference member; separate payment & membership start dates
 │   │   ├── ExpenseHistory.tsx       # With "Payment Done By" member field
 │   │   ├── AddExpense.tsx           # Expense categories + who paid
 │   │   ├── Bank.tsx                 # Cash deposits/withdrawals with net balance tracking
-│   │   └── BulkPayment.tsx          # Excel bulk upload for payments/expenses
+│   │   └── BulkPayment.tsx          # Excel bulk upload for payments/donations/expenses; DD-MM-YYYY + Excel serial date parsing
 │   ├── promo-popups/
 │   │   └── PromoPopups.tsx
 │   ├── reports/
@@ -140,7 +141,7 @@ src/
 │   ├── MyProfile.tsx                # Overview + PVC ID card download
 │   ├── EditProfile.tsx
 │   ├── FamilyMembers.tsx
-│   ├── MyDonations.tsx              # With PDF receipt download
+│   ├── MyDonations.tsx              # Donations, membership history, referral payments; per-payment PDF receipts
 │   ├── Membership.tsx
 │   ├── BusinessDetails.tsx          # Logo, visiting card upload/delete/reupload
 │   └── MyMatrimonial.tsx            # Self or family profiles, duplicate prevention
@@ -178,10 +179,12 @@ src/
 ### Admin Panel
 - **3-tier roles**: `super_admin` / `admin` (configurable permissions) / `viewer` (read-only)
 - **Members**: list (filter by governing/executive/regular/status), add, edit, approve, block/unblock toggle, export Excel
-- **Payments**: record member or outsider donations (with reference member), memberships, bulk Excel upload
+- **Payments**: record member or outsider donations (with reference member), memberships, bulk Excel upload; separate payment date & membership start date fields
+- **Membership receipts**: per-payment membership period (start from admin-entered date, end = start + 1 year); correct for all past and future years
+- **Outsider Donors**: dedicated page — donor name, reference member, top referrers, filter by reference
 - **Expenses**: track with category, paid-to, and "payment done by" member
 - **Bank**: cash deposit/withdrawal tracking with net offline/online/balance calculations
-- **Financial Reports**: year-wise income/expense breakdown by online/offline mode, bank transactions, Excel export (6 sheets)
+- **Financial Reports**: year-wise income/expense breakdown by online/offline mode, payment mode filter, bank transactions, Excel export (6 sheets)
 - **Matrimonial**: add with photo/caste/manglik fields, delete, hide/show; duplicate prevention
 - **Gallery**: create albums, upload photos
 - **Souvenir**: upload PDFs, manage sponsors with receipts
@@ -190,7 +193,7 @@ src/
 
 ### PDF Generation
 - Donation receipt (A5, branded)
-- Membership receipt with validity period
+- Membership receipt with per-payment validity period (membership start date → +1 year, independent of payment date)
 - Souvenir sponsor receipt
 - Member profile PDF (4 pages: personal, family, business/job, transactions)
 
@@ -257,6 +260,7 @@ src/
 | `/admin/members/add` | Add Member |
 | `/admin/members/:id` | Edit Member |
 | `/admin/members/pending` | Pending Approvals |
+| `/admin/members/outsiders` | Outsider Donors |
 | `/admin/payments` | Payment History |
 | `/admin/payments/add` | Add Payment |
 | `/admin/expenses` | Expense History |
@@ -284,9 +288,9 @@ src/
 
 ## Stats
 
-- **89 source files** (`.tsx` / `.ts`)
-- **~19,000 lines of code**
-- **20 public pages** + **30 admin pages** + **7 profile pages** + **7 auth pages** + **2 utility pages** (404, Unsubscribe)
+- **90 source files** (`.tsx` / `.ts`)
+- **~19,500 lines of code**
+- **20 public pages** + **31 admin pages** + **7 profile pages** + **7 auth pages** + **2 utility pages** (404, Unsubscribe)
 - **100/100 SEO** · **94/100 Desktop Performance** · **96/100 Best Practices** *(Google PageSpeed)*
 
 ---

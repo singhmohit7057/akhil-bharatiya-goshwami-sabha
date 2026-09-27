@@ -60,6 +60,7 @@ const AdminLogs = lazy(() => import('./admin/logs/AdminLogs').then((m) => ({ def
 const AllMembers = lazy(() => import('./admin/members/AllMembers').then((m) => ({ default: m.AllMembers })))
 const AddMember = lazy(() => import('./admin/members/AddMember').then((m) => ({ default: m.AddMember })))
 const MemberDetail = lazy(() => import('./admin/members/MemberDetail').then((m) => ({ default: m.MemberDetail })))
+const OutsiderDonors = lazy(() => import('./admin/members/OutsiderDonors').then((m) => ({ default: m.OutsiderDonors })))
 const AddEvent = lazy(() => import('./admin/yearly-planner/AddEvent').then((m) => ({ default: m.AddEvent })))
 const EditEvent = lazy(() => import('./admin/yearly-planner/EditEvent').then((m) => ({ default: m.EditEvent })))
 const ManageDirectory = lazy(() => import('./admin/directory/ManageDirectory').then((m) => ({ default: m.ManageDirectory })))
@@ -180,6 +181,7 @@ export default function App() {
             <Route path="members" element={<AllMembers />} />
             <Route path="members/add" element={<AddMember />} />
             <Route path="members/pending" element={<PendingApprovals />} />
+            <Route path="members/outsiders" element={<OutsiderDonors />} />
 
             {/* Payments */}
             <Route path="payments" element={<PaymentHistory />} />
