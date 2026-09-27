@@ -5,7 +5,7 @@ import { Users, Shield, Crown, UserCheck, MapPin, Handshake, Heart, Briefcase, P
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 
-import { localized, formatDate, getRoleLabel } from '../lib/utils'
+import { localized, formatDate, getDisplayRole } from '../lib/utils'
 import type { Event, Profile } from '../types'
 import { SEO } from '../components/SEO'
 
@@ -500,7 +500,7 @@ function AutoMemberSlide({ items, perSlide, slide, setSlide, totalSlides, curren
               <p className="text-sm font-semibold text-text-primary leading-tight truncate">
                 {lang === 'hi' && member.full_name_hi ? member.full_name_hi : member.full_name}
               </p>
-              <p className="text-[11px] text-primary font-medium mt-0.5 truncate">{getRoleLabel(member.role)}</p>
+              <p className="text-[11px] text-primary font-medium mt-0.5 truncate">{getDisplayRole(member.role, member.is_executive_member)}</p>
               {member.city && <p className="text-[10px] text-text-secondary truncate">{member.city}</p>}
             </div>
           </div>

@@ -5,7 +5,7 @@ import { Search, Shield, Edit2, Eye, User, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
-import { getRoleLabel } from '../../lib/utils'
+import { getDisplayRole } from '../../lib/utils'
 import type { Profile } from '../../types'
 import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
@@ -84,7 +84,7 @@ export function AllMembers() {
       'Gender':           m.gender ? m.gender.charAt(0).toUpperCase() + m.gender.slice(1) : '',
       'Date of Birth':    m.date_of_birth || '',
       'Marital Status':   m.marital_status ? m.marital_status.charAt(0).toUpperCase() + m.marital_status.slice(1) : '',
-      'Role':             getRoleLabel(m.role || ''),
+      'Role':             getDisplayRole(m.role, m.is_executive_member),
       'Executive Member': m.is_executive_member ? 'Yes' : 'No',
       'Membership Till':  m.membership_end_date || '',
       'Member Since':     m.member_since || m.created_at?.split('T')[0] || '',
@@ -162,7 +162,7 @@ export function AllMembers() {
               </div>
               <p className="text-[10px] text-text-secondary">{m.member_id || 'No ID'} · {m.phone || '—'}</p>
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{getRoleLabel(m.role)}</span>
+                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{getDisplayRole(m.role, m.is_executive_member)}</span>
                 {m.account_status === 'suspended' && (
                   <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">Blocked</span>
                 )}
@@ -232,7 +232,7 @@ export function AllMembers() {
                   <td className="px-4 py-3 text-xs text-text-secondary text-center">{m.member_id || '—'}</td>
                   <td className="px-4 py-3 text-text-secondary text-center">{m.phone || '—'}</td>
                   <td className="px-4 py-3 text-center">
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{getRoleLabel(m.role)}</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{getDisplayRole(m.role, m.is_executive_member)}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-text-secondary text-center">{(m as any).membership_end_date || (m.is_executive_member ? 'Active' : '—')}</td>
                   {canBlock && (

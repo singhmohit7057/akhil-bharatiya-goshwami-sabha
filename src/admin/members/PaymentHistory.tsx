@@ -114,10 +114,13 @@ export function PaymentHistory() {
         .eq('purpose', 'Executive Membership')
       // No remaining membership payments → revoke executive status
       if (!remaining || remaining.length === 0) {
+        const { data: mProf } = await supabase.from('profiles').select('role').eq('id', memberId).single()
+        const roleRevert = mProf?.role === 'executive_member' ? { role: 'member' } : {}
         await supabase.from('profiles').update({
           is_executive_member: false,
           membership_start_date: null,
           membership_end_date: null,
+          ...roleRevert,
         }).eq('id', memberId)
         toast.success('Payment deleted — Executive status revoked (no remaining membership payments)')
       } else {
@@ -156,7 +159,9 @@ export function PaymentHistory() {
       const { error } = await supabase.from('donations').insert(payload)
       if (error) { toast.error('Failed to record payment'); setSaving(false); return }
       if (paymentType === 'membership') {
-        await supabase.from('profiles').update({ is_executive_member: true }).eq('id', form.user_id)
+        const { data: mData } = await supabase.from('profiles').select('role').eq('id', form.user_id).single()
+        const roleUp = mData?.role === 'member' ? { role: 'executive_member' } : {}
+        await supabase.from('profiles').update({ is_executive_member: true, ...roleUp }).eq('id', form.user_id)
         toast.success('Membership payment recorded & executive status activated')
       } else {
         toast.success('Donation recorded')

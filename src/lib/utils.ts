@@ -57,3 +57,9 @@ export async function compressImage(file: File, maxSize = 600, quality = 0.82): 
     img.src = URL.createObjectURL(file)
   })
 }
+
+export function getDisplayRole(role: string | null | undefined, isExecutiveMember?: boolean): string {
+  if (role && role !== 'member') return getRoleLabel(role)
+  if (isExecutiveMember) return 'Executive Member'
+  return 'Member'
+}

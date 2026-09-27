@@ -123,10 +123,13 @@ export function AddPayment() {
       const startDate = new Date(form.membership_start_date)
       const endDate = new Date(startDate)
       endDate.setFullYear(endDate.getFullYear() + 1)
+      const { data: memberData } = await supabase.from('profiles').select('role').eq('id', form.user_id).single()
+      const roleUpdate = memberData?.role === 'member' ? { role: 'executive_member' } : {}
       await supabase.from('profiles').update({
         is_executive_member: true,
         membership_start_date: form.membership_start_date,
         membership_end_date: endDate.toISOString().split('T')[0],
+        ...roleUpdate,
       }).eq('id', form.user_id)
       logAction('create', 'payment', `₹${amount} Membership`, undefined, `Member: ${form.user_id}`)
       toast.success('Membership payment recorded & executive status activated')

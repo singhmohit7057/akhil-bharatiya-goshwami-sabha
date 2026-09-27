@@ -7,7 +7,7 @@ import { generateMemberProfilePdf } from '../../lib/receiptPdf'
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
-import { getRoleLabel, formatDate, compressImage } from '../../lib/utils'
+import { formatDate, compressImage, getDisplayRole } from '../../lib/utils'
 import { transliterateToHindi } from '../../lib/transliterate'
 import type { Profile, MemberRole, FamilyMember, FamilyRelation, Gender, BusinessDetail } from '../../types'
 import { FAMILY_RELATIONS } from '../../types'
@@ -261,8 +261,8 @@ export function MemberDetail() {
             <h1 className="text-xl font-bold text-text-primary">{member.full_name}</h1>
             <p className="text-sm text-text-secondary">{member.email} · {member.member_id || 'No ID'}</p>
             <div className="flex gap-2 mt-1">
-              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{getRoleLabel(member.role)}</span>
-              {member.is_executive_member && (
+              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{getDisplayRole(member.role, member.is_executive_member)}</span>
+              {member.is_executive_member && member.role === 'member' && (
                 <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Shield className="w-3 h-3" /> Executive
                 </span>
@@ -276,7 +276,7 @@ export function MemberDetail() {
               fullName: member.full_name,
               email: member.email || undefined,
               phone: member.phone || undefined,
-              role: getRoleLabel(member.role),
+              role: getDisplayRole(member.role, member.is_executive_member),
               isExecutive: member.is_executive_member,
               memberSince: (member as any).member_since || member.created_at?.split('T')[0],
               membershipEndDate: (member as any).membership_end_date || undefined,
@@ -545,15 +545,17 @@ export function MemberDetail() {
                     setGrantLoading(true)
                     const endDate = new Date(grantStartDate)
                     endDate.setFullYear(endDate.getFullYear() + 1)
+                    const roleUp = member.role === 'member' ? { role: 'executive_member' } : {}
                     const { error } = await supabase.from('profiles').update({
                       is_executive_member: true,
                       membership_start_date: grantStartDate,
                       membership_end_date: endDate.toISOString().split('T')[0],
+                      ...roleUp,
                     }).eq('id', member.id)
                     if (error) { toast.error('Failed'); setGrantLoading(false); return }
                     logAction('update', 'member', member.full_name, member.id, `Executive status granted from ${grantStartDate} (no payment)`)
                     toast.success('Executive status granted')
-                    setMember({ ...member, is_executive_member: true })
+                    setMember({ ...member, is_executive_member: true, ...(member.role === 'member' ? { role: 'executive_member' as MemberRole } : {}) })
                     setShowGrantForm(false)
                     setGrantLoading(false)
                   }}
@@ -596,13 +598,14 @@ export function MemberDetail() {
                   disabled={revokeLoading}
                   onClick={async () => {
                     setRevokeLoading(true)
+                    const roleRevert = member.role === 'executive_member' ? { role: 'member' as MemberRole } : {}
                     const { error } = await supabase.from('profiles').update({
-                      is_executive_member: false, membership_start_date: null, membership_end_date: null,
+                      is_executive_member: false, membership_start_date: null, membership_end_date: null, ...roleRevert,
                     }).eq('id', member.id)
                     if (error) { toast.error('Failed'); setRevokeLoading(false); return }
                     logAction('update', 'member', member.full_name, member.id, 'Executive status revoked')
                     toast.success('Executive status revoked')
-                    setMember({ ...member, is_executive_member: false })
+                    setMember({ ...member, is_executive_member: false, ...roleRevert })
                     setRevokeWarning(null)
                     setRevokeLoading(false)
                   }}
