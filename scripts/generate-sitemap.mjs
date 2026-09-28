@@ -1,10 +1,8 @@
 // Run before build: node scripts/generate-sitemap.mjs
-// Queries Supabase for dynamic content (events, matrimonial) and writes public/sitemap.xml
+// Uses plain fetch (no Supabase client) to avoid WebSocket issues on Node <22
 
-import { createClient } from '@supabase/supabase-js'
 import { writeFileSync, readFileSync, existsSync } from 'fs'
 
-// Load .env.local then .env manually (no dotenv dependency needed)
 function loadEnv(file) {
   if (!existsSync(file)) return
   readFileSync(file, 'utf-8').split('\n').forEach(line => {
@@ -25,25 +23,36 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1)
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+async function query(table, select, filters = '') {
+  const url = `${supabaseUrl}/rest/v1/${table}?select=${select}${filters}`
+  const res = await fetch(url, {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+    },
+  })
+  if (!res.ok) return []
+  return res.json()
+}
+
 const BASE = 'https://akhilbharatiyagoswami.com'
 const TODAY = new Date().toISOString().split('T')[0]
 
 const staticRoutes = [
-  { path: '/',               changefreq: 'weekly',  priority: '1.0' },
-  { path: '/about',          changefreq: 'monthly', priority: '0.8' },
-  { path: '/events',         changefreq: 'weekly',  priority: '0.8' },
-  { path: '/businesses',     changefreq: 'weekly',  priority: '0.7' },
-  { path: '/matrimonial',    changefreq: 'weekly',  priority: '0.7' },
-  { path: '/members',        changefreq: 'weekly',  priority: '0.7' },
-  { path: '/gallery',        changefreq: 'weekly',  priority: '0.7' },
-  { path: '/souvenirs',      changefreq: 'monthly', priority: '0.6' },
-  { path: '/donate',         changefreq: 'monthly', priority: '0.8' },
-  { path: '/contact',        changefreq: 'monthly', priority: '0.7' },
-  { path: '/verify',         changefreq: 'monthly', priority: '0.5' },
-  { path: '/privacy-policy', changefreq: 'yearly',  priority: '0.3' },
-  { path: '/terms-of-service', changefreq: 'yearly', priority: '0.3' },
-  { path: '/cookie-policy',  changefreq: 'yearly',  priority: '0.3' },
+  { path: '/',                 changefreq: 'weekly',  priority: '1.0' },
+  { path: '/about',            changefreq: 'monthly', priority: '0.8' },
+  { path: '/events',           changefreq: 'weekly',  priority: '0.8' },
+  { path: '/businesses',       changefreq: 'weekly',  priority: '0.7' },
+  { path: '/matrimonial',      changefreq: 'weekly',  priority: '0.7' },
+  { path: '/members',          changefreq: 'weekly',  priority: '0.7' },
+  { path: '/gallery',          changefreq: 'weekly',  priority: '0.7' },
+  { path: '/souvenirs',        changefreq: 'monthly', priority: '0.6' },
+  { path: '/donate',           changefreq: 'monthly', priority: '0.8' },
+  { path: '/contact',          changefreq: 'monthly', priority: '0.7' },
+  { path: '/verify',           changefreq: 'monthly', priority: '0.5' },
+  { path: '/privacy-policy',   changefreq: 'yearly',  priority: '0.3' },
+  { path: '/terms-of-service', changefreq: 'yearly',  priority: '0.3' },
+  { path: '/cookie-policy',    changefreq: 'yearly',  priority: '0.3' },
 ]
 
 function urlEntry({ loc, lastmod, changefreq, priority }) {
@@ -62,13 +71,8 @@ const entries = staticRoutes.map(r => urlEntry({
   priority: r.priority,
 }))
 
-// Events
-const { data: events } = await supabase
-  .from('events')
-  .select('id, updated_at')
-  .eq('is_published', true)
-
-for (const e of events || []) {
+const events = await query('events', 'id,updated_at', '&is_published=eq.true')
+for (const e of events) {
   entries.push(urlEntry({
     loc: `${BASE}/events/${e.id}`,
     lastmod: e.updated_at ? e.updated_at.split('T')[0] : TODAY,
@@ -77,13 +81,8 @@ for (const e of events || []) {
   }))
 }
 
-// Matrimonial profiles
-const { data: profiles } = await supabase
-  .from('matrimonial_profiles')
-  .select('id, updated_at')
-  .eq('is_visible', true)
-
-for (const p of profiles || []) {
+const profiles = await query('matrimonial_profiles', 'id,updated_at', '&is_visible=eq.true')
+for (const p of profiles) {
   entries.push(urlEntry({
     loc: `${BASE}/matrimonial/${p.id}`,
     lastmod: p.updated_at ? p.updated_at.split('T')[0] : TODAY,
@@ -99,4 +98,4 @@ ${entries.join('\n')}
 `
 
 writeFileSync('public/sitemap.xml', xml)
-console.log(`✓ Sitemap generated: ${staticRoutes.length} static + ${(events || []).length} events + ${(profiles || []).length} matrimonial profiles`)
+console.log(`✓ Sitemap generated: ${staticRoutes.length} static + ${events.length} events + ${profiles.length} matrimonial profiles`)
