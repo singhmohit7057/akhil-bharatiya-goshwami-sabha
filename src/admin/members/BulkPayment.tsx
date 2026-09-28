@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import { supabase, supabaseAdmin } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { logAction } from '../../lib/adminLog'
 
 interface PaymentRow {
   member_id: string
@@ -273,6 +274,7 @@ export function BulkPayment() {
     setDone(true)
     const success = results.filter((r) => r.status === 'success').length
     const failed = results.filter((r) => r.status === 'error').length
+    logAction('create', 'payment', `Bulk membership import ${selectedYear}: ${success} recorded${failed ? `, ${failed} failed` : ''}`)
     toast.success(`${success} payments recorded${failed ? ` · ${failed} failed` : ''}`)
   }
 
@@ -379,6 +381,7 @@ export function BulkPayment() {
     setDonDone(true)
     const s = res.filter((r) => r.status === 'success').length
     const f = res.filter((r) => r.status === 'error').length
+    logAction('create', 'payment', `Bulk donation import: ${s} recorded${f ? `, ${f} failed` : ''}`)
     toast.success(`${s} donations recorded${f ? ` · ${f} failed` : ''}`)
   }
 
@@ -459,6 +462,7 @@ export function BulkPayment() {
     setExpResults(res); setExpLoading(false); setExpDone(true)
     const s = res.filter((r) => r.status === 'success').length
     const f = res.filter((r) => r.status === 'error').length
+    logAction('create', 'expense', `Bulk expense import: ${s} recorded${f ? `, ${f} failed` : ''}`)
     toast.success(`${s} expenses recorded${f ? ` · ${f} failed` : ''}`)
   }
 

@@ -286,6 +286,7 @@ export function AddMember() {
     setBulkDone(true)
     const success = results.filter((r) => r.status === 'success').length
     const failed = results.filter((r) => r.status === 'error').length
+    logAction('create', 'member', `Bulk import: ${success} members added${failed ? `, ${failed} failed` : ''}`)
     toast.success(`Imported ${success} members${failed ? `, ${failed} failed` : ''}`)
   }
 

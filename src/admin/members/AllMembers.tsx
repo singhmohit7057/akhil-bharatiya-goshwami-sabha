@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { getDisplayRole } from '../../lib/utils'
+import { logAction } from '../../lib/adminLog'
 import type { Profile } from '../../types'
 import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
@@ -46,6 +47,7 @@ export function AllMembers() {
       .update({ account_status: isBlocked ? 'active' : 'suspended' })
       .eq('id', m.id)
     if (error) { toast.error('Failed to update status'); return }
+    logAction('update', 'member', m.full_name, m.id, isBlocked ? 'Unblocked' : 'Blocked')
     toast.success(`${m.full_name} ${isBlocked ? 'unblocked' : 'blocked'}`)
     fetchMembers()
   }

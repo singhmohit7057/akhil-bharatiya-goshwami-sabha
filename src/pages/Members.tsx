@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Search, User, Shield, Crown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getRoleLabel } from '../lib/utils'
 import type { Profile } from '../types'
@@ -15,10 +16,12 @@ export function Members() {
     return d?.is_admin_role ?? false
   }
   const { t } = useTranslation('members')
+  const [searchParams] = useSearchParams()
   const [members, setMembers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<'all' | 'governing' | 'executive' | 'member'>('all')
+  const initialFilter = (['governing', 'executive', 'member'].includes(searchParams.get('filter') || '') ? searchParams.get('filter') : 'all') as 'all' | 'governing' | 'executive' | 'member'
+  const [filter, setFilter] = useState<'all' | 'governing' | 'executive' | 'member'>(initialFilter)
 
   useEffect(() => {
     supabase

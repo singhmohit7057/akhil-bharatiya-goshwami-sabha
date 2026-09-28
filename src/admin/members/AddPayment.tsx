@@ -142,6 +142,7 @@ export function AddPayment() {
       logAction('create', 'payment', `₹${amount} Membership`, undefined, `Member: ${form.user_id}`)
       toast.success('Membership payment recorded & executive status activated')
     } else {
+      logAction('create', 'payment', `₹${amount} — ${purpose}`, undefined, `Member: ${form.user_id || form.donor_name}`)
       toast.success('Donation recorded')
     }
 

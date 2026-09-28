@@ -3,6 +3,7 @@ import { Trash2, Landmark, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { logAction } from '../../lib/adminLog'
 import { formatDate } from '../../lib/utils'
 import { DateInput } from '../../components/ui/DateInput'
 import { MemberSelect } from '../../components/ui/MemberSelect'
@@ -89,6 +90,7 @@ export function Bank() {
       recorded_by: user?.id,
     })
     if (error) { toast.error('Failed to record'); setSaving(false); return }
+    logAction('create', 'bank', `${activeTab === 'deposit' ? 'Deposit' : 'Withdrawal'} ₹${form.amount}${form.purpose ? ` — ${form.purpose}` : ''}`)
     toast.success(`${activeTab === 'deposit' ? 'Cash deposit' : 'Cash withdrawal'} recorded`)
     resetForm()
     setSaving(false)

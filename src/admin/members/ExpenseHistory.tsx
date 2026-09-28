@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Plus, Search, Trash2, TrendingDown, IndianRupee, Tag, Pencil } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { logAction } from '../../lib/adminLog'
 import { supabase } from '../../lib/supabase'
 import { formatDate } from '../../lib/utils'
 import { Spinner } from '../../components/ui/Spinner'
@@ -39,7 +40,9 @@ export function ExpenseHistory() {
 
   async function handleDelete(id: string) {
     if (!confirm('Delete this expense?')) return
+    const exp = expenses.find(e => e.id === id)
     await supabase.from('expenses').delete().eq('id', id)
+    logAction('delete', 'expense', exp ? `${exp.title} — ₹${exp.amount}` : id, id)
     toast.success('Deleted')
     fetchExpenses()
   }

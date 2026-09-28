@@ -121,19 +121,19 @@ export function AdminDashboard() {
 
   const statCards = [
     // Row 1
-    { icon: UserCheck, label: t('dashboard.pendingApprovals'), value: stats.pending, to: '/admin/members/pending', gradient: 'from-orange-500 to-red-500' },
-    { icon: Users, label: t('dashboard.totalMembers'), value: stats.total, to: '/admin/members', gradient: 'from-blue-500 to-indigo-600' },
     { icon: UserCheck, label: 'Governing Members', value: stats.governing, to: '/admin/members', gradient: 'from-violet-500 to-purple-600' },
     { icon: Crown, label: 'Executive Members', value: stats.executive, to: '/admin/members', gradient: 'from-amber-400 to-orange-500' },
-    { icon: Users, label: 'Members', value: stats.regularMembers, to: '/admin/members', gradient: 'from-sky-500 to-blue-600' },
+    { icon: Users, label: 'Members', value: stats.regularMembers, to: '/admin/members', gradient: 'from-sky-500 to-blue-500' },
+    { icon: Users, label: t('dashboard.totalMembers'), value: stats.total, to: '/admin/members', gradient: 'from-indigo-600 to-indigo-800' },
+    { icon: UserCheck, label: t('dashboard.pendingApprovals'), value: stats.pending, to: '/admin/members/pending', gradient: 'from-red-500 to-rose-600' },
     { icon: Plus, label: 'New This Month', value: stats.newThisMonth, to: '/admin/members', gradient: 'from-emerald-500 to-green-600' },
     // Row 2
-    { icon: IndianRupee, label: 'Member Donation', value: `₹${stats.donations.toLocaleString()}`, to: '/admin/payments', gradient: 'from-purple-500 to-violet-600' },
+    { icon: IndianRupee, label: 'Member Donation', value: `₹${stats.donations.toLocaleString()}`, to: '/admin/payments', gradient: 'from-fuchsia-500 to-pink-600' },
     { icon: IndianRupee, label: 'Non-Member Donation', value: `₹${stats.outsiderDonations.toLocaleString()}`, to: '/admin/payments', gradient: 'from-teal-500 to-cyan-600' },
-    { icon: Crown, label: 'Total Membership', value: `₹${stats.membershipAmount.toLocaleString()}`, to: '/admin/payments', gradient: 'from-amber-500 to-yellow-600' },
+    { icon: Crown, label: 'Total Membership', value: `₹${stats.membershipAmount.toLocaleString()}`, to: '/admin/payments', gradient: 'from-yellow-400 to-amber-500' },
     { icon: Briefcase, label: 'Business Listings', value: stats.businesses, to: '/admin/business', gradient: 'from-cyan-500 to-blue-600' },
-    { icon: Heart, label: 'Matrimonial Profiles', value: stats.matrimonial, to: '/admin/matrimonial', gradient: 'from-pink-500 to-rose-600' },
-    { icon: Calendar, label: t('dashboard.totalEvents'), value: stats.events, to: '/admin/yearly-planner', gradient: 'from-green-500 to-teal-600' },
+    { icon: Heart, label: 'Matrimonial Profiles', value: stats.matrimonial, to: '/admin/matrimonial', gradient: 'from-pink-600 to-rose-700' },
+    { icon: Calendar, label: t('dashboard.totalEvents'), value: stats.events, to: '/admin/yearly-planner', gradient: 'from-lime-500 to-green-500' },
   ]
 
   const quickActions = [

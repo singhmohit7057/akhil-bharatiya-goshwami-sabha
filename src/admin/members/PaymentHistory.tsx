@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IndianRupee, Crown, Search, Plus, Edit2, Trash2, BookOpen, FileDown } from 'lucide-react'
 import { generatePaymentReceiptPdf, generateSouvenirReceiptPdf } from '../../lib/receiptPdf'
+import { logAction } from '../../lib/adminLog'
 import toast from 'react-hot-toast'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
@@ -84,6 +85,7 @@ export function PaymentHistory() {
     const memberId = deletingPayment?.user_id
 
     await supabase.from('donations').delete().eq('id', id)
+    logAction('delete', 'payment', `₹${deletingPayment?.amount} — ${deletingPayment?.purpose || 'Donation'}`, id)
 
     if (isMemPayment && memberId) {
       const { data: remaining } = await supabase.from('donations').select('id').eq('user_id', memberId).eq('purpose', 'Executive Membership')

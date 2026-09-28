@@ -90,10 +90,10 @@ export function Homepage() {
   }, [])
 
   const stats = [
-    { icon: Shield, value: memberStats.governing, label: t('stats.governingMembers'), color: 'bg-orange-100 text-orange-700' },
-    { icon: Crown, value: memberStats.executive, label: t('stats.executiveMembers'), color: 'bg-amber-100 text-amber-700' },
-    { icon: UserCheck, value: memberStats.members, label: t('stats.members'), color: 'bg-blue-100 text-blue-700' },
-    { icon: Users, value: memberStats.total, label: t('stats.totalMembers'), color: 'bg-green-100 text-green-700' },
+    { icon: Shield, value: memberStats.governing, label: t('stats.governingMembers'), color: 'bg-orange-100 text-orange-700', filter: 'governing' },
+    { icon: Crown, value: memberStats.executive, label: t('stats.executiveMembers'), color: 'bg-amber-100 text-amber-700', filter: 'executive' },
+    { icon: UserCheck, value: memberStats.members, label: t('stats.members'), color: 'bg-blue-100 text-blue-700', filter: 'member' },
+    { icon: Users, value: memberStats.total, label: t('stats.totalMembers'), color: 'bg-green-100 text-green-700', filter: 'all' },
   ]
 
   const features = [
@@ -166,13 +166,14 @@ export function Homepage() {
       <section className="bg-white border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat) => (
-            <div key={stat.label} className={`rounded-xl p-5 ${stat.color.split(' ')[0]} text-center`}>
+            <Link key={stat.label} to={`/members${stat.filter !== 'all' ? `?filter=${stat.filter}` : ''}`}
+              className={`rounded-xl p-5 ${stat.color.split(' ')[0]} text-center block hover:brightness-95 transition-all cursor-pointer`}>
               <div className={`w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center mx-auto mb-3`}>
                 <stat.icon className={`w-5 h-5 ${stat.color.split(' ')[1]}`} />
               </div>
               <p className="text-3xl font-bold text-text-primary">{stat.value}</p>
               <p className="text-sm font-medium text-text-primary mt-1">{stat.label}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
