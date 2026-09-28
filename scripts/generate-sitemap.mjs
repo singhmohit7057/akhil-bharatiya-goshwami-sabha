@@ -24,15 +24,19 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 async function query(table, select, filters = '') {
-  const url = `${supabaseUrl}/rest/v1/${table}?select=${select}${filters}`
-  const res = await fetch(url, {
-    headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-    },
-  })
-  if (!res.ok) return []
-  return res.json()
+  try {
+    const url = `${supabaseUrl}/rest/v1/${table}?select=${select}${filters}`
+    const res = await fetch(url, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    })
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
 }
 
 const BASE = 'https://akhilbharatiyagoswami.com'
