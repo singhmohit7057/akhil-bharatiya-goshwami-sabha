@@ -183,10 +183,10 @@ export function BusinessDetails() {
 
     if (detail) {
       const { error } = await supabase.from('business_details').update(payload).eq('id', detail.id)
-      if (error) { console.error('Update error:', error); toast.error('Failed: ' + error.message); setSaving(false); return }
+      if (error) { toast.error('Failed: ' + error.message); setSaving(false); return }
     } else {
       const { data: inserted, error } = await supabase.from('business_details').insert(payload).select().single()
-      if (error) { console.error('Insert error:', error); toast.error('Failed: ' + error.message); setSaving(false); return }
+      if (error) { toast.error('Failed: ' + error.message); setSaving(false); return }
       if (inserted) setDetail(inserted as BusinessDetail)
     }
 

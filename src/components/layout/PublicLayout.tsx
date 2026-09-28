@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import { Navbar } from '../shared/Navbar'
 import { Footer } from '../shared/Footer'
 import { PromoPopup } from '../shared/PromoPopup'
+import { CookieBanner } from '../shared/CookieBanner'
 
 export function PublicLayout() {
   return (
@@ -12,6 +13,7 @@ export function PublicLayout() {
       </main>
       <Footer />
       <PromoPopup />
+      <CookieBanner />
     </div>
   )
 }

@@ -370,7 +370,7 @@ export function AdminLayout() {
       <div className="flex-1 lg:ml-[260px] min-w-0 overflow-x-hidden">
         {/* Mobile header */}
         <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-border sticky top-0 z-20">
-          <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-lg hover:bg-gray-100">
+          <button onClick={() => setSidebarOpen(true)} aria-label="Open navigation menu" className="p-1.5 rounded-lg hover:bg-gray-100">
             <Menu className="w-5 h-5 text-text-primary" />
           </button>
           <p className="text-sm font-bold text-text-primary">Admin Panel</p>
