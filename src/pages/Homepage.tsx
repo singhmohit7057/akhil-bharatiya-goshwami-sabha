@@ -97,10 +97,10 @@ export function Homepage() {
   ]
 
   const features = [
-    { icon: Handshake, title: t('features.community'), desc: t('features.communityDesc'), color: 'bg-blue-100 text-blue-700' },
-    { icon: Heart, title: t('features.matrimonial'), desc: t('features.matrimonialDesc'), color: 'bg-pink-100 text-pink-700' },
-    { icon: Briefcase, title: t('features.business'), desc: t('features.businessDesc'), color: 'bg-amber-100 text-amber-700' },
-    { icon: PartyPopper, title: t('features.events'), desc: t('features.eventsDesc'), color: 'bg-green-100 text-green-700' },
+    { icon: Handshake, title: t('features.community'), desc: t('features.communityDesc'), color: 'bg-blue-100 text-blue-700', to: '/gallery' },
+    { icon: Heart, title: t('features.matrimonial'), desc: t('features.matrimonialDesc'), color: 'bg-pink-100 text-pink-700', to: '/matrimonial' },
+    { icon: Briefcase, title: t('features.business'), desc: t('features.businessDesc'), color: 'bg-amber-100 text-amber-700', to: '/businesses' },
+    { icon: PartyPopper, title: t('features.events'), desc: t('features.eventsDesc'), color: 'bg-green-100 text-green-700', to: '/events' },
   ]
 
   return (
@@ -187,13 +187,13 @@ export function Homepage() {
         </div>
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
           {features.map((f) => (
-            <div key={f.title} className={`p-7 rounded-xl border border-border hover:shadow-md transition-shadow text-center ${f.color.split(' ')[0]}`}>
+            <Link key={f.title} to={f.to} className={`p-7 rounded-xl border border-border hover:shadow-md hover:brightness-95 transition-all text-center block ${f.color.split(' ')[0]}`}>
               <div className="w-12 h-12 rounded-lg bg-white/80 flex items-center justify-center mx-auto mb-4">
                 <f.icon className={`w-6 h-6 ${f.color.split(' ')[1]}`} />
               </div>
               <h3 className="text-base font-bold text-text-primary mb-2">{f.title}</h3>
               <p className="text-sm text-text-primary/70 leading-relaxed">{f.desc}</p>
-            </div>
+            </Link>
           ))}
         </div>
         <div className="text-center">

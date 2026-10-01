@@ -10,6 +10,13 @@ import { MemberSelect } from '../../components/ui/MemberSelect'
 import { Spinner } from '../../components/ui/Spinner'
 import type { Profile } from '../../types'
 
+const nowB = new Date()
+const currentFYB = nowB.getMonth() >= 3 ? nowB.getFullYear() : nowB.getFullYear() - 1
+const FY_YEARS = Array.from({ length: currentFYB - 2023 + 1 }, (_, i) => String(2023 + i))
+function fyLabelB(y: string) { return `${y}-${String(Number(y) + 1).slice(2)}` }
+function fyStartB(y: string) { return `${y}-04-01` }
+function fyEndB(y: string)   { return `${Number(y) + 1}-03-31` }
+
 interface BankTx {
   id: string
   type: 'deposit' | 'withdraw'
@@ -36,6 +43,7 @@ export function Bank() {
   const [totalOut, setTotalOut] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [year, setYear] = useState(String(currentFYB))
   const [activeTab, setActiveTab] = useState<'all' | 'deposit' | 'withdraw'>('all')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
@@ -50,11 +58,15 @@ export function Bank() {
   const inputClass = 'w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
 
   useEffect(() => {
+    const start = fyStartB(year)
+    const end   = fyEndB(year)
+    setLoading(true)
     Promise.all([
-      supabase.from('bank_transactions').select('*, profiles!bank_transactions_by_who_fkey(full_name)').order('transaction_date', { ascending: false }),
+      supabase.from('bank_transactions').select('*, profiles!bank_transactions_by_who_fkey(full_name)')
+        .gte('transaction_date', start).lte('transaction_date', end).order('transaction_date', { ascending: false }),
       supabase.from('profiles').select('*').eq('account_status', 'active').order('full_name'),
-      supabase.from('donations').select('amount, payment_method'),
-      supabase.from('expenses').select('amount, payment_mode'),
+      supabase.from('donations').select('amount, payment_method').gte('donation_date', start).lte('donation_date', end),
+      supabase.from('expenses').select('amount, payment_mode').gte('expense_date', start).lte('expense_date', end),
     ]).then(([txRes, memRes, donRes, expRes]) => {
       setTransactions((txRes.data as BankTx[]) || [])
       setMembers((memRes.data as Profile[]) || [])
@@ -68,7 +80,7 @@ export function Bank() {
       setTotalOut(expenses.reduce((s, e) => s + Number(e.amount), 0))
       setLoading(false)
     })
-  }, [])
+  }, [year])
 
   function resetForm() {
     setForm({ amount: '', transaction_date: new Date().toISOString().split('T')[0], by_who: '', bank_name: '', purpose: '', notes: '' })
@@ -94,7 +106,8 @@ export function Bank() {
     toast.success(`${activeTab === 'deposit' ? 'Cash deposit' : 'Cash withdrawal'} recorded`)
     resetForm()
     setSaving(false)
-    const { data } = await supabase.from('bank_transactions').select('*, profiles!bank_transactions_by_who_fkey(full_name)').order('transaction_date', { ascending: false })
+    const { data } = await supabase.from('bank_transactions').select('*, profiles!bank_transactions_by_who_fkey(full_name)')
+      .gte('transaction_date', fyStartB(year)).lte('transaction_date', fyEndB(year)).order('transaction_date', { ascending: false })
     if (data) setTransactions(data as BankTx[])
   }
 
@@ -137,6 +150,16 @@ export function Bank() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Fiscal year selector */}
+      <div className="flex gap-2 flex-wrap mb-5">
+        {FY_YEARS.map((y) => (
+          <button key={y} onClick={() => setYear(y)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${year === y ? 'bg-primary text-white border-primary' : 'border-border text-text-secondary hover:border-primary/40'}`}>
+            {fyLabelB(y)}
+          </button>
+        ))}
       </div>
 
       {/* Stats — 5 cards */}

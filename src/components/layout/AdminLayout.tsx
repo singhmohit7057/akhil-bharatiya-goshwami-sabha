@@ -307,7 +307,6 @@ export function AdminLayout() {
                           <item.icon className={cn('w-[18px] h-[18px]', active ? 'text-primary' : (section.iconColor || 'text-gray-500'))} />
                           {item.label}
                         </span>
-                        <ChevronDown className="w-3.5 h-3.5 opacity-30" />
                       </Link>
                     )}
 

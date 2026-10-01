@@ -18,12 +18,18 @@ interface TxRow {
   bankType?: 'deposit' | 'withdraw'
 }
 
-const YEARS = Array.from({ length: new Date().getFullYear() - 2023 + 1 }, (_, i) => String(2023 + i))
+// Fiscal year: Apr–Mar. FY "2025" = Apr 2025 – Mar 2026.
+const now = new Date()
+const currentFY = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1
+const YEARS = Array.from({ length: currentFY - 2023 + 1 }, (_, i) => String(2023 + i))
+function fyLabel(y: string) { return `${y}-${String(Number(y) + 1).slice(2)}` }
+function fyStart(y: string) { return `${y}-04-01` }
+function fyEnd(y: string)   { return `${Number(y) + 1}-03-31` }
 
 export function Reports() {
   const { isSuperAdmin } = useAuth()
   const superAdmin = isSuperAdmin()
-  const [year, setYear] = useState(new Date().getFullYear().toString())
+  const [year, setYear] = useState(String(currentFY))
   const [loading, setLoading] = useState(true)
   const [transactions, setTransactions] = useState<TxRow[]>([])
   const [bankTransactions, setBankTransactions] = useState<any[]>([])
@@ -35,8 +41,8 @@ export function Reports() {
 
   async function fetchAll() {
     setLoading(true)
-    const start = `${year}-01-01`
-    const end   = `${year}-12-31`
+    const start = fyStart(year)
+    const end   = fyEnd(year)
 
     const [donRes, expRes, suvRes, bankRes] = await Promise.all([
       supabase.from('donations').select('id, amount, donation_date, purpose, payment_method, donor_name, profiles!donations_user_id_fkey(full_name)')
@@ -45,7 +51,7 @@ export function Reports() {
         .gte('expense_date', start).lte('expense_date', end).order('expense_date', { ascending: false }),
       supabase.from('souvenir_sponsors').select('id, amount, created_at, sponsor_name, payment_mode')
         .eq('is_paid', true)
-        .gte('created_at', `${year}-01-01T00:00:00`).lte('created_at', `${year}-12-31T23:59:59`),
+        .gte('created_at', `${start}T00:00:00`).lte('created_at', `${end}T23:59:59`),
       supabase.from('bank_transactions').select('id, type, amount, transaction_date, bank_name, purpose, profiles!bank_transactions_by_who_fkey(full_name)')
         .gte('transaction_date', start).lte('transaction_date', end).order('transaction_date', { ascending: false }),
     ])
@@ -139,8 +145,8 @@ export function Reports() {
   })
 
   async function exportReport() {
-    const start = `${year}-01-01`
-    const end   = `${year}-12-31`
+    const start = fyStart(year)
+    const end   = fyEnd(year)
 
     // Fetch fresh full data for export
     const [donRes, expRes, suvRes, bankExportRes] = await Promise.all([
@@ -153,7 +159,7 @@ export function Reports() {
       supabase.from('souvenir_sponsors')
         .select('sponsor_name, company_name, phone, created_at, ad_size, amount, payment_mode, notes, souvenirs(title)')
         .eq('is_paid', true)
-        .gte('created_at', `${year}-01-01T00:00:00`).lte('created_at', `${year}-12-31T23:59:59`),
+        .gte('created_at', `${start}T00:00:00`).lte('created_at', `${end}T23:59:59`),
       supabase.from('bank_transactions')
         .select('type, amount, transaction_date, bank_name, purpose, notes, profiles!bank_transactions_by_who_fkey(full_name)')
         .gte('transaction_date', start).lte('transaction_date', end).order('transaction_date', { ascending: false }),
@@ -164,7 +170,7 @@ export function Reports() {
 
     // Sheet 1: Dashboard
     const wsDash = XLSX.utils.aoa_to_sheet([
-      [`Financial Report — ${year}`],
+      [`Financial Report — FY ${fyLabel(year)}`],
       [],
       ['Summary', 'Amount (₹)'],
       ['Total Income', totalIn],
@@ -281,7 +287,7 @@ export function Reports() {
     wsBk['!cols'] = [col(18), col(14), col(12), col(24), col(20), col(24), col(24)]
     XLSX.utils.book_append_sheet(wb, wsBk, 'Bank Transactions')
 
-    XLSX.writeFile(wb, `ABGSPB_Financial_Report_${year}.xlsx`)
+    XLSX.writeFile(wb, `ABGSPB_Financial_Report_FY${fyLabel(year)}.xlsx`)
   }
 
   return (
@@ -291,7 +297,7 @@ export function Reports() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Financial Report</h1>
-            <p className="text-sm text-text-secondary mt-0.5">All transactions — income & expenses</p>
+            <p className="text-sm text-text-secondary mt-0.5">All transactions — income & expenses (Apr–Mar)</p>
           </div>
           {superAdmin && !loading && transactions.length > 0 && (
             <button onClick={exportReport}
@@ -305,7 +311,7 @@ export function Reports() {
           {YEARS.map((y) => (
             <button key={y} onClick={() => setYear(y)}
               className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-colors ${year === y ? 'bg-primary text-white border-primary' : 'border-border text-text-secondary hover:border-primary/40'}`}>
-              {y}
+              {fyLabel(y)}
             </button>
           ))}
         </div>
@@ -454,7 +460,7 @@ export function Reports() {
             {/* Mobile card list */}
             <div className="sm:hidden divide-y divide-border">
               {filtered.length === 0 ? (
-                <p className="px-4 py-8 text-center text-text-secondary text-sm">No transactions for {year}</p>
+                <p className="px-4 py-8 text-center text-text-secondary text-sm">No transactions for FY {fyLabel(year)}</p>
               ) : filtered.map((t) => (
                 <div key={t.id + t.date} className="px-4 py-3 flex items-center gap-3">
                   <div className="shrink-0">
@@ -497,7 +503,7 @@ export function Reports() {
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
-                    <tr><td colSpan={7} className="px-4 py-10 text-center text-text-secondary text-sm">No transactions for {year}</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-10 text-center text-text-secondary text-sm">No transactions for FY {fyLabel(year)}</td></tr>
                   ) : filtered.map((t) => (
                     <tr key={t.id + t.date} className="border-b border-border hover:bg-gray-50">
                       <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{formatDate(t.date, 'en')}</td>
