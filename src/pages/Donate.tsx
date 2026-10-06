@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Heart, Shield, Eye, Building2, QrCode, Mail, User, Phone, CreditCard, IndianRupee, X } from 'lucide-react'
+import { Heart, FileText, Eye, Building2, QrCode, Mail, User, Phone, CreditCard, IndianRupee, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { SEO } from '../components/SEO'
@@ -41,7 +41,7 @@ export function Donate() {
     <>
       <SEO
         title="Donate | Akhil Bharatiya Goswami Sabha Paschim Bangal"
-        description="Support the Goswami community. Donate to Akhil Bharatiya Goswami Sabha Paschim Bangal – 80G tax exemption available on all donations."
+        description="Support the Goswami community. Donate to Akhil Bharatiya Goswami Sabha Paschim Bangal and help us preserve culture, support families, and build a stronger community."
         canonical="/donate"
       />
       <div>
@@ -65,7 +65,7 @@ export function Donate() {
             <div className="space-y-5 mb-8">
               <div className="flex gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Shield className="w-5 h-5 text-primary" />
+                  <FileText className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-text-primary">{t('taxBenefit')}</h3>
@@ -247,16 +247,15 @@ export function Donate() {
                   </div>
                 </div>
 
-                {/* PAN */}
+                {/* PAN — optional */}
                 <div>
-                  <p className="text-xs font-bold text-text-primary uppercase tracking-wider mb-3">{t('taxSection')}</p>
+                  <p className="text-xs font-bold text-text-primary uppercase tracking-wider mb-3">PAN Card <span className="font-normal text-text-secondary normal-case">(Optional)</span></p>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-                    <input type="text" placeholder={t('panPlaceholder')} maxLength={10} value={form.pan}
+                    <input type="text" placeholder="PAN Card Number (optional)" maxLength={10} value={form.pan}
                       onChange={(e) => setForm({ ...form, pan: e.target.value.toUpperCase() })}
                       className="w-full pl-10 pr-3 py-2.5 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                   </div>
-                  <p className="text-[10px] text-text-secondary mt-1">{t('panNote')}</p>
                 </div>
 
                 <button type="submit" className="w-full py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-dark transition-colors">

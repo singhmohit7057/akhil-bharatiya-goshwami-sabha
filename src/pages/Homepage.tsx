@@ -145,17 +145,17 @@ export function Homepage() {
       {/* Social Links Bar */}
       <div className="bg-orange-50 border-b border-orange-100 py-4">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-center gap-6">
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
+          <a href="https://www.instagram.com/akhilbharatiyagoswamisabha" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
             <img src="/instagram.png" alt="" className="w-5 h-5 rounded" aria-hidden="true" />
             <span className="text-xs font-medium">Instagram</span>
           </a>
           <span className="text-text-secondary/30">|</span>
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
+          <a href="https://www.facebook.com/akhilbharatiyagoswamisabha" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
             <img src="/facebook.png" alt="" className="w-5 h-5 rounded" aria-hidden="true" />
             <span className="text-xs font-medium">Facebook</span>
           </a>
           <span className="text-text-secondary/30">|</span>
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
+          <a href="https://www.youtube.com/@akhilbharatiyagoswamisabha" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-text-primary hover:text-primary transition-colors">
             <img src="/youtube.png" alt="" className="w-5 h-5 rounded" aria-hidden="true" />
             <span className="text-xs font-medium">YouTube</span>
           </a>
