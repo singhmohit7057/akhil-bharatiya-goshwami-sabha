@@ -134,9 +134,54 @@ export function EditProfile() {
 
   const inputClass = 'w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm'
 
+  const profileFields = [
+    { key: 'photo',          label: 'Profile Photo',    filled: !!(profile?.profile_photo_url || photoPreview) },
+    { key: 'full_name',      label: 'Name (English)',   filled: !!form.full_name.trim() },
+    { key: 'email',          label: 'Email',            filled: !!profile?.email },
+    { key: 'father_name',    label: "Father's Name",    filled: !!form.father_name.trim() },
+    { key: 'mother_name',    label: "Mother's Name",    filled: !!form.mother_name.trim() },
+    { key: 'date_of_birth',  label: 'Date of Birth',    filled: !!form.date_of_birth },
+    { key: 'gender',         label: 'Gender',           filled: !!form.gender },
+    { key: 'phone',          label: 'Phone',            filled: !!form.phone.trim() },
+    { key: 'caste',          label: 'Caste',            filled: !!(form as any).caste?.trim() },
+    { key: 'gotra',          label: 'Gotra',            filled: !!form.gotra.trim() },
+    { key: 'city',           label: 'City',             filled: !!form.city.trim() },
+    { key: 'marital_status', label: 'Marital Status',   filled: !!form.marital_status },
+    { key: 'address',        label: 'Local Address',    filled: !!form.address.trim() },
+    { key: 'village_address',label: 'Village Address',  filled: !!(form as any).village_address?.trim() },
+  ]
+  const filledCount = profileFields.filter(f => f.filled).length
+  const totalCount = profileFields.length
+  const pct = Math.round((filledCount / totalCount) * 100)
+  const barColor = pct === 100 ? 'bg-green-500' : pct >= 70 ? 'bg-primary' : pct >= 40 ? 'bg-amber-500' : 'bg-red-400'
+
   return (
     <div className="bg-white rounded-xl border border-border p-5">
-      <h2 className="text-base font-semibold text-text-primary mb-4">{t('edit')}</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-semibold text-text-primary">{t('edit')}</h2>
+        <div className="relative group">
+          <span className="text-xs text-text-secondary cursor-help select-none">
+            {filledCount}/{totalCount} fields · <span className={`font-semibold ${pct === 100 ? 'text-green-600' : pct >= 70 ? 'text-primary' : 'text-amber-600'}`}>{pct}%</span>
+          </span>
+          {/* Hover checklist */}
+          <div className="absolute right-0 top-6 z-20 w-52 bg-white border border-border rounded-xl shadow-lg p-3 hidden group-hover:block">
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Profile Completion</p>
+            <div className="space-y-1">
+              {profileFields.map((f) => (
+                <div key={f.key} className="flex items-center gap-2">
+                  <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 text-[9px] font-bold ${f.filled ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-400'}`}>
+                    {f.filled ? '✓' : '✗'}
+                  </span>
+                  <span className={`text-xs ${f.filled ? 'text-text-primary' : 'text-text-secondary'}`}>{f.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-1.5 mb-5">
+        <div className={`h-1.5 rounded-full transition-all duration-300 ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
 
       {/* Profile Photo Upload */}
       <div className="mb-5 flex items-center gap-4">

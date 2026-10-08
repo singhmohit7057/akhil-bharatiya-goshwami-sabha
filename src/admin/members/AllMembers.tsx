@@ -11,6 +11,61 @@ import type { Profile } from '../../types'
 import { useAuth } from '../../hooks/useAuth'
 import { Spinner } from '../../components/ui/Spinner'
 
+const PROFILE_FIELD_LABELS: { key: string; label: string }[] = [
+  { key: 'profile_photo_url', label: 'Profile Photo' },
+  { key: 'full_name',         label: 'Name (English)' },
+  { key: 'email',             label: 'Email' },
+  { key: 'father_name',       label: "Father's Name" },
+  { key: 'mother_name',       label: "Mother's Name" },
+  { key: 'date_of_birth',     label: 'Date of Birth' },
+  { key: 'gender',            label: 'Gender' },
+  { key: 'phone',             label: 'Phone' },
+  { key: 'caste',             label: 'Caste' },
+  { key: 'gotra',             label: 'Gotra' },
+  { key: 'city',              label: 'City' },
+  { key: 'marital_status',    label: 'Marital Status' },
+  { key: 'address',           label: 'Local Address' },
+  { key: 'village_address',   label: 'Village Address' },
+]
+
+function profileCompletion(m: any): { pct: number; fields: { label: string; filled: boolean }[] } {
+  const fields = PROFILE_FIELD_LABELS.map(f => ({ label: f.label, filled: !!m[f.key] }))
+  const pct = Math.round((fields.filter(f => f.filled).length / fields.length) * 100)
+  return { pct, fields }
+}
+
+function ProfileRing({ pct, fields, size = 20 }: { pct: number; fields: { label: string; filled: boolean }[]; size?: number }) {
+  const r = (size - 3) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ - (pct / 100) * circ
+  const color = pct === 100 ? '#22c55e' : pct >= 70 ? '#f97316' : pct >= 40 ? '#f59e0b' : '#ef4444'
+  return (
+    <div className="relative shrink-0 group/ring cursor-help">
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e5e7eb" strokeWidth="2.5" />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="2.5"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center font-bold text-text-secondary"
+        style={{ fontSize: size < 24 ? '6px' : '7px' }}>{pct}</span>
+      {/* Hover popover */}
+      <div className="absolute z-30 top-full mt-2 right-0 w-48 bg-white border border-border rounded-xl shadow-lg p-3 hidden group-hover/ring:block">
+        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Profile · {pct}%</p>
+        <div className="space-y-1">
+          {fields.map(f => (
+            <div key={f.label} className="flex items-center gap-1.5">
+              <span className={`w-3 h-3 rounded-full flex items-center justify-center shrink-0 text-[8px] font-bold ${f.filled ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-400'}`}>
+                {f.filled ? '✓' : '✗'}
+              </span>
+              <span className={`text-[11px] ${f.filled ? 'text-text-primary' : 'text-text-secondary'}`}>{f.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function AllMembers() {
   const { isViewer, isSuperAdmin, isAdmin } = useAuth()
   const superAdmin = isSuperAdmin()
@@ -199,6 +254,7 @@ export function AllMembers() {
             <thead>
               <tr className="border-b border-border bg-gray-50 text-center">
                 <th className="px-4 py-3 font-medium text-text-secondary text-left">{t('common:labels.name')}</th>
+                <th className="px-4 py-3 font-medium text-text-secondary text-center">Profile</th>
                 <th className="px-4 py-3 font-medium text-text-secondary">
                   <button onClick={() => setIdSort(s => s === 'asc' ? 'desc' : 'asc')}
                     className="inline-flex items-center gap-1 hover:text-primary transition-colors">
@@ -229,6 +285,11 @@ export function AllMembers() {
                       {m.account_status === 'suspended' && (
                         <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">Blocked</span>
                       )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex justify-center">
+                      {(() => { const c = profileCompletion(m); return <ProfileRing pct={c.pct} fields={c.fields} size={28} /> })()}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-text-secondary text-center">{m.member_id || '—'}</td>
