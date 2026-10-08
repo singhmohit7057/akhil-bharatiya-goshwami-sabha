@@ -34,7 +34,7 @@ function profileCompletion(m: any): { pct: number; fields: { label: string; fill
   return { pct, fields }
 }
 
-function ProfileRing({ pct, fields, size = 20 }: { pct: number; fields: { label: string; filled: boolean }[]; size?: number }) {
+function ProfileRing({ pct, fields = [], size = 20 }: { pct: number; fields?: { label: string; filled: boolean }[]; size?: number }) {
   const r = (size - 3) / 2
   const circ = 2 * Math.PI * r
   const offset = circ - (pct / 100) * circ
@@ -52,7 +52,7 @@ function ProfileRing({ pct, fields, size = 20 }: { pct: number; fields: { label:
       <div className="absolute z-30 top-full mt-2 right-0 w-48 bg-white border border-border rounded-xl shadow-lg p-3 hidden group-hover/ring:block">
         <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Profile · {pct}%</p>
         <div className="space-y-1">
-          {fields.map(f => (
+          {(fields || []).map(f => (
             <div key={f.label} className="flex items-center gap-1.5">
               <span className={`w-3 h-3 rounded-full flex items-center justify-center shrink-0 text-[8px] font-bold ${f.filled ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-400'}`}>
                 {f.filled ? '✓' : '✗'}
