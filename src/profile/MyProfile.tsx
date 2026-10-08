@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { User, Mail, Phone, MapPin, Calendar, Shield, Gem, UserCircle, Download, Tag } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { toPng } from 'html-to-image'
 import { useAuth } from '../hooks/useAuth'
@@ -9,6 +10,38 @@ import { formatDate, getRoleLabel } from '../lib/utils'
 
 import type { FamilyMember, BusinessDetail } from '../types'
 import { Spinner } from '../components/ui/Spinner'
+
+function ProfileRing({ profile }: { profile: any }) {
+  const fields = [
+    profile.profile_photo_url, profile.full_name, profile.email,
+    profile.father_name, profile.mother_name, profile.date_of_birth,
+    profile.gender, profile.phone, profile.caste, profile.gotra,
+    profile.city, profile.marital_status, profile.address, profile.village_address,
+  ]
+  const filled = fields.filter(Boolean).length
+  const total = fields.length
+  const pct = Math.round((filled / total) * 100)
+  const size = 56
+  const r = (size - 5) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ - (pct / 100) * circ
+  const color = pct === 100 ? '#22c55e' : pct >= 70 ? '#f97316' : pct >= 40 ? '#f59e0b' : '#ef4444'
+  return (
+    <Link to="/profile/edit" className="flex flex-col items-center gap-1 shrink-0 group" title="Complete your profile">
+      <div className="relative">
+        <svg width={size} height={size} className="-rotate-90">
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e5e7eb" strokeWidth="4" />
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="4"
+            strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold" style={{ color }}>{pct}%</span>
+      </div>
+      <span className="text-[10px] font-medium transition-colors" style={{ color: pct === 100 ? '#22c55e' : '#f97316' }}>
+        {pct === 100 ? 'Complete ✓' : 'Add details'}
+      </span>
+    </Link>
+  )
+}
 
 export function MyProfile() {
   const { t, i18n } = useTranslation('profile')
@@ -56,14 +89,14 @@ export function MyProfile() {
       {/* Header */}
       <div className="bg-white rounded-xl border border-border p-5">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
             {profile.profile_photo_url ? (
               <img src={profile.profile_photo_url} alt="" className="w-20 h-20 rounded-full object-cover" />
             ) : (
               <User className="w-10 h-10 text-primary" />
             )}
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-text-primary">{profile.full_name}</h1>
             <div className="flex flex-wrap gap-2 mt-1">
               <span className="text-xs bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-medium">
@@ -79,6 +112,7 @@ export function MyProfile() {
               <Calendar className="w-3 h-3" /> Member since {formatDate((profile as any).member_since || profile.created_at, lang)}
             </p>
           </div>
+          <ProfileRing profile={profile} />
         </div>
       </div>
 
