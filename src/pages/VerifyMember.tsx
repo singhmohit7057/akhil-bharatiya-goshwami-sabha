@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CheckCircle, XCircle, User, Shield, Calendar, MapPin, Gem, Search } from 'lucide-react'
+import { CheckCircle, XCircle, User, Shield, Calendar, MapPin, Phone, Mail, Search } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getRoleLabel, formatDate } from '../lib/utils'
 import type { Profile } from '../types'
@@ -168,10 +168,17 @@ export function VerifyMember() {
               </div>
             )}
 
-            {profile.gotra && (
+            {profile.phone && (
               <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
-                <span className="text-xs text-text-secondary flex items-center gap-1"><Gem className="w-3 h-3" /> {t('gotra')}</span>
-                <span className="text-sm font-medium text-text-primary">{profile.gotra}</span>
+                <span className="text-xs text-text-secondary flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</span>
+                <span className="text-sm font-medium text-text-primary">{profile.phone}</span>
+              </div>
+            )}
+
+            {profile.email && (
+              <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
+                <span className="text-xs text-text-secondary flex items-center gap-1"><Mail className="w-3 h-3" /> Email</span>
+                <span className="text-sm font-medium text-text-primary">{profile.email}</span>
               </div>
             )}
 
@@ -182,10 +189,10 @@ export function VerifyMember() {
               </div>
             )}
 
-            {profile.created_at && (
+            {((profile as any).member_since || profile.created_at) && (
               <div className="flex items-center justify-between p-3 bg-surface rounded-lg">
                 <span className="text-xs text-text-secondary flex items-center gap-1"><Calendar className="w-3 h-3" /> {t('memberSince')}</span>
-                <span className="text-sm font-medium text-text-primary">{formatDate(profile.created_at, lang)}</span>
+                <span className="text-sm font-medium text-text-primary">{formatDate((profile as any).member_since || profile.created_at, lang)}</span>
               </div>
             )}
           </div>

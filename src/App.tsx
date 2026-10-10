@@ -61,6 +61,7 @@ const AllMembers = lazy(() => import('./admin/members/AllMembers').then((m) => (
 const AddMember = lazy(() => import('./admin/members/AddMember').then((m) => ({ default: m.AddMember })))
 const MemberDetail = lazy(() => import('./admin/members/MemberDetail').then((m) => ({ default: m.MemberDetail })))
 const OutsiderDonors = lazy(() => import('./admin/members/OutsiderDonors').then((m) => ({ default: m.OutsiderDonors })))
+const BulkIDCards = lazy(() => import('./admin/media/BulkIDCards').then((m) => ({ default: m.BulkIDCards })))
 const AddEvent = lazy(() => import('./admin/yearly-planner/AddEvent').then((m) => ({ default: m.AddEvent })))
 const EditEvent = lazy(() => import('./admin/yearly-planner/EditEvent').then((m) => ({ default: m.EditEvent })))
 const ManageDirectory = lazy(() => import('./admin/directory/ManageDirectory').then((m) => ({ default: m.ManageDirectory })))
@@ -182,6 +183,7 @@ export default function App() {
             <Route path="members/add" element={<AddMember />} />
             <Route path="members/pending" element={<PendingApprovals />} />
             <Route path="members/outsiders" element={<OutsiderDonors />} />
+            <Route path="id-cards" element={<BulkIDCards />} />
 
             {/* Payments */}
             <Route path="payments" element={<PaymentHistory />} />
