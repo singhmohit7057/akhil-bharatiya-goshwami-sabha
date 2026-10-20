@@ -12,6 +12,9 @@ Sentry.init({
   tracesSampleRate: 0.2,
 })
 
+// Auto-reload when a lazy-loaded chunk is missing after a new deployment
+window.addEventListener('vite:preloadError', () => { window.location.reload() })
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
