@@ -90,10 +90,13 @@ export function EditBusiness() {
     setShowBranch(false)
   }
 
-  function getStoragePath(url: string): string | null {
-    const marker = '/business-photos/'
-    const idx = url.indexOf(marker)
-    return idx !== -1 ? url.slice(idx + marker.length) : null
+  function getStoragePath(url: string): { bucket: string; path: string } | null {
+    for (const bucket of ['business-photos', 'profile-photos']) {
+      const marker = `/${bucket}/`
+      const idx = url.indexOf(marker)
+      if (idx !== -1) return { bucket, path: url.slice(idx + marker.length) }
+    }
+    return null
   }
 
   async function handleDelete(type: 'logo' | 'vc_front' | 'vc_back') {
@@ -101,7 +104,7 @@ export function EditBusiness() {
     const currentUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
     if (currentUrl) {
       const p = getStoragePath(currentUrl)
-      if (p) await supabase.storage.from('business-photos').remove([p])
+      if (p) await supabase.storage.from(p.bucket).remove([p.path])
     }
     const field = type === 'logo' ? 'logo_url' : type === 'vc_front' ? 'visiting_card_front' : 'visiting_card_back'
     await supabase.from('business_directory').update({ [field]: null }).eq('id', id!)
@@ -120,7 +123,7 @@ export function EditBusiness() {
     const oldUrl = type === 'logo' ? logoUrl : type === 'vc_front' ? vcFrontUrl : vcBackUrl
     if (oldUrl) {
       const oldPath = getStoragePath(oldUrl)
-      if (oldPath) await supabase.storage.from('business-photos').remove([oldPath])
+      if (oldPath) await supabase.storage.from(oldPath.bucket).remove([oldPath.path])
     }
     const ext = file.name.split('.').pop()
     const path = `${listing.user_id}/${type}_${Date.now()}.${ext}`

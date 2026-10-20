@@ -31,7 +31,7 @@ export function ManageMatrimonial() {
   async function fetchProfiles() {
     const { data } = await supabase
       .from('matrimonial_profiles')
-      .select('*, profiles(full_name, email, city, gender, date_of_birth, profile_photo_url), matrimonial_photos(photo_url)')
+      .select('*, profiles(full_name, email, phone, city, gender, date_of_birth, profile_photo_url), matrimonial_photos(photo_url)')
       .order('created_at', { ascending: false })
     setProfiles((data as MpWithProfile[]) || [])
     setLoading(false)
@@ -39,6 +39,16 @@ export function ManageMatrimonial() {
 
   async function handleDelete(id: string) {
     if (!confirm('Permanently delete this matrimonial profile?')) return
+    // Delete storage files first
+    const { data: photoRows } = await supabase.from('matrimonial_photos').select('photo_url').eq('matrimonial_id', id)
+    if (photoRows && photoRows.length > 0) {
+      const paths = photoRows.map((p: any) => {
+        const marker = '/matrimonial-photos/'
+        const idx = p.photo_url.indexOf(marker)
+        return idx !== -1 ? p.photo_url.slice(idx + marker.length) : null
+      }).filter(Boolean) as string[]
+      if (paths.length > 0) await supabase.storage.from('matrimonial-photos').remove(paths)
+    }
     await supabase.from('matrimonial_photos').delete().eq('matrimonial_id', id)
     await supabase.from('matrimonial_profiles').delete().eq('id', id)
     logAction('delete', 'matrimonial', id, id)
@@ -172,6 +182,7 @@ export function ManageMatrimonial() {
                 <thead>
                   <tr className="border-b border-border bg-gray-50 text-left">
                     <th className="px-4 py-3 font-medium text-text-secondary">Profile</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Added By</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Education</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Occupation</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">City</th>
@@ -199,6 +210,10 @@ export function ManageMatrimonial() {
                             </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm text-text-primary font-medium">{mp.profiles?.full_name || '—'}</p>
+                        {(mp.profiles as any)?.phone && <p className="text-xs text-text-secondary">{(mp.profiles as any).phone}</p>}
                       </td>
                       <td className="px-4 py-3 text-text-secondary">{mp.education || '—'}</td>
                       <td className="px-4 py-3 text-text-secondary">{mp.occupation || '—'}</td>

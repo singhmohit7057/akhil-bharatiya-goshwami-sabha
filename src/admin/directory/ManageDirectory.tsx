@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Eye, Edit2, EyeOff, Search, Plus } from 'lucide-react'
+import { Eye, Edit2, EyeOff, Search, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { logAction } from '../../lib/adminLog'
 import { useAuth } from '../../hooks/useAuth'
@@ -20,18 +20,42 @@ export function ManageDirectory() {
     fetchListings()
   }, [])
 
-  const [ownerNames, setOwnerNames] = useState<Record<string, string>>({})
+  const [ownerNames, setOwnerNames] = useState<Record<string, { name: string; phone?: string }>>({})
 
   async function fetchListings() {
-    const { data } = await supabase.from('business_directory').select('*, profiles(full_name)').order('created_at', { ascending: false })
-    const items = (data || []) as (BusinessListing & { profiles?: { full_name: string } })[]
+    const { data } = await supabase.from('business_directory').select('*, profiles(full_name, phone)').order('created_at', { ascending: false })
+    const items = (data || []) as (BusinessListing & { profiles?: { full_name: string; phone?: string } })[]
     setListings(items)
-    const names: Record<string, string> = {}
+    const names: Record<string, { name: string; phone?: string }> = {}
     items.forEach((item) => {
-      if (item.profiles?.full_name) names[item.id] = item.profiles.full_name
+      if (item.profiles?.full_name) names[item.id] = { name: item.profiles.full_name, phone: item.profiles.phone }
     })
     setOwnerNames(names)
     setLoading(false)
+  }
+
+  function storagePathFromUrl(url: string): { bucket: string; path: string } | null {
+    for (const bucket of ['business-photos', 'profile-photos']) {
+      const marker = `/${bucket}/`
+      const idx = url.indexOf(marker)
+      if (idx !== -1) return { bucket, path: url.slice(idx + marker.length) }
+    }
+    return null
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Permanently delete this business listing and all its images?')) return
+    const listing = listings.find(l => l.id === id) as any
+    // Delete storage files
+    const urls = [listing?.logo_url, listing?.visiting_card_front, listing?.visiting_card_back].filter(Boolean)
+    for (const url of urls) {
+      const p = storagePathFromUrl(url)
+      if (p) await supabase.storage.from(p.bucket).remove([p.path])
+    }
+    await supabase.from('business_directory').delete().eq('id', id)
+    logAction('delete', 'business', listing?.business_name || id, id)
+    toast.success('Business deleted')
+    fetchListings()
   }
 
   async function handleToggleActive(id: string, currentActive: boolean) {
@@ -120,6 +144,9 @@ export function ManageDirectory() {
                       className={l.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}>
                       {l.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
+                    <button onClick={() => handleDelete(l.id)} className="text-text-secondary hover:text-red-500">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -134,7 +161,7 @@ export function ManageDirectory() {
                   <tr className="border-b border-border bg-gray-50 text-left">
                     <th className="px-4 py-3 font-medium text-text-secondary">Business</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Category</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Owner</th>
+                    <th className="px-4 py-3 font-medium text-text-secondary">Added By</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">City</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Status</th>
                     <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>
@@ -150,7 +177,10 @@ export function ManageDirectory() {
                       <td className="px-4 py-3">
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{l.category}</span>
                       </td>
-                      <td className="px-4 py-3 text-text-secondary">{ownerNames[l.id] || '—'}</td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm text-text-primary font-medium">{ownerNames[l.id]?.name || '—'}</p>
+                        {ownerNames[l.id]?.phone && <p className="text-xs text-text-secondary">{ownerNames[l.id].phone}</p>}
+                      </td>
                       <td className="px-4 py-3 text-text-secondary">{l.city || '—'}</td>
                       <td className="px-4 py-3">
                         {l.is_active ? (
@@ -172,6 +202,9 @@ export function ManageDirectory() {
                               <button onClick={() => handleToggleActive(l.id, l.is_active)}
                                 className={`flex items-center gap-1 text-xs ${l.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}>
                                 {l.is_active ? <><EyeOff className="w-3.5 h-3.5" /> Hide</> : <><Eye className="w-3.5 h-3.5" /> Show</>}
+                              </button>
+                              <button onClick={() => handleDelete(l.id)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-red-500">
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
                               </button>
                             </>
                           )}
