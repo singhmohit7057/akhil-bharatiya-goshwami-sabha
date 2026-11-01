@@ -66,7 +66,7 @@ export function Footer() {
 
           {/* Copyright */}
           <div className="border-t border-border pt-3 flex items-center justify-between">
-            <p className="text-[10px] text-text-secondary">&copy; {year} {t('orgSubtitle')}. {t('footer.rights')}</p>
+            <p className="text-[10px] text-text-secondary">&copy; {year} ABGSPB. {t('footer.rights')}</p>
             <p className="text-[10px] text-text-secondary">Made with <span className="text-red-500">❤️</span> by <a href="https://tmmt.in" target="_blank" rel="noopener noreferrer" className="text-primary font-medium">TMMT</a></p>
           </div>
         </div>
