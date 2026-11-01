@@ -134,6 +134,11 @@ export function Navbar() {
               </div>
             )}
 
+            {!user && (
+              <Link to="/register" className="sm:hidden px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors animate-pulse" style={{ boxShadow: '0 0 8px 2px rgba(249,115,22,0.6)' }}>
+                {t('nav.joinNow')}
+              </Link>
+            )}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
