@@ -203,9 +203,10 @@ export function PendingApprovals() {
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-text-secondary">
                       {m.phone && <span>Phone: <strong className="text-text-primary">{m.phone}</strong></span>}
                       {m.gender && <span>Gender: <strong className="text-text-primary capitalize">{m.gender}</strong></span>}
+                      {m.date_of_birth && <span>DOB: <strong className="text-text-primary">{formatDate(m.date_of_birth, lang)}</strong></span>}
                       {m.gotra && <span>Gotra: <strong className="text-text-primary">{m.gotra}</strong></span>}
+                      {(m as any).caste && <span>Caste: <strong className="text-text-primary">{(m as any).caste}</strong></span>}
                       {m.city && <span>City: <strong className="text-text-primary">{m.city}</strong></span>}
-                      {m.state && <span>State: <strong className="text-text-primary">{m.state}</strong></span>}
                     </div>
                     <p className="text-[11px] text-text-secondary mt-2">
                       Registered {formatDate(m.created_at, lang)}

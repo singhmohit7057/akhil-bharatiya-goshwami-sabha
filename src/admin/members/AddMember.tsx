@@ -353,7 +353,7 @@ export function AddMember() {
             {/* Row 1: Name EN | Name Hindi */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Name (English) *</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Name (English) * <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <input type="text" required value={form.full_name} onChange={(e) => {
                   const val = e.target.value
                   setForm((prev) => ({ ...prev, full_name: val, ...(hiManuallyEdited ? {} : { full_name_hi: transliterateToHindi(val) }) }))
@@ -380,7 +380,7 @@ export function AddMember() {
             {/* Row 2: DOB | Gender */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <DateInput value={form.date_of_birth} onChange={(v) => setForm({ ...form, date_of_birth: v })} />
               </div>
               <div>
@@ -401,7 +401,7 @@ export function AddMember() {
                 <input type="email" required autoComplete="new-email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Phone</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Phone <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputClass} />
               </div>
             </div>
@@ -428,11 +428,11 @@ export function AddMember() {
             {/* Row 5: Caste | Gotra */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Caste</label>
-                <input type="text" placeholder="e.g. Goswami" value={form.caste} onChange={(e) => setForm({ ...form, caste: e.target.value })} className={inputClass} />
+                <label className="block text-xs font-medium text-text-primary mb-1">Caste <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+                <input type="text" value={form.caste} onChange={(e) => setForm({ ...form, caste: e.target.value })} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Gotra</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Gotra <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <input type="text" value={form.gotra} onChange={(e) => setForm({ ...form, gotra: e.target.value })} className={inputClass} />
               </div>
             </div>
@@ -465,7 +465,7 @@ export function AddMember() {
             {/* Row 8: Village Address */}
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Village Address</label>
-              <textarea rows={2} placeholder="Village, Post Office, District..." value={form.village_address} onChange={(e) => setForm({ ...form, village_address: e.target.value })} className={inputClass} />
+              <textarea rows={2} value={form.village_address} onChange={(e) => setForm({ ...form, village_address: e.target.value })} className={inputClass} />
             </div>
 
             <button type="submit" disabled={loading} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">

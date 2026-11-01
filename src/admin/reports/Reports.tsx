@@ -15,7 +15,7 @@ interface TxRow {
   amount: number
   mode: string | null
   member?: string
-  bankType?: 'deposit' | 'withdraw'
+  bankType?: 'deposit' | 'withdraw' | 'charge' | 'interest'
 }
 
 // Fiscal year: Apr–Mar. FY "2025" = Apr 2025 – Mar 2026.
@@ -36,6 +36,7 @@ export function Reports() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'in' | 'out' | 'bank'>('all')
   const [modeFilter, setModeFilter] = useState('')
+  const [openingBalance, setOpeningBalance] = useState(0)
 
   useEffect(() => { fetchAll() }, [year])
 
@@ -44,7 +45,7 @@ export function Reports() {
     const start = fyStart(year)
     const end   = fyEnd(year)
 
-    const [donRes, expRes, suvRes, bankRes] = await Promise.all([
+    const [donRes, expRes, suvRes, bankRes, obRes] = await Promise.all([
       supabase.from('donations').select('id, amount, donation_date, purpose, payment_method, donor_name, profiles!donations_user_id_fkey(full_name)')
         .gte('donation_date', start).lte('donation_date', end).order('donation_date', { ascending: false }),
       supabase.from('expenses').select('id, amount, expense_date, category, title, payment_mode, paid_to')
@@ -54,7 +55,11 @@ export function Reports() {
         .gte('created_at', `${start}T00:00:00`).lte('created_at', `${end}T23:59:59`),
       supabase.from('bank_transactions').select('id, type, amount, transaction_date, bank_name, purpose, profiles!bank_transactions_by_who_fkey(full_name)')
         .gte('transaction_date', start).lte('transaction_date', end).order('transaction_date', { ascending: false }),
+      supabase.from('bank_fy_balance').select('opening_balance_bank, opening_balance_cash').eq('fy_year', year).maybeSingle(),
     ])
+    const obBank = Number((obRes.data as any)?.opening_balance_bank || 0)
+    const obCash = Number((obRes.data as any)?.opening_balance_cash || 0)
+    setOpeningBalance(obBank + obCash)
 
     const rows: TxRow[] = []
 
@@ -100,8 +105,8 @@ export function Reports() {
     for (const b of bankData) {
       rows.push({
         id: b.id, date: b.transaction_date, type: 'bank',
-        category: b.type === 'deposit' ? 'Cash Deposit' : 'Cash Withdraw',
-        description: b.purpose || (b.type === 'deposit' ? 'Cash Deposit' : 'Cash Withdrawal'),
+        category: b.type === 'deposit' ? 'Cash Deposit' : b.type === 'interest' ? 'Bank Interest' : b.type === 'charge' ? 'Bank Charge' : 'Cash Withdraw',
+        description: b.purpose || (b.type === 'deposit' ? 'Cash Deposit' : b.type === 'interest' ? 'Bank Interest' : b.type === 'charge' ? 'Bank Charge' : 'Cash Withdrawal'),
         amount: Number(b.amount),
         mode: b.bank_name || null,
         member: (b.profiles as any)?.full_name,
@@ -124,9 +129,11 @@ export function Reports() {
 
   const totalDeposited  = bankTransactions.filter(b => b.type === 'deposit').reduce((s, b) => s + Number(b.amount), 0)
   const totalWithdrawn  = bankTransactions.filter(b => b.type === 'withdraw').reduce((s, b) => s + Number(b.amount), 0)
+  const totalBankInterest = bankTransactions.filter(b => b.type === 'interest').reduce((s, b) => s + Number(b.amount), 0)
+  const totalBankCharges  = bankTransactions.filter(b => b.type === 'charge').reduce((s, b) => s + Number(b.amount), 0)
 
   const netOffline = offlineIn - offlineOut - totalDeposited + totalWithdrawn  // cash in hand
-  const netOnline  = onlineIn  - onlineOut  + totalDeposited - totalWithdrawn  // bank balance
+  const netOnline  = onlineIn  - onlineOut  + totalDeposited - totalWithdrawn + totalBankInterest - totalBankCharges  // bank balance
 
   const membershipTotal = transactions.filter((t) => t.category === 'Membership').reduce((s, t) => s + t.amount, 0)
   const donationTotal   = transactions.filter((t) => t.category === 'Donation').reduce((s, t) => s + t.amount, 0)
@@ -175,7 +182,7 @@ export function Reports() {
       ['Summary', 'Amount (₹)'],
       ['Total Income', totalIn],
       ['Total Expense', totalOut],
-      ['Net Balance', totalIn - totalOut],
+      ['Net Balance', openingBalance + totalIn - totalOut + totalBankInterest - totalBankCharges],
       [],
       ['By Payment Mode', ''],
       ['Offline Income', offlineIn],
@@ -186,8 +193,8 @@ export function Reports() {
       ['Online Expense', onlineOut],
       ['Net Online (Bank Balance)', netOnline],
       [],
-      ['Cash Deposited to Bank', totalDeposited],
-      ['Cash Withdrawn from Bank', totalWithdrawn],
+      ['Cash Deposited to Bank', totalDeposited + bankTransactions.filter(b => b.type === 'interest').reduce((s, b) => s + Number(b.amount), 0)],
+      ['Cash Withdrawn from Bank', totalWithdrawn + bankTransactions.filter(b => b.type === 'charge').reduce((s, b) => s + Number(b.amount), 0)],
       [],
       ['Income Breakdown', ''],
       ['Total Membership', membershipTotal],
@@ -331,10 +338,13 @@ export function Reports() {
                 <div className="flex items-center gap-1.5 mb-1"><TrendingDown className="w-3.5 h-3.5 text-red-500" /><p className="text-xs text-text-secondary font-medium">Total Expense</p></div>
                 <p className="text-xl font-bold text-red-500">₹{totalOut.toLocaleString()}</p>
               </div>
-              <div className={`rounded-xl border p-4 ${(totalIn - totalOut) >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                <div className="flex items-center gap-1.5 mb-1"><IndianRupee className={`w-3.5 h-3.5 ${(totalIn - totalOut) >= 0 ? 'text-green-700' : 'text-red-600'}`} /><p className="text-xs text-text-secondary font-medium">Net Balance</p></div>
-                <p className={`text-xl font-bold ${(totalIn - totalOut) >= 0 ? 'text-green-700' : 'text-red-600'}`}>{(totalIn - totalOut) >= 0 ? '+' : ''}₹{(totalIn - totalOut).toLocaleString()}</p>
+              {(() => { const nb = openingBalance + totalIn - totalOut + totalBankInterest - totalBankCharges; return (
+              <div className={`rounded-xl border p-4 ${nb >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <div className="flex items-center gap-1.5 mb-1"><IndianRupee className={`w-3.5 h-3.5 ${nb >= 0 ? 'text-green-700' : 'text-red-600'}`} /><p className="text-xs text-text-secondary font-medium">Net Balance</p></div>
+                <p className={`text-xl font-bold ${nb >= 0 ? 'text-green-700' : 'text-red-600'}`}>{nb >= 0 ? '+' : ''}₹{nb.toLocaleString()}</p>
+                <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">OB + Inc − Exp + Int − Chg</p>
               </div>
+              ); })()}
             </div>
 
             {/* Row 2–4: Mode breakdown inside a single card */}
@@ -367,22 +377,26 @@ export function Reports() {
                 <div className={`rounded-lg p-3 ${netOnline >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
                   <p className="text-[10px] text-text-secondary mb-0.5">Net Online <span className="opacity-60">(Bank Balance)</span></p>
                   <p className={`text-base font-bold ${netOnline >= 0 ? 'text-green-700' : 'text-red-600'}`}>{netOnline >= 0 ? '+' : ''}₹{netOnline.toLocaleString()}</p>
-                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Inc − Exp + Dep − Wdr</p>
+                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Inc − Exp + Dep − Wdr + Interest − Charges</p>
                 </div>
-                {/* Cash deposit/withdraw — informational transfer row */}
+                {/* Opening balance + internal transfers */}
                 <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-300">
-                  <p className="text-[10px] text-text-secondary mb-1">Cash Deposited to Bank</p>
-                  <p className="text-base font-bold text-gray-600">₹{totalDeposited.toLocaleString()}</p>
-                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Added to Net Online ↑</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-300">
-                  <p className="text-[10px] text-text-secondary mb-1">Cash Withdrawn from Bank</p>
-                  <p className="text-base font-bold text-gray-600">₹{totalWithdrawn.toLocaleString()}</p>
-                  <p className="text-[9px] text-text-secondary mt-0.5 opacity-70">Added to Net Offline ↑</p>
+                  <p className="text-[10px] text-text-secondary mb-1">Opening Balance <span className="opacity-60">(FY {fyLabel(year)})</span></p>
+                  <p className="text-base font-bold text-gray-700">₹{openingBalance.toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-300">
-                  <p className="text-[10px] text-text-secondary mb-1">Transfer (internal)</p>
-                  <p className="text-xs text-gray-400 italic mt-1">Does not affect Net Balance</p>
+                  <p className="text-[10px] text-text-secondary mb-2">Cash (internal)</p>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-green-600 font-medium">Deposited: +₹{totalDeposited.toLocaleString()}</span>
+                    <span className="text-red-500 font-medium">Withdrawn: -₹{totalWithdrawn.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 border border-dashed border-gray-300">
+                  <p className="text-[10px] text-text-secondary mb-2">Bank (internal)</p>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-purple-600 font-medium">Charges: -₹{totalBankCharges.toLocaleString()}</span>
+                    <span className="text-teal-600 font-medium">Interest: +₹{totalBankInterest.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -445,6 +459,8 @@ export function Reports() {
               <option value="Expense">Expense</option>
               <option value="Cash Deposit">Cash Deposit</option>
               <option value="Cash Withdraw">Cash Withdraw</option>
+              <option value="Bank Interest">Bank Interest</option>
+              <option value="Bank Charge">Bank Charge</option>
             </select>
             <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)}
               className="px-3 py-1.5 border border-border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
@@ -464,8 +480,8 @@ export function Reports() {
               ) : filtered.map((t) => (
                 <div key={t.id + t.date} className="px-4 py-3 flex items-center gap-3">
                   <div className="shrink-0">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600') : 'bg-red-50 text-red-600'}`}>
-                      {t.type === 'in' ? '↑IN' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'DEP' : 'WDR') : '↓OUT'}
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : t.type === 'bank' ? (t.bankType === 'deposit' || t.bankType === 'interest' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600') : 'bg-red-50 text-red-600'}`}>
+                      {t.type === 'in' ? '↑IN' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'DEP' : t.bankType === 'interest' ? 'CR' : t.bankType === 'charge' ? 'DR' : 'WDR') : '↓OUT'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -481,8 +497,8 @@ export function Reports() {
                       </p>
                     )}
                   </div>
-                  <p className={`text-sm font-semibold shrink-0 ${t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? 'text-green-600' : 'text-red-500'}`}>
-                    {t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? '+' : '-'}₹{t.amount.toLocaleString()}
+                  <p className={`text-sm font-semibold shrink-0 ${t.type === 'in' || (t.type === 'bank' && (t.bankType === 'deposit' || t.bankType === 'interest')) ? 'text-green-600' : 'text-red-500'}`}>
+                    {t.type === 'in' || (t.type === 'bank' && (t.bankType === 'deposit' || t.bankType === 'interest')) ? '+' : '-'}₹{t.amount.toLocaleString()}
                   </p>
                 </div>
               ))}
@@ -508,8 +524,8 @@ export function Reports() {
                     <tr key={t.id + t.date} className="border-b border-border hover:bg-gray-50">
                       <td className="px-4 py-3 text-text-secondary whitespace-nowrap">{formatDate(t.date, 'en')}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600') : 'bg-red-50 text-red-600'}`}>
-                          {t.type === 'in' ? '↑ IN' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'DEP' : 'WDR') : '↓ OUT'}
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.type === 'in' ? 'bg-green-50 text-green-700' : t.type === 'bank' ? (t.bankType === 'deposit' || t.bankType === 'interest' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600') : 'bg-red-50 text-red-600'}`}>
+                          {t.type === 'in' ? '↑ IN' : t.type === 'bank' ? (t.bankType === 'deposit' ? 'DEP' : t.bankType === 'interest' ? 'CR' : t.bankType === 'charge' ? 'DR' : 'WDR') : '↓ OUT'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -527,8 +543,8 @@ export function Reports() {
                         ) : '—'}
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">{t.mode || '—'}</td>
-                      <td className={`px-4 py-3 font-semibold text-right ${t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? 'text-green-600' : 'text-red-500'}`}>
-                        {t.type === 'in' || (t.type === 'bank' && t.bankType === 'deposit') ? '+' : '-'}₹{t.amount.toLocaleString()}
+                      <td className={`px-4 py-3 font-semibold text-right ${t.type === 'in' || (t.type === 'bank' && (t.bankType === 'deposit' || t.bankType === 'interest')) ? 'text-green-600' : 'text-red-500'}`}>
+                        {t.type === 'in' || (t.type === 'bank' && (t.bankType === 'deposit' || t.bankType === 'interest')) ? '+' : '-'}₹{t.amount.toLocaleString()}
                       </td>
                     </tr>
                   ))}

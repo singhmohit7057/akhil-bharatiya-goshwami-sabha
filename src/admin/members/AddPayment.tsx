@@ -19,7 +19,7 @@ export function AddPayment() {
   const [members, setMembers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [paymentType, setPaymentType] = useState<'donation' | 'membership'>('donation')
+  const [paymentType, setPaymentType] = useState<'donation' | 'membership'>('membership')
   const [donorType, setDonorType] = useState<'member' | 'other'>('member')
   const [form, setForm] = useState({
     user_id: '',
@@ -163,17 +163,6 @@ export function AddPayment() {
         <div className="flex gap-3 mb-5">
           <button
             type="button"
-            onClick={() => setPaymentType('donation')}
-            className={`flex-1 p-4 rounded-xl border text-center transition-colors ${
-              paymentType === 'donation' ? 'border-green-300 bg-green-50' : 'border-border hover:border-green-200'
-            }`}
-          >
-            <IndianRupee className={`w-5 h-5 mx-auto mb-1 ${paymentType === 'donation' ? 'text-green-600' : 'text-text-secondary'}`} />
-            <p className={`text-sm font-semibold ${paymentType === 'donation' ? 'text-green-700' : 'text-text-secondary'}`}>Donation</p>
-            <p className="text-xs text-text-secondary mt-0.5">Custom amount</p>
-          </button>
-          <button
-            type="button"
             onClick={() => setPaymentType('membership')}
             className={`flex-1 p-4 rounded-xl border text-center transition-colors ${
               paymentType === 'membership' ? 'border-amber-300 bg-amber-50' : 'border-border hover:border-amber-200'
@@ -181,6 +170,17 @@ export function AddPayment() {
           >
             <Crown className={`w-5 h-5 mx-auto mb-1 ${paymentType === 'membership' ? 'text-amber-600' : 'text-text-secondary'}`} />
             <p className={`text-sm font-semibold ${paymentType === 'membership' ? 'text-amber-700' : 'text-text-secondary'}`}>Membership</p>
+            <p className="text-xs text-text-secondary mt-0.5">Custom amount</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaymentType('donation')}
+            className={`flex-1 p-4 rounded-xl border text-center transition-colors ${
+              paymentType === 'donation' ? 'border-green-300 bg-green-50' : 'border-border hover:border-green-200'
+            }`}
+          >
+            <IndianRupee className={`w-5 h-5 mx-auto mb-1 ${paymentType === 'donation' ? 'text-green-600' : 'text-text-secondary'}`} />
+            <p className={`text-sm font-semibold ${paymentType === 'donation' ? 'text-green-700' : 'text-text-secondary'}`}>Donation</p>
             <p className="text-xs text-text-secondary mt-0.5">Custom amount</p>
           </button>
         </div>

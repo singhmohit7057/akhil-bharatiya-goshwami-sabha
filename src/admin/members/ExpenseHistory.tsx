@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Plus, Search, Trash2, TrendingDown, IndianRupee, Tag, Pencil } from 'lucide-react'
+import { Plus, Search, Trash2, TrendingDown, IndianRupee, Tag, Pencil, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { logAction } from '../../lib/adminLog'
 import { supabase } from '../../lib/supabase'
@@ -45,6 +45,17 @@ export function ExpenseHistory() {
     logAction('delete', 'expense', exp ? `${exp.title} — ₹${exp.amount}` : id, id)
     toast.success('Deleted')
     fetchExpenses()
+  }
+
+  function getFY(dateStr: string): string {
+    const d = new Date(dateStr)
+    const yr = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1
+    return `${yr}-${String(yr + 1).slice(2)}`
+  }
+
+  const [expandedFY, setExpandedFY] = useState<Set<string>>(new Set([getFY(new Date().toISOString())]))
+  function toggleFY(fy: string) {
+    setExpandedFY(prev => { const next = new Set(prev); next.has(fy) ? next.delete(fy) : next.add(fy); return next })
   }
 
   const categories = [...new Set(expenses.map((e) => e.category).filter(Boolean))] as string[]
@@ -148,56 +159,77 @@ export function ExpenseHistory() {
             ))}
           </div>
 
-          {/* Desktop table */}
-          <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-gray-50 text-left">
-                    <th className="px-4 py-3 font-medium text-text-secondary">Title</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Category</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Paid To</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Done By</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Mode</th>
-                    {canEdit && <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((e) => (
-                    <tr key={e.id} className="border-b border-border hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-text-primary">
-                        {e.title}
-                        {e.notes && <p className="text-xs text-text-secondary font-normal mt-0.5 truncate max-w-[200px]">{e.notes}</p>}
-                      </td>
-                      <td className="px-4 py-3">
-                        {e.category ? (
-                          <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{e.category}</span>
-                        ) : '—'}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-red-600">₹{Number(e.amount).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-text-secondary">{formatDate(e.expense_date, 'en')}</td>
-                      <td className="px-4 py-3 text-text-secondary">{e.paid_to || '—'}</td>
-                      <td className="px-4 py-3 text-text-secondary">{(e as any).profiles?.full_name || '—'}</td>
-                      <td className="px-4 py-3 text-text-secondary">{e.payment_mode || '—'}</td>
-                      {canEdit && (
-                        <td className="px-4 py-3">
-                          <div className="flex gap-1">
-                            <Link to={`/admin/expenses/edit/${e.id}`} className="p-1.5 text-text-secondary hover:text-primary transition-colors">
-                              <Pencil className="w-4 h-4" />
-                            </Link>
-                            <button onClick={() => handleDelete(e.id)} className="p-1.5 text-text-secondary hover:text-red-500 transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Desktop — FY grouped */}
+          <div className="hidden sm:block space-y-3">
+            {(() => {
+              const fyMap = new Map<string, Expense[]>()
+              filtered.forEach(e => {
+                const fy = getFY(e.expense_date)
+                if (!fyMap.has(fy)) fyMap.set(fy, [])
+                fyMap.get(fy)!.push(e)
+              })
+              const fys = Array.from(fyMap.keys()).sort((a, b) => b.localeCompare(a))
+              return fys.map(fy => {
+                const rows = fyMap.get(fy)!
+                const fyTotal = rows.reduce((s, e) => s + Number(e.amount), 0)
+                const isOpen = expandedFY.has(fy)
+                return (
+                  <div key={fy} className="bg-white rounded-xl border border-border overflow-hidden">
+                    <button onClick={() => toggleFY(fy)}
+                      className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+                        <span className="font-semibold text-text-primary">FY {fy}</span>
+                        <span className="text-xs text-text-secondary">{rows.length} expense{rows.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <span className="text-sm font-bold text-red-600">₹{fyTotal.toLocaleString()}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="overflow-x-auto border-t border-border">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border bg-gray-50 text-left">
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Title</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Category</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Amount</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Date</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Paid To</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Done By</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Mode</th>
+                              {canEdit && <th className="px-4 py-2.5 font-medium text-text-secondary">Actions</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((e) => (
+                              <tr key={e.id} className="border-b border-border hover:bg-gray-50">
+                                <td className="px-4 py-3 font-medium text-text-primary">
+                                  {e.title}
+                                  {e.notes && <p className="text-xs text-text-secondary font-normal mt-0.5 truncate max-w-[200px]">{e.notes}</p>}
+                                </td>
+                                <td className="px-4 py-3">{e.category ? <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{e.category}</span> : '—'}</td>
+                                <td className="px-4 py-3 font-semibold text-red-600">₹{Number(e.amount).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-text-secondary">{formatDate(e.expense_date, 'en')}</td>
+                                <td className="px-4 py-3 text-text-secondary">{e.paid_to || '—'}</td>
+                                <td className="px-4 py-3 text-text-secondary">{(e as any).profiles?.full_name || '—'}</td>
+                                <td className="px-4 py-3 text-text-secondary">{e.payment_mode || '—'}</td>
+                                {canEdit && (
+                                  <td className="px-4 py-3">
+                                    <div className="flex gap-1">
+                                      <Link to={`/admin/expenses/edit/${e.id}`} className="p-1.5 text-text-secondary hover:text-primary transition-colors"><Pencil className="w-4 h-4" /></Link>
+                                      <button onClick={() => handleDelete(e.id)} className="p-1.5 text-text-secondary hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            })()}
           </div>
         </>
       )}

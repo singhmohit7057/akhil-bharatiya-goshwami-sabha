@@ -374,7 +374,7 @@ export function MemberDetail() {
             {/* Row 1: Name EN | Name Hindi */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Name (English) *</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Name (English) * <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <input type="text" required value={form.full_name} onChange={(e) => {
                   updateField('full_name', e.target.value)
                   if (!hiManuallyEdited.current) updateField('full_name_hi', transliterateToHindi(e.target.value))
@@ -402,7 +402,7 @@ export function MemberDetail() {
             {/* Row 2: DOB | Gender */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <DateInput value={form.date_of_birth} onChange={(v) => updateField('date_of_birth', v)} />
               </div>
               <div>
@@ -418,7 +418,7 @@ export function MemberDetail() {
             {/* Row 3: Phone | Designation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Phone</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Phone <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} />
               </div>
               <div>
@@ -431,11 +431,11 @@ export function MemberDetail() {
             {/* Row 4: Caste | Gotra */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Caste</label>
-                <input type="text" placeholder="e.g. Goswami" value={form.caste} onChange={(e) => updateField('caste', e.target.value)} className={inputClass} />
+                <label className="block text-xs font-medium text-text-primary mb-1">Caste <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+                <input type="text" value={form.caste} onChange={(e) => updateField('caste', e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-text-primary mb-1">Gotra</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Gotra <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
                 <input type="text" value={form.gotra} onChange={(e) => updateField('gotra', e.target.value)} className={inputClass} />
               </div>
             </div>
@@ -464,7 +464,7 @@ export function MemberDetail() {
             {/* Row 7: Village Address */}
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">Village Address</label>
-              <textarea value={form.village_address} onChange={(e) => updateField('village_address', e.target.value)} rows={2} placeholder="Village, Post Office, District..." className={inputClass} />
+              <textarea value={form.village_address} onChange={(e) => updateField('village_address', e.target.value)} rows={2} className={inputClass} />
             </div>
             <button type="submit" disabled={saving} className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50">
               {saving ? '...' : 'Save Profile'}

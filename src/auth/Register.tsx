@@ -6,6 +6,7 @@ import { CheckCircle, Clock, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { SEO } from '../components/SEO'
+import { DateInput } from '../components/ui/DateInput'
 
 export function Register() {
   const { t } = useTranslation('auth')
@@ -16,7 +17,9 @@ export function Register() {
     password: '',
     phone: '',
     gender: '',
+    date_of_birth: '',
     gotra: '',
+    caste: '',
     city: '',
     state: '',
   })
@@ -62,7 +65,9 @@ export function Register() {
         const { error: updateError } = await supabase.from('profiles').update({
           phone: form.phone || null,
           gender: form.gender || null,
+          date_of_birth: form.date_of_birth || null,
           gotra: form.gotra || null,
+          caste: form.caste || null,
           city: form.city || null,
           state: form.state || null,
         }).eq('id', data.user!.id)
@@ -132,22 +137,25 @@ export function Register() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Name | Phone */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">{t('register.fullName')} *</label>
               <input type="text" required value={form.fullName} onChange={(e) => updateField('fullName', e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.phone')}</label>
-              <input type="tel" maxLength={10} value={form.phone} onChange={(e) => updateField('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} className={inputClass} />
+              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.phone')} *</label>
+              <input type="tel" required maxLength={10} value={form.phone} onChange={(e) => updateField('phone', e.target.value.replace(/\D/g, '').slice(0, 10))} className={inputClass} />
             </div>
           </div>
 
+          {/* Email */}
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">{t('register.email')} *</label>
             <input type="email" required value={form.email} onChange={(e) => updateField('email', e.target.value)} className={inputClass} />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1">{t('register.password')} *</label>
             <div className="relative">
@@ -158,10 +166,11 @@ export function Register() {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3">
+          {/* Gender | City */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.gender')}</label>
-              <select value={form.gender} onChange={(e) => updateField('gender', e.target.value)} className={`${inputClass} bg-white`}>
+              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.gender')} *</label>
+              <select required value={form.gender} onChange={(e) => updateField('gender', e.target.value)} className={`${inputClass} bg-white`}>
                 <option value="">Select</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -169,16 +178,26 @@ export function Register() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.gotra')}</label>
-              <input type="text" value={form.gotra} onChange={(e) => updateField('gotra', e.target.value)} className={inputClass} />
+              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.city')} *</label>
+              <input type="text" required value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
+            </div>
+          </div>
+
+          {/* DOB */}
+          <div>
+            <label className="block text-xs font-medium text-text-primary mb-1">Date of Birth *</label>
+            <DateInput value={form.date_of_birth} onChange={(v) => updateField('date_of_birth', v)} />
+          </div>
+
+          {/* Gotra | Caste */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.gotra')} *</label>
+              <input type="text" required value={form.gotra} onChange={(e) => updateField('gotra', e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.city')}</label>
-              <input type="text" value={form.city} onChange={(e) => updateField('city', e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">{t('register.state')}</label>
-              <input type="text" value={form.state} onChange={(e) => updateField('state', e.target.value)} className={inputClass} />
+              <label className="block text-xs font-medium text-text-primary mb-1">Caste *</label>
+              <input type="text" required value={form.caste} onChange={(e) => updateField('caste', e.target.value)} className={inputClass} />
             </div>
           </div>
 

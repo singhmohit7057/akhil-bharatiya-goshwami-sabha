@@ -33,3 +33,9 @@ dist-ssr
 .claude/
 
 .vercel
+
+# Brag video output
+brag-output/
+
+# Diagrams and docs
+docs/

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { IndianRupee, Crown, Search, Plus, Edit2, Trash2, BookOpen, FileDown } from 'lucide-react'
+import { IndianRupee, Crown, Search, Plus, Edit2, Trash2, BookOpen, FileDown, ChevronDown } from 'lucide-react'
 import { generatePaymentReceiptPdf, generateSouvenirReceiptPdf } from '../../lib/receiptPdf'
 import { logAction } from '../../lib/adminLog'
 import toast from 'react-hot-toast'
@@ -110,6 +110,23 @@ export function PaymentHistory() {
     if (data) setPayments(data as PaymentWithProfile[])
   }
 
+  // FY helpers (Apr–Mar)
+  function getFY(dateStr: string): string {
+    const d = new Date(dateStr)
+    const yr = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1
+    return `${yr}-${String(yr + 1).slice(2)}`
+  }
+  function fyLabel(fy: string) { return `FY ${fy}` }
+
+  const [expandedFY, setExpandedFY] = useState<Set<string>>(new Set([getFY(new Date().toISOString())]))
+  function toggleFY(fy: string) {
+    setExpandedFY(prev => {
+      const next = new Set(prev)
+      next.has(fy) ? next.delete(fy) : next.add(fy)
+      return next
+    })
+  }
+
   const filteredDonations = typeFilter === 'souvenir' ? [] : payments.filter((p) => {
     const matchSearch = !search || p.profiles?.full_name?.toLowerCase().includes(search.toLowerCase()) || (p as any).donor_name?.toLowerCase().includes(search.toLowerCase())
     const matchType = !typeFilter
@@ -201,7 +218,7 @@ export function PaymentHistory() {
         </select>
       </div>
 
-      {/* Table */}
+      {/* FY-grouped table */}
       {filtered.length === 0 && filteredSouvenirs.length === 0 ? (
         <div className="bg-white rounded-xl border border-border p-8 text-center text-text-secondary">No payments found.</div>
       ) : (
@@ -253,89 +270,95 @@ export function PaymentHistory() {
             ))}
           </div>
 
-          {/* Desktop table */}
-          <div className="hidden sm:block bg-white rounded-xl border border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-gray-50 text-left">
-                    <th className="px-4 py-3 font-medium text-text-secondary">Member</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Amount</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Date</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Type</th>
-                    <th className="px-4 py-3 font-medium text-text-secondary">Payment</th>
-                    {superAdmin && <th className="px-4 py-3 font-medium text-text-secondary">Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((p) => (
-                    <tr key={p.id} className="border-b border-border/50 hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-text-primary">
-                        {(p as any).donor_name
-                          ? <>{(p as any).donor_name}{(p as any).reference_member?.full_name && <span className="text-xs text-text-secondary font-normal ml-1">({(p as any).reference_member.full_name})</span>}</>
-                          : p.profiles?.full_name}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-text-primary">&#8377;{Number(p.amount).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-text-secondary">{formatDate(p.donation_date, 'en')}</td>
-                      <td className="px-4 py-3">
-                        {p.purpose === 'Souvenir Ad' ? (
-                          <span className="text-xs bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
-                            <BookOpen className="w-3 h-3" /> Souvenir
-                          </span>
-                        ) : p.purpose === 'Executive Membership' ? (
-                          <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
-                            <Crown className="w-3 h-3" /> Membership
-                          </span>
-                        ) : (
-                          <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Donation</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-text-secondary">{p.payment_method || '—'}</td>
-                      {superAdmin && (
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => downloadReceipt(p)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-emerald-600">
-                              <FileDown className="w-3.5 h-3.5" /> Receipt
-                            </button>
-                            <a href={`/admin/payments/edit/${p.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary">
-                              <Edit2 className="w-3.5 h-3.5" /> Edit
-                            </a>
-                            <button onClick={() => handleDelete(p.id)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-red-500">
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
-                            </button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                  {/* Souvenir rows */}
-                  {filteredSouvenirs.map((s: any) => (
-                    <tr key={`sov-${s.id}`} className="border-b border-border/50 hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-text-primary">
-                        {s.sponsor_name}
-                        {s.company_name && <p className="text-[10px] text-text-secondary">{s.company_name}</p>}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-text-primary">₹{Number(s.amount).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-text-secondary">{s.created_at ? formatDate(s.created_at.split('T')[0], 'en') : '—'}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
-                          <BookOpen className="w-3 h-3" /> Souvenir
-                        </span>
-                        {s.souvenirs?.title && <p className="text-[10px] text-text-secondary mt-0.5">{s.souvenirs.title}</p>}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-text-secondary">{s.payment_mode || '—'}</td>
-                      {superAdmin && (
-                        <td className="px-4 py-3">
-                          <button onClick={() => downloadSouvenirReceipt(s)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-emerald-600">
-                            <FileDown className="w-3.5 h-3.5" /> Receipt
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Desktop — FY grouped */}
+          <div className="hidden sm:block space-y-3">
+            {(() => {
+              // Group all rows by FY
+              const allRows = [
+                ...filtered.map(p => ({ ...p, _date: p.donation_date, _type: 'payment' as const })),
+                ...filteredSouvenirs.map((s: any) => ({ ...s, _date: s.created_at?.split('T')[0] || '', _type: 'souvenir' as const })),
+              ]
+              const fyMap = new Map<string, typeof allRows>()
+              allRows.forEach(r => {
+                const fy = getFY(r._date)
+                if (!fyMap.has(fy)) fyMap.set(fy, [])
+                fyMap.get(fy)!.push(r)
+              })
+              const fys = Array.from(fyMap.keys()).sort((a, b) => b.localeCompare(a))
+
+              return fys.map(fy => {
+                const rows = fyMap.get(fy)!
+                const fyTotal = rows.reduce((s, r) => s + Number(r.amount), 0)
+                const isOpen = expandedFY.has(fy)
+                return (
+                  <div key={fy} className="bg-white rounded-xl border border-border overflow-hidden">
+                    {/* FY Header */}
+                    <button onClick={() => toggleFY(fy)}
+                      className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+                        <span className="font-semibold text-text-primary">{fyLabel(fy)}</span>
+                        <span className="text-xs text-text-secondary">{rows.length} payment{rows.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <span className="text-sm font-bold text-primary">₹{fyTotal.toLocaleString()}</span>
+                    </button>
+
+                    {/* Rows */}
+                    {isOpen && (
+                      <div className="overflow-x-auto border-t border-border">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border bg-gray-50 text-left">
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Member</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Amount</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Date</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Type</th>
+                              <th className="px-4 py-2.5 font-medium text-text-secondary">Payment</th>
+                              {superAdmin && <th className="px-4 py-2.5 font-medium text-text-secondary">Actions</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((r: any) => r._type === 'souvenir' ? (
+                              <tr key={`sov-${r.id}`} className="border-b border-border/50 hover:bg-gray-50">
+                                <td className="px-4 py-3 font-medium text-text-primary">{r.sponsor_name}{r.company_name && <p className="text-[10px] text-text-secondary">{r.company_name}</p>}</td>
+                                <td className="px-4 py-3 font-semibold text-text-primary">₹{Number(r.amount).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-text-secondary">{r.created_at ? formatDate(r.created_at.split('T')[0], 'en') : '—'}</td>
+                                <td className="px-4 py-3"><span className="text-xs bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit"><BookOpen className="w-3 h-3" /> Souvenir</span>{r.souvenirs?.title && <p className="text-[10px] text-text-secondary mt-0.5">{r.souvenirs.title}</p>}</td>
+                                <td className="px-4 py-3 text-xs text-text-secondary">{r.payment_mode || '—'}</td>
+                                {superAdmin && <td className="px-4 py-3"><button onClick={() => downloadSouvenirReceipt(r)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-emerald-600"><FileDown className="w-3.5 h-3.5" /> Receipt</button></td>}
+                              </tr>
+                            ) : (
+                              <tr key={r.id} className="border-b border-border/50 hover:bg-gray-50">
+                                <td className="px-4 py-3 font-medium text-text-primary">
+                                  {r.donor_name ? <>{r.donor_name}{r.reference_member?.full_name && <span className="text-xs text-text-secondary font-normal ml-1">({r.reference_member.full_name})</span>}</> : r.profiles?.full_name}
+                                </td>
+                                <td className="px-4 py-3 font-semibold text-text-primary">₹{Number(r.amount).toLocaleString()}</td>
+                                <td className="px-4 py-3 text-text-secondary">{formatDate(r.donation_date, 'en')}</td>
+                                <td className="px-4 py-3">
+                                  {r.purpose === 'Executive Membership'
+                                    ? <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit"><Crown className="w-3 h-3" /> Membership</span>
+                                    : <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Donation</span>}
+                                </td>
+                                <td className="px-4 py-3 text-xs text-text-secondary">{r.payment_method || '—'}</td>
+                                {superAdmin && (
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      <button onClick={() => downloadReceipt(r)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-emerald-600"><FileDown className="w-3.5 h-3.5" /> Receipt</button>
+                                      <a href={`/admin/payments/edit/${r.id}`} className="flex items-center gap-1 text-xs text-text-secondary hover:text-primary"><Edit2 className="w-3.5 h-3.5" /> Edit</a>
+                                      <button onClick={() => handleDelete(r.id)} className="flex items-center gap-1 text-xs text-text-secondary hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+                                    </div>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            })()}
           </div>
         </>
       )}

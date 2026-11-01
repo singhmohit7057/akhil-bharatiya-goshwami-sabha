@@ -215,7 +215,7 @@ export function EditProfile() {
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.name')} (English) *</label>
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.name')} (English) * <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
             <input type="text" required value={form.full_name} onChange={(e) => {
               const val = e.target.value
               updateField('full_name', val)
@@ -248,7 +248,7 @@ export function EditProfile() {
         {/* Row 2: DOB | Gender */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.dateOfBirth')}</label>
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.dateOfBirth')} <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
             <DateInput value={form.date_of_birth} onChange={(v) => updateField('date_of_birth', v)} />
           </div>
           <div>
@@ -269,7 +269,7 @@ export function EditProfile() {
             <input type="email" disabled value={profile?.email || ''} className={`${inputClass} bg-gray-50 text-text-secondary cursor-not-allowed`} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.phone')}</label>
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.phone')} <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
             <input type="tel" value={form.phone} onChange={(e) => updateField('phone', e.target.value)} className={inputClass} />
           </div>
         </div>
@@ -277,11 +277,11 @@ export function EditProfile() {
         {/* Row 4: Caste | Gotra */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">Caste</label>
-            <input type="text" value={(form as any).caste || ''} onChange={(e) => updateField('caste', e.target.value)} placeholder="e.g. Goswami" className={inputClass} />
+            <label className="block text-xs font-medium text-text-primary mb-1">Caste <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
+            <input type="text" value={(form as any).caste || ''} onChange={(e) => updateField('caste', e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.gotra')}</label>
+            <label className="block text-xs font-medium text-text-primary mb-1">{t('common:labels.gotra')} <span className="text-text-secondary font-normal text-[10px]">(shown on ID card)</span></label>
             <input type="text" value={form.gotra} onChange={(e) => updateField('gotra', e.target.value)} className={inputClass} />
           </div>
         </div>
