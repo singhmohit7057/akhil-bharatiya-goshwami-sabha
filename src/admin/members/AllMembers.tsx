@@ -86,6 +86,20 @@ export function AllMembers() {
   }, [])
 
   async function fetchMembers() {
+    const today = new Date().toISOString().split('T')[0]
+    // Auto-expire: executive_member role → member when membership_end_date passed
+    const { data: expired } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('is_executive_member', true)
+      .lt('membership_end_date', today)
+      .not('membership_end_date', 'is', null)
+    if (expired && expired.length > 0) {
+      for (const m of expired) {
+        const revertRole = m.role === 'executive_member' ? { role: 'member' } : {}
+        await supabase.from('profiles').update({ is_executive_member: false, ...revertRole }).eq('id', m.id)
+      }
+    }
     const { data } = await supabase
       .from('profiles')
       .select('*')

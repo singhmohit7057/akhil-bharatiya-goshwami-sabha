@@ -39,7 +39,7 @@ export function Membership() {
         const latestPayment = history.length > 0 ? history[0] : null
         const paidOn = latestPayment?.donation_date || null
         const validFrom = (profile as any).membership_start_date || paidOn
-        const validUntil = (profile as any).membership_end_date || (validFrom ? (() => { const d = new Date(validFrom); d.setFullYear(d.getFullYear() + 1); return d.toISOString().split('T')[0] })() : null)
+        const validUntil = (profile as any).membership_end_date || (validFrom ? (() => { const d = new Date(validFrom); d.setFullYear(d.getFullYear() + 1); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0] })() : null)
         const isActive = profile.is_executive_member && validUntil ? new Date(validUntil) >= new Date() : false
 
         setData({

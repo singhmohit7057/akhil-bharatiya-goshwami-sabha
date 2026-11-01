@@ -26,7 +26,7 @@ interface ReceiptData {
 
 function getExpiryDate(dateStr: string): string {
   const d = new Date(dateStr)
-  d.setFullYear(d.getFullYear() + 1)
+  d.setFullYear(d.getFullYear() + 1); d.setDate(d.getDate() - 1)
   return d.toISOString().split('T')[0]
 }
 

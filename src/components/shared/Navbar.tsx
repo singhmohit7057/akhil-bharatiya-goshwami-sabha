@@ -118,7 +118,7 @@ export function Navbar() {
                 )}
               </div>
             ) : (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <Link
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-text-primary hover:text-primary transition-colors"
@@ -135,7 +135,7 @@ export function Navbar() {
             )}
 
             {!user && (
-              <Link to="/register" className="sm:hidden px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors animate-pulse" style={{ boxShadow: '0 0 8px 2px rgba(249,115,22,0.6)' }}>
+              <Link to="/register" className="lg:hidden px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors" style={{ animation: 'glowPulse 2s ease-in-out infinite', boxShadow: '0 0 8px 2px rgba(249,115,22,0.6)' }}>
                 {t('nav.joinNow')}
               </Link>
             )}

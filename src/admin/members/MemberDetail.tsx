@@ -534,7 +534,7 @@ export function MemberDetail() {
                   className="px-3 py-2 border border-amber-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300" />
                 {grantStartDate && (
                   <p className="text-[11px] text-amber-700 mt-1">
-                    Valid for 1 year → expires {new Date(new Date(grantStartDate).setFullYear(new Date(grantStartDate).getFullYear() + 1)).toISOString().split('T')[0]}
+                    Valid for 1 year → expires {(() => { const d = new Date(grantStartDate); d.setFullYear(d.getFullYear() + 1); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0] })()}
                   </p>
                 )}
               </div>
@@ -544,7 +544,7 @@ export function MemberDetail() {
                   onClick={async () => {
                     setGrantLoading(true)
                     const endDate = new Date(grantStartDate)
-                    endDate.setFullYear(endDate.getFullYear() + 1)
+                    endDate.setFullYear(endDate.getFullYear() + 1); endDate.setDate(endDate.getDate() - 1)
                     const roleUp = member.role === 'member' ? { role: 'executive_member' } : {}
                     const { error } = await supabase.from('profiles').update({
                       is_executive_member: true,

@@ -29,3 +29,5 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+@keyframes glowPulse { 0%, 100% { box-shadow: 0 0 6px 1px rgba(249,115,22,0.5); } 50% { box-shadow: 0 0 14px 4px rgba(249,115,22,0.9); } }

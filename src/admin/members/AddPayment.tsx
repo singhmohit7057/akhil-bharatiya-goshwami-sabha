@@ -106,7 +106,7 @@ export function AddPayment() {
         if (latestPay?.id === editId) {
           const startDate = new Date(form.membership_start_date)
           const endDate = new Date(startDate)
-          endDate.setFullYear(endDate.getFullYear() + 1)
+          endDate.setFullYear(endDate.getFullYear() + 1); endDate.setDate(endDate.getDate() - 1)
           const { data: memberData } = await supabase.from('profiles').select('role').eq('id', form.user_id).single()
           const roleUpdate = memberData?.role === 'member' ? { role: 'executive_member' } : {}
           await supabase.from('profiles').update({

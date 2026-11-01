@@ -63,7 +63,7 @@ export function MyDonations() {
           .filter((d) => d.purpose === 'Executive Membership')
           .map((d) => {
             const startDate = (d as any).membership_start_date || d.donation_date
-            const dt = new Date(startDate); dt.setFullYear(dt.getFullYear() + 1)
+            const dt = new Date(startDate); dt.setFullYear(dt.getFullYear() + 1); dt.setDate(dt.getDate() - 1)
             return {
               id: d.id,
               amount: Number(d.amount),

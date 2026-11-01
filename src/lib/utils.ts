@@ -58,8 +58,10 @@ export async function compressImage(file: File, maxSize = 600, quality = 0.82): 
   })
 }
 
-export function getDisplayRole(role: string | null | undefined, isExecutiveMember?: boolean): string {
-  if (role && role !== 'member') return getRoleLabel(role)
-  if (isExecutiveMember) return 'Executive Member'
+export function getDisplayRole(role: string | null | undefined, isExecutiveMember?: boolean, membershipEndDate?: string | null): string {
+  // Governing members always keep their designation regardless of membership expiry
+  if (role && role !== 'member' && role !== 'executive_member') return getRoleLabel(role)
+  const isExpired = membershipEndDate ? new Date(membershipEndDate) < new Date() : false
+  if (isExecutiveMember && !isExpired) return 'Executive Member'
   return 'Member'
 }

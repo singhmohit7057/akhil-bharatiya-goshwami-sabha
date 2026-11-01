@@ -244,10 +244,10 @@ export function BulkPayment() {
         let newEnd: Date
         if (existingEnd && existingEnd > newStart) {
           newEnd = new Date(existingEnd)
-          newEnd.setFullYear(newEnd.getFullYear() + 1)
+          newEnd.setFullYear(newEnd.getFullYear() + 1); newEnd.setDate(newEnd.getDate() - 1)
         } else {
           newEnd = new Date(newStart)
-          newEnd.setFullYear(newEnd.getFullYear() + 1)
+          newEnd.setFullYear(newEnd.getFullYear() + 1); newEnd.setDate(newEnd.getDate() - 1)
         }
 
         const memberSince = member.membership_start_date

@@ -295,12 +295,22 @@ export function PaymentHistory() {
                     {/* FY Header */}
                     <button onClick={() => toggleFY(fy)}
                       className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform shrink-0 ${isOpen ? '' : '-rotate-90'}`} />
                         <span className="font-semibold text-text-primary">{fyLabel(fy)}</span>
                         <span className="text-xs text-text-secondary">{rows.length} payment{rows.length !== 1 ? 's' : ''}</span>
+                        {(() => {
+                          const mem = rows.filter((r: any) => r._type === 'payment' && r.purpose === 'Executive Membership').length
+                          const don = rows.filter((r: any) => r._type === 'payment' && r.purpose !== 'Executive Membership').length
+                          const sov = rows.filter((r: any) => r._type === 'souvenir').length
+                          return <>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${mem > 0 ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-text-secondary'}`}>{mem} membership</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${don > 0 ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-text-secondary'}`}>{don} donation</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${sov > 0 ? 'bg-violet-50 text-violet-700' : 'bg-gray-50 text-text-secondary'}`}>{sov} souvenir</span>
+                          </>
+                        })()}
                       </div>
-                      <span className="text-sm font-bold text-primary">₹{fyTotal.toLocaleString()}</span>
+                      <span className="text-sm font-bold text-primary shrink-0">₹{fyTotal.toLocaleString()}</span>
                     </button>
 
                     {/* Rows */}
