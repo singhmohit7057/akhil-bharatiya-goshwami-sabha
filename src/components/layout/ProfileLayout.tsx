@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { User, Edit, Users, Briefcase, IndianRupee, Heart, Crown } from 'lucide-react'
+import { User, Edit, Users, Briefcase, IndianRupee, Heart, Crown, ScrollText } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { Navbar } from '../shared/Navbar'
 import { Footer } from '../shared/Footer'
@@ -19,6 +19,7 @@ export function ProfileLayout() {
     { to: '/profile/membership', icon: Crown, label: 'Membership' },
     { to: '/profile/business', icon: Briefcase, label: t('tabs.business') },
     { to: '/profile/matrimonial', icon: Heart, label: t('tabs.matrimonial') },
+    { to: '/profile/certificates', icon: ScrollText, label: 'Certificates' },
   ]
 
   function isActive(path: string, exact?: boolean) {

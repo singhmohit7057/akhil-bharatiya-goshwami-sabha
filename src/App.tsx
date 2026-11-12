@@ -45,6 +45,7 @@ const BusinessDetails = lazy(() => import('./profile/BusinessDetails').then((m) 
 const MyDonations = lazy(() => import('./profile/MyDonations').then((m) => ({ default: m.MyDonations })))
 const Membership = lazy(() => import('./profile/Membership').then((m) => ({ default: m.Membership })))
 const MyMatrimonial = lazy(() => import('./profile/MyMatrimonial').then((m) => ({ default: m.MyMatrimonial })))
+const MyCertificates = lazy(() => import('./profile/MyCertificates').then((m) => ({ default: m.MyCertificates })))
 
 // Admin pages — lazy loaded
 const AdminDashboard = lazy(() => import('./admin/Dashboard').then((m) => ({ default: m.AdminDashboard })))
@@ -63,6 +64,7 @@ const MemberDetail = lazy(() => import('./admin/members/MemberDetail').then((m) 
 const OutsiderDonors = lazy(() => import('./admin/members/OutsiderDonors').then((m) => ({ default: m.OutsiderDonors })))
 const BulkIDCards = lazy(() => import('./admin/media/BulkIDCards').then((m) => ({ default: m.BulkIDCards })))
 const LiveDarshanAdmin = lazy(() => import('./admin/media/LiveDarshan').then((m) => ({ default: m.LiveDarshanAdmin })))
+const CertificatesAdmin = lazy(() => import('./admin/media/Certificates').then((m) => ({ default: m.Certificates })))
 const LiveDarshan = lazy(() => import('./pages/LiveDarshan').then((m) => ({ default: m.LiveDarshan })))
 const AddEvent = lazy(() => import('./admin/yearly-planner/AddEvent').then((m) => ({ default: m.AddEvent })))
 const EditEvent = lazy(() => import('./admin/yearly-planner/EditEvent').then((m) => ({ default: m.EditEvent })))
@@ -160,6 +162,7 @@ export default function App() {
             <Route path="donations" element={<MyDonations />} />
             <Route path="membership" element={<Membership />} />
             <Route path="matrimonial" element={<MyMatrimonial />} />
+            <Route path="certificates" element={<MyCertificates />} />
           </Route>
 
           {/* Admin (authenticated + admin roles) */}
@@ -188,6 +191,7 @@ export default function App() {
             <Route path="members/outsiders" element={<OutsiderDonors />} />
             <Route path="id-cards" element={<BulkIDCards />} />
             <Route path="live-darshan" element={<LiveDarshanAdmin />} />
+            <Route path="certificates" element={<CertificatesAdmin />} />
 
             {/* Payments */}
             <Route path="payments" element={<PaymentHistory />} />
