@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react'
+import { inject } from '@vercel/analytics'
+import { injectSpeedInsights } from '@vercel/speed-insights'
 import './i18n'
 import './index.css'
 import App from './App'
@@ -14,6 +16,9 @@ Sentry.init({
 
 // Auto-reload when a lazy-loaded chunk is missing after a new deployment
 window.addEventListener('vite:preloadError', () => { window.location.reload() })
+
+inject()
+injectSpeedInsights()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
