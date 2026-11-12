@@ -23,6 +23,7 @@ export function Homepage() {
   const [suggestionForm, setSuggestionForm] = useState({ name: '', phone: '', suggestion: '' })
   const [suggestionSaving, setSuggestionSaving] = useState(false)
   const [suggestionSubmitted, setSuggestionSubmitted] = useState(false)
+  const [liveSlots, setLiveSlots] = useState<{ slot: number; title: string | null; youtube_url: string }[]>([])
   const [subscribeEmail, setSubscribeEmail] = useState('')
   const [subscribing, setSubscribing] = useState(false)
   const [subscribeSuccess, setSubscribeSuccess] = useState(false)
@@ -87,6 +88,9 @@ export function Homepage() {
       .then(({ data }) => {
         if (data) setGalleryImages(data)
       })
+    supabase.from('live_darshan').select('slot, title, youtube_url')
+      .eq('is_active', true).not('youtube_url', 'is', null).order('slot')
+      .then(({ data }) => { if (data) setLiveSlots(data as any) })
   }, [])
 
   const stats = [
@@ -220,6 +224,42 @@ export function Homepage() {
           </div>
         </div>
       </section>
+
+      {/* Live Darshan Section */}
+      {liveSlots.length > 0 && (
+        <section className="bg-white py-12 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8">
+              <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">Live Darshan</p>
+              <h2 className="text-3xl font-bold text-text-primary">12 Sacred Shiva Temples Live Darshan</h2>
+              <p className="text-text-secondary mt-2">Watch live darshan from sacred temples and holy sites</p>
+            </div>
+            <div className={`grid gap-4 ${liveSlots.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto' : liveSlots.length <= 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'}`}>
+              {liveSlots.map((s) => {
+                const id = s.youtube_url?.match(/(?:youtube\.com\/(?:watch\?v=|live\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1]
+                if (!id) return null
+                return (
+                  <div key={s.slot} className="rounded-xl overflow-hidden border border-border shadow-sm">
+                    <div className="aspect-video">
+                      <iframe src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&rel=0`}
+                        className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen title={s.title || `Live ${s.slot}`} />
+                    </div>
+                    {s.title && (
+                      <div className="px-4 py-2.5 bg-white border-t border-border">
+                        <p className="text-sm font-semibold text-text-primary">{s.title}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="text-center mt-6">
+              <Link to="/live-darshan" className="text-sm font-medium text-primary hover:underline">View All Live Streams →</Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Members Auto-Slide — all members, 4×4 grid */}
       {(() => {

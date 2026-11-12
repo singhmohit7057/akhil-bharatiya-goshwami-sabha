@@ -22,6 +22,7 @@ export function Navbar() {
 
   navLinks.push({ to: '/matrimonial', label: t('nav.matrimonial') })
   navLinks.push({ to: '/gallery', label: t('nav.gallery') })
+  navLinks.push({ to: '/live-darshan', label: t('nav.liveDarshan') })
   navLinks.push({ to: '/donate', label: t('nav.donate') })
   navLinks.push({ to: '/contact', label: t('nav.contact') })
 

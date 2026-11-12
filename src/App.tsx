@@ -62,6 +62,8 @@ const AddMember = lazy(() => import('./admin/members/AddMember').then((m) => ({ 
 const MemberDetail = lazy(() => import('./admin/members/MemberDetail').then((m) => ({ default: m.MemberDetail })))
 const OutsiderDonors = lazy(() => import('./admin/members/OutsiderDonors').then((m) => ({ default: m.OutsiderDonors })))
 const BulkIDCards = lazy(() => import('./admin/media/BulkIDCards').then((m) => ({ default: m.BulkIDCards })))
+const LiveDarshanAdmin = lazy(() => import('./admin/media/LiveDarshan').then((m) => ({ default: m.LiveDarshanAdmin })))
+const LiveDarshan = lazy(() => import('./pages/LiveDarshan').then((m) => ({ default: m.LiveDarshan })))
 const AddEvent = lazy(() => import('./admin/yearly-planner/AddEvent').then((m) => ({ default: m.AddEvent })))
 const EditEvent = lazy(() => import('./admin/yearly-planner/EditEvent').then((m) => ({ default: m.EditEvent })))
 const ManageDirectory = lazy(() => import('./admin/directory/ManageDirectory').then((m) => ({ default: m.ManageDirectory })))
@@ -102,6 +104,7 @@ export default function App() {
             <Route path="gallery" element={<Gallery />} />
             <Route path="gallery/:id" element={<GalleryAlbum />} />
             <Route path="souvenirs" element={<Souvenirs />} />
+            <Route path="live-darshan" element={<LiveDarshan />} />
             <Route path="donate" element={<Donate />} />
             <Route path="contact" element={<Contact />} />
             <Route path="unsubscribe" element={<Unsubscribe />} />
@@ -184,6 +187,7 @@ export default function App() {
             <Route path="members/pending" element={<PendingApprovals />} />
             <Route path="members/outsiders" element={<OutsiderDonors />} />
             <Route path="id-cards" element={<BulkIDCards />} />
+            <Route path="live-darshan" element={<LiveDarshanAdmin />} />
 
             {/* Payments */}
             <Route path="payments" element={<PaymentHistory />} />
