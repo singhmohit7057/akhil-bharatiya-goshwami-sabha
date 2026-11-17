@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import {
   UserCheck, Users, Calendar, IndianRupee, Crown, Briefcase, Heart,
   Plus, UserPlus, CalendarPlus, CreditCard, Store, Receipt,
-  Check, X, MapPin, Clock, User,
+  Check, X, MapPin, Clock, User, Cake,
   MessageSquare, Mail, MailX, Lightbulb,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -25,6 +25,7 @@ export function AdminDashboard() {
   const [pendingMembers, setPendingMembers] = useState<Profile[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
   const [recentPayments, setRecentPayments] = useState<DonationWithProfile[]>([])
+  const [birthdayMembers, setBirthdayMembers] = useState<{ id: string; full_name: string; date_of_birth: string; profile_photo_url: string | null; daysTo: number; isToday: boolean }[]>([])
 
   useEffect(() => {
     const monthStart = new Date()
@@ -90,6 +91,22 @@ export function AdminDashboard() {
         unsubscribed: unsubRes.count || 0,
       })
     })
+
+    // Birthday fetch — upcoming 30 days
+    supabase.from('profiles').select('id, full_name, date_of_birth, profile_photo_url')
+      .eq('account_status', 'active').not('date_of_birth', 'is', null)
+      .then(({ data }) => {
+        if (!data) return
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        const results = (data as any[]).map(m => {
+          const dob = new Date(m.date_of_birth)
+          const next = new Date(today.getFullYear(), dob.getMonth(), dob.getDate())
+          if (next < today) next.setFullYear(today.getFullYear() + 1)
+          const daysTo = Math.round((next.getTime() - today.getTime()) / 86400000)
+          return { ...m, daysTo, isToday: daysTo === 0 }
+        }).filter(m => m.daysTo <= 30).sort((a, b) => a.daysTo - b.daysTo)
+        setBirthdayMembers(results)
+      })
   }, [])
 
   async function handleApprove(member: Profile) {
@@ -150,7 +167,7 @@ export function AdminDashboard() {
       <h1 className="text-3xl font-extrabold text-text-primary mb-4">{t('title')}</h1>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
         {statCards.map((card) => (
           <Link key={card.label} to={card.to} className={`bg-gradient-to-br ${card.gradient} rounded-xl p-4 hover:shadow-lg hover:scale-[1.02] transition-all flex flex-col items-center justify-center gap-2 text-center`}>
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -163,7 +180,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl border border-border p-4 mb-6">
+      <div className="bg-white rounded-xl border border-border p-4 mb-4">
         <h2 className="text-sm font-semibold text-text-primary mb-3">Quick Actions</h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {quickActions.map((action) => (
@@ -178,7 +195,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Forms & Subscribers */}
-      <div className="bg-white rounded-xl border border-border p-4 mb-6">
+      <div className="bg-white rounded-xl border border-border p-4 mb-4">
         <h2 className="text-sm font-semibold text-text-primary mb-3">Forms & Subscribers</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
@@ -196,6 +213,37 @@ export function AdminDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Birthday Section */}
+      {birthdayMembers.length > 0 && (
+        <div className="bg-white rounded-xl border border-border p-5 mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Cake className="w-5 h-5 text-pink-500" />
+            <h2 className="text-base font-semibold text-text-primary">Upcoming Birthdays</h2>
+            <span className="text-xs text-text-secondary ml-1">(next 30 days)</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {birthdayMembers.map(m => (
+              <div key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border ${m.isToday ? 'bg-pink-50 border-pink-200' : 'bg-surface border-border'}`}>
+                <div className="w-11 h-11 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+                  {m.profile_photo_url
+                    ? <img src={m.profile_photo_url} alt="" className="w-11 h-11 rounded-full object-cover" />
+                    : <User className="w-5 h-5 text-primary" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-text-primary truncate">{m.full_name}</p>
+                  <p className="text-xs text-text-secondary">
+                    {new Date(m.date_of_birth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </p>
+                  <p className={`text-xs font-medium mt-0.5 ${m.isToday ? 'text-pink-600' : 'text-primary'}`}>
+                    {m.isToday ? '🎂 Today!' : `${m.daysTo} day${m.daysTo !== 1 ? 's' : ''} to go`}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Registrations */}
@@ -317,6 +365,7 @@ export function AdminDashboard() {
           )}
         </div>
       </div>
+
 
     </div>
   )

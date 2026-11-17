@@ -33,7 +33,7 @@ function transliterateWord(word: string): string {
     let matched = ''
     let hindi = ''
 
-    for (let len = 4; len >= 1; len--) {
+    for (let len = 6; len >= 1; len--) {
       const chunk = lower.substring(i, i + len)
       if (MAP[chunk]) {
         matched = chunk
