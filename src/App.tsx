@@ -66,6 +66,9 @@ const BulkIDCards = lazy(() => import('./admin/media/BulkIDCards').then((m) => (
 const LiveDarshanAdmin = lazy(() => import('./admin/media/LiveDarshan').then((m) => ({ default: m.LiveDarshanAdmin })))
 const CertificatesAdmin = lazy(() => import('./admin/media/Certificates').then((m) => ({ default: m.Certificates })))
 const LiveDarshan = lazy(() => import('./pages/LiveDarshan').then((m) => ({ default: m.LiveDarshan })))
+const Articles = lazy(() => import('./pages/Articles').then((m) => ({ default: m.Articles })))
+const ArticleDetail = lazy(() => import('./pages/ArticleDetail').then((m) => ({ default: m.ArticleDetail })))
+const ArticlesAdmin = lazy(() => import('./admin/media/Articles').then((m) => ({ default: m.Articles })))
 const AddEvent = lazy(() => import('./admin/yearly-planner/AddEvent').then((m) => ({ default: m.AddEvent })))
 const EditEvent = lazy(() => import('./admin/yearly-planner/EditEvent').then((m) => ({ default: m.EditEvent })))
 const ManageDirectory = lazy(() => import('./admin/directory/ManageDirectory').then((m) => ({ default: m.ManageDirectory })))
@@ -107,6 +110,8 @@ export default function App() {
             <Route path="gallery/:id" element={<GalleryAlbum />} />
             <Route path="souvenirs" element={<Souvenirs />} />
             <Route path="live-darshan" element={<LiveDarshan />} />
+            <Route path="articles" element={<Articles />} />
+            <Route path="articles/:id" element={<ArticleDetail />} />
             <Route path="donate" element={<Donate />} />
             <Route path="contact" element={<Contact />} />
             <Route path="unsubscribe" element={<Unsubscribe />} />
@@ -192,6 +197,7 @@ export default function App() {
             <Route path="id-cards" element={<BulkIDCards />} />
             <Route path="live-darshan" element={<LiveDarshanAdmin />} />
             <Route path="certificates" element={<CertificatesAdmin />} />
+            <Route path="articles" element={<ArticlesAdmin />} />
 
             {/* Payments */}
             <Route path="payments" element={<PaymentHistory />} />

@@ -31,6 +31,16 @@ export function PromoPopup() {
       })
   }, [])
 
+  // Lock body scroll while popup is open
+  useEffect(() => {
+    if (visible) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [visible])
+
   function handleClose() {
     if (popup) localStorage.setItem(`popup_dismissed_${popup.id}`, 'true')
     setVisible(false)

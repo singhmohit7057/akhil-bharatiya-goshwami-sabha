@@ -30,6 +30,7 @@ export function Footer() {
                 <li><Link to="/events" className="text-xs text-text-secondary">{t('nav.events')}</Link></li>
                 <li><Link to="/businesses" className="text-xs text-text-secondary">{t('nav.directory')}</Link></li>
                 <li><Link to="/matrimonial" className="text-xs text-text-secondary">{t('nav.matrimonial')}</Link></li>
+                <li><Link to="/live-darshan" className="text-xs text-text-secondary">Live Darshan</Link></li>
                 <li><Link to="/contact" className="text-xs text-text-secondary">{t('nav.contact')}</Link></li>
               </ul>
             </div>
@@ -38,6 +39,7 @@ export function Footer() {
               <ul className="space-y-1.5">
                 <li><Link to="/members" className="text-xs text-text-secondary">{t('nav.members')}</Link></li>
                 <li><Link to="/gallery" className="text-xs text-text-secondary">{t('nav.gallery')}</Link></li>
+                <li><Link to="/articles" className="text-xs text-text-secondary">Articles</Link></li>
                 <li><Link to="/souvenirs" className="text-xs text-text-secondary">{t('nav.souvenirs')}</Link></li>
                 <li><Link to="/verify" className="text-xs text-text-secondary">{t('nav.verify')}</Link></li>
                 <li><Link to="/donate" className="text-xs text-text-secondary">{t('nav.donate')}</Link></li>
@@ -90,6 +92,7 @@ export function Footer() {
               <li><Link to="/events" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.events')}</Link></li>
               <li><Link to="/businesses" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.directory')}</Link></li>
               <li><Link to="/matrimonial" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.matrimonial')}</Link></li>
+              <li><Link to="/live-darshan" className="text-xs text-text-secondary hover:text-primary transition-colors">Live Darshan</Link></li>
               <li><Link to="/contact" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.contact')}</Link></li>
             </ul>
           </div>
@@ -98,6 +101,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link to="/members" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.members')}</Link></li>
               <li><Link to="/gallery" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.gallery')}</Link></li>
+              <li><Link to="/articles" className="text-xs text-text-secondary hover:text-primary transition-colors">Articles</Link></li>
               <li><Link to="/souvenirs" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.souvenirs')}</Link></li>
               <li><Link to="/verify" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.verify')}</Link></li>
               <li><Link to="/donate" className="text-xs text-text-secondary hover:text-primary transition-colors">{t('nav.donate')}</Link></li>

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Users, Shield, Crown, UserCheck, MapPin, Handshake, Heart, Briefcase, PartyPopper, User, Calendar, MessageSquare, Send } from 'lucide-react'
+import { Users, Shield, Crown, UserCheck, MapPin, Handshake, Heart, Briefcase, PartyPopper, User, Calendar, MessageSquare, Send, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 
@@ -24,6 +24,9 @@ export function Homepage() {
   const [suggestionSaving, setSuggestionSaving] = useState(false)
   const [suggestionSubmitted, setSuggestionSubmitted] = useState(false)
   const [liveSlots, setLiveSlots] = useState<{ slot: number; title: string | null; youtube_url: string }[]>([])
+  const [articles, setArticles] = useState<{ id: string; title: string; slug: string | null; content: string; cover_image_url: string | null; created_at: string; publisher: { full_name: string; profile_photo_url: string | null } | null }[]>([])
+  const [articleSlide, setArticleSlide] = useState(0)
+  const [articleFading, setArticleFading] = useState(false)
   const [subscribeEmail, setSubscribeEmail] = useState('')
   const [subscribing, setSubscribing] = useState(false)
   const [subscribeSuccess, setSubscribeSuccess] = useState(false)
@@ -91,6 +94,10 @@ export function Homepage() {
     supabase.from('live_darshan').select('slot, title, youtube_url')
       .eq('is_active', true).not('youtube_url', 'is', null).order('slot')
       .then(({ data }) => { if (data) setLiveSlots(data as any) })
+    supabase.from('articles')
+      .select('id, title, slug, content, cover_image_url, created_at, publisher:profiles!articles_publisher_id_fkey(full_name, profile_photo_url)')
+      .eq('is_published', true).order('created_at', { ascending: false }).limit(9)
+      .then(({ data }) => { if (data) setArticles(data as any) })
   }, [])
 
   const stats = [
@@ -225,7 +232,96 @@ export function Homepage() {
         </div>
       </section>
 
-      {/* Live Darshan Section */}
+      {/* Articles Slider */}
+      {articles.length > 0 && (() => {
+        const PER = 3
+        const totalSlides = Math.ceil(articles.length / PER)
+        const visible = articles.slice(articleSlide * PER, articleSlide * PER + PER)
+        const goTo = (n: number) => {
+          setArticleFading(true)
+          setTimeout(() => { setArticleSlide(n); setArticleFading(false) }, 180)
+        }
+        const prev = () => goTo((articleSlide - 1 + totalSlides) % totalSlides)
+        const next = () => goTo((articleSlide + 1) % totalSlides)
+        return (
+          <section className="py-16 px-4 bg-surface">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-8">
+                <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-2">From Our Community</p>
+                <h2 className="text-2xl font-bold text-text-primary">Latest Articles</h2>
+              </div>
+
+              {/* Cards with side arrows */}
+              <div className="relative">
+                {totalSlides > 1 && (
+                  <button onClick={prev} aria-label="Previous"
+                    className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow-md flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary hover:shadow-lg transition-all">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
+                {totalSlides > 1 && (
+                  <button onClick={next} aria-label="Next"
+                    className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-border shadow-md flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary hover:shadow-lg transition-all">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                )}
+
+              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-5 transition-opacity duration-180 ${articleFading ? 'opacity-0' : 'opacity-100'}`}>
+                {visible.map((a) => (
+                  <Link key={a.id} to={`/articles/${a.slug || a.id}`}
+                    className="group bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+                    {a.cover_image_url ? (
+                      <img src={a.cover_image_url} alt={a.title}
+                        className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-44 bg-gradient-to-br from-orange-50 to-amber-100 flex items-center justify-center text-4xl">📰</div>
+                    )}
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="font-semibold text-text-primary text-sm leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">{a.title}</h3>
+                      <p className="text-xs text-text-secondary line-clamp-3 flex-1">{a.content}</p>
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border text-[11px] text-text-secondary">
+                        {a.publisher?.full_name && (
+                          <span className="flex items-center gap-1.5">
+                            {a.publisher.profile_photo_url ? (
+                              <img src={a.publisher.profile_photo_url} alt="" className="w-5 h-5 rounded-full object-cover ring-1 ring-border" loading="lazy" />
+                            ) : (
+                              <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center ring-1 ring-border">
+                                <User className="w-3 h-3 text-primary" />
+                              </span>
+                            )}
+                            {a.publisher.full_name}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 ml-auto">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(a.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              </div>{/* end relative wrapper */}
+
+              {/* Dots */}
+              {totalSlides > 1 && (
+                <div className="flex justify-center gap-1.5 mt-6">
+                  {Array.from({ length: totalSlides }).map((_, i) => (
+                    <button key={i} onClick={() => goTo(i)} aria-label={`Slide ${i + 1}`}
+                      className={`w-2 h-2 rounded-full transition-colors ${i === articleSlide ? 'bg-primary' : 'bg-gray-300'} relative before:absolute before:inset-[-8px]`} />
+                  ))}
+                </div>
+              )}
+
+              <div className="text-center mt-6">
+                <Link to="/articles" className="text-sm font-medium text-primary hover:underline">View All Articles →</Link>
+              </div>
+            </div>
+          </section>
+        )
+      })()}
+
+      {/* Live Darshan Section — thumbnails only, click to open full page */}
       {liveSlots.length > 0 && (
         <section className="bg-white py-12 px-4">
           <div className="max-w-6xl mx-auto">
@@ -239,18 +335,27 @@ export function Homepage() {
                 const id = s.youtube_url?.match(/(?:youtube\.com\/(?:watch\?v=|live\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1]
                 if (!id) return null
                 return (
-                  <div key={s.slot} className="rounded-xl overflow-hidden border border-border shadow-sm">
-                    <div className="aspect-video">
-                      <iframe src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&rel=0`}
-                        className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen title={s.title || `Live ${s.slot}`} />
+                  <Link key={s.slot} to="/live-darshan" className="group rounded-xl overflow-hidden border border-border shadow-sm block hover:shadow-md transition-shadow">
+                    <div className="aspect-video relative bg-black">
+                      <img
+                        src={`https://img.youtube.com/vi/${id}/mqdefault.jpg`}
+                        alt={s.title || `Live ${s.slot}`}
+                        className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                        loading="lazy"
+                      />
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                          <svg viewBox="0 0 24 24" fill="white" className="w-5 h-5 ml-0.5"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </div>
                     </div>
                     {s.title && (
                       <div className="px-4 py-2.5 bg-white border-t border-border">
-                        <p className="text-sm font-semibold text-text-primary">{s.title}</p>
+                        <p className="text-sm font-semibold text-text-primary truncate">{s.title}</p>
                       </div>
                     )}
-                  </div>
+                  </Link>
                 )
               })}
             </div>
@@ -510,13 +615,17 @@ function AutoMemberSlide({ items, perSlide, slide, setSlide, totalSlides, curren
   items: Profile[]; perSlide: number; slide: number; setSlide: (n: number) => void
   totalSlides: number; currentItems: Profile[]; boardSlugs: string[]; executiveSlugs: string[]; lang: string
 }) {
+  // Keep auto-advance in a ref so the timer never re-triggers a full-page re-render
+  const slideRef = useRef(slide)
+  slideRef.current = slide
+
   useEffect(() => {
     if (items.length <= perSlide) return
     const timer = setInterval(() => {
-      setSlide((slide + 1) % totalSlides)
+      setSlide((slideRef.current + 1) % totalSlides)
     }, 5000)
     return () => clearInterval(timer)
-  }, [items.length, totalSlides, perSlide, slide])
+  }, [items.length, totalSlides, perSlide]) // ← slide removed from deps; uses ref instead
 
   if (currentItems.length === 0) return <p className="text-center text-sm text-text-secondary py-8">No members yet.</p>
 

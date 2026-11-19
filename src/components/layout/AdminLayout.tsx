@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, ShieldCheck, Users, Award, Heart, Briefcase,
   CalendarRange, Gift, IndianRupee, Images, Megaphone, FileText, Mail,
-  ChevronDown, Menu, BarChart3, Eye, CreditCard, Tv, ScrollText,
+  ChevronDown, Menu, BarChart3, Eye, CreditCard, Tv, ScrollText, Newspaper,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { cn } from '../../lib/utils'
@@ -145,6 +145,7 @@ const sections: NavSection[] = [
       { to: '/admin/live-darshan', icon: Tv, label: 'Live Darshan' },
       { to: '/admin/certificates', icon: ScrollText, label: 'Certificates' },
       { to: '/admin/id-cards', icon: CreditCard, label: 'Bulk ID Cards' },
+      { to: '/admin/articles', icon: Newspaper, label: 'Articles' },
       { to: '/admin/promo-popups', icon: Megaphone, label: 'Promo Popups' },
       { to: '/admin/forms', icon: FileText, label: 'Form Submissions' },
       { to: '/admin/subscribers', icon: Mail, label: 'Subscribers' },
@@ -161,16 +162,21 @@ const sections: NavSection[] = [
   },
 ]
 
-// Map permission key → section titles that require it
-const PERM_SECTION_MAP: Record<string, string[]> = {
-  members:     ['MEMBERS'],
-  payments:    ['PAYMENTS'],
-  events:      ['COMMUNITY'],
-  gallery:     ['MEDIA & PROMOTIONS'],
-  matrimonial: ['COMMUNITY'],
-  directory:   ['COMMUNITY'],
-  reports:     ['REPORTS', 'LOGS'],
-  community:   ['MEDIA & PROMOTIONS', 'COMMUNITY'],
+// Map permission key → admin route prefixes that require it
+const PERM_ROUTE_MAP: Record<string, string[]> = {
+  members:      ['/admin/members', '/admin/id-cards'],
+  payments:     ['/admin/payments', '/admin/expenses', '/admin/bank'],
+  events:       ['/admin/yearly-planner'],
+  gallery:      ['/admin/gallery'],
+  matrimonial:  ['/admin/matrimonial'],
+  directory:    ['/admin/business'],
+  reports:      ['/admin/reports', '/admin/logs'],
+  community:    ['/admin/souvenir', '/admin/promo-popups', '/admin/forms', '/admin/subscribers'],
+  articles:     ['/admin/articles'],
+  live_darshan: ['/admin/live-darshan'],
+  certificates: ['/admin/certificates'],
+  id_cards:     ['/admin/id-cards'],
+  designations: ['/admin/designations'],
 }
 
 export function AdminLayout() {
@@ -183,43 +189,26 @@ export function AdminLayout() {
 
   const filteredSections = (() => {
     if (superAdmin) return sections
-    // Viewer: curated view — specific sections and items only
-    if (viewer) {
-      const viewerAllowed: Record<string, string[]> = {
-        '':          ['/admin'],
-        'MEMBERS':   ['/admin/members'],
-        'PAYMENTS':  ['/admin/payments', '/admin/expenses', '/admin/bank'],
-        'REPORTS':   ['/admin/reports'],
-        'COMMUNITY': ['/admin/matrimonial', '/admin/business', '/admin/yearly-planner'],
-        'MEDIA & PROMOTIONS': ['/admin/forms', '/admin/subscribers'],
-      }
-      return sections
-        .filter((s) => viewerAllowed[s.title ?? ''] !== undefined)
-        .map((s) => ({
-          ...s,
-          items: s.items.map((item) => ({
-            ...item,
-            children: item.children?.filter((c) =>
-              viewerAllowed[s.title ?? '']?.some((path) => c.to.startsWith(path)) &&
-              !c.to.includes('/add') && !c.to.includes('/pending') && !c.to.includes('/bulk')
-            ),
-          })).filter((item) =>
-            viewerAllowed[s.title ?? '']?.some((path) => item.to.startsWith(path))
-          ),
-        }))
-        .filter((s) => s.items.length > 0)
-    }
-    // Admin: show only sections they have permission for
-    const allowedTitles = new Set<string>(['DASHBOARD', ''])
+    // Viewer: sees everything but cannot edit — full sidebar, read-only pages
+    if (viewer) return sections
+    // Admin: show only items they have permission for (route-based)
     const perms: string[] = (profile as any)?.admin_permissions || []
+    const allowedRoutes = new Set<string>(['/admin', '/admin/sub-admins']) // dashboard always visible
     perms.forEach((p) => {
-      ;(PERM_SECTION_MAP[p] || []).forEach((t) => allowedTitles.add(t))
+      ;(PERM_ROUTE_MAP[p] || []).forEach((r) => allowedRoutes.add(r))
     })
+    const isAllowed = (to: string) =>
+      to === '/admin' || [...allowedRoutes].some((r) => r !== '/admin' && to.startsWith(r))
     return sections
-      .filter((s) => !s.title || allowedTitles.has(s.title))
       .map((s) => ({
         ...s,
-        items: s.items.filter((item) => item.to !== '/admin/sub-admins' && item.to !== '/admin/sub-admins/add'),
+        items: s.items
+          .filter((item) => item.to !== '/admin/sub-admins' && item.to !== '/admin/sub-admins/add')
+          .map((item) => ({
+            ...item,
+            children: item.children?.filter((c) => isAllowed(c.to)),
+          }))
+          .filter((item) => isAllowed(item.to)),
       }))
       .filter((s) => s.items.length > 0)
   })()
