@@ -216,73 +216,126 @@ function generateModern(data: CertificateData) {
   doc.save(`ABGSPB_${safeTitle}_${safeName}.pdf`)
 }
 
-// ── Template 3: Royal ─────────────────────────────────────────────────────────
+// ── Template 3: Royal (Samman Patra style) ────────────────────────────────────
 function generateRoyal(data: CertificateData) {
   const isPortrait = data.orientation === 'portrait'
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: isPortrait ? 'portrait' : 'landscape' })
   const W = isPortrait ? 210 : 297, H = isPortrait ? 297 : 210
 
-  // Dark navy background
-  doc.setFillColor(15, 20, 50); doc.rect(0, 0, W, H, 'F')
+  // White background
+  doc.setFillColor(255, 255, 255); doc.rect(0, 0, W, H, 'F')
 
-  // Gold border
-  doc.setDrawColor(212, 175, 55); doc.setLineWidth(2)
-  doc.rect(8, 8, W - 16, H - 16)
-  doc.setLineWidth(0.5); doc.setDrawColor(180, 140, 40)
-  doc.rect(12, 12, W - 24, H - 24)
+  // ── Left decorative side bar ──
+  doc.setFillColor(255, 153, 51); doc.rect(0, 0, 10, H, 'F')   // saffron outer
+  doc.setFillColor(255, 190, 80); doc.rect(10, 0, 5, H, 'F')   // lighter saffron
+  doc.setFillColor(0, 90, 170);   doc.rect(15, 0, 7, H, 'F')   // blue
 
-  // Gold top band
-  doc.setFillColor(212, 175, 55); doc.rect(15, 15, W - 30, 20, 'F')
-  doc.setTextColor(15, 20, 50); doc.setFontSize(11); doc.setFont('helvetica', 'bold')
-  doc.text('AKHIL BHARATIYA GOSWAMI SABHA · PASCHIM BANGAL', W / 2, 27, { align: 'center' })
+  // ── Right decorative side bar (mirror) ──
+  doc.setFillColor(0, 90, 170);   doc.rect(W - 22, 0, 7, H, 'F')
+  doc.setFillColor(255, 190, 80); doc.rect(W - 15, 0, 5, H, 'F')
+  doc.setFillColor(255, 153, 51); doc.rect(W - 10, 0, 10, H, 'F')
 
-  // Certificate heading
-  doc.setTextColor(212, 175, 55); doc.setFontSize(11); doc.setFont('helvetica', 'bold')
-  doc.text('— CERTIFICATE —', W / 2, 52, { align: 'center' })
+  // ── Top band ──
+  doc.setFillColor(255, 153, 51); doc.rect(0, 0, W, 5, 'F')
+  doc.setFillColor(0, 90, 170);   doc.rect(0, 5, W, 3, 'F')
 
-  // Title
-  doc.setTextColor(255, 255, 255); doc.setFontSize(isPortrait ? 20 : 26); doc.setFont('helvetica', 'bold')
-  doc.text(data.certificateTitle.toUpperCase(), W / 2, 68, { align: 'center' })
+  // ── Bottom band ──
+  doc.setFillColor(0, 90, 170);   doc.rect(0, H - 8, W, 5, 'F')
+  doc.setFillColor(255, 153, 51); doc.rect(0, H - 3, W, 3, 'F')
 
-  doc.setTextColor(180, 160, 100); doc.setFontSize(10); doc.setFont('helvetica', 'italic')
-  doc.text('This certificate is proudly presented to', W / 2, 82, { align: 'center' })
+  const mx = 25 // left margin after side bars
 
-  // Name
-  doc.setTextColor(212, 175, 55); doc.setFontSize(isPortrait ? 26 : 32); doc.setFont('helvetica', 'bold')
-  doc.text(data.memberName, W / 2, 98, { align: 'center' })
+  // ── Header background ──
+  doc.setFillColor(255, 248, 235); doc.rect(mx, 10, W - mx * 2, 42, 'F')
+  doc.setDrawColor(255, 153, 51); doc.setLineWidth(0.8)
+  doc.rect(mx, 10, W - mx * 2, 42)
 
-  // Gold underline
-  const nw = doc.getTextWidth(data.memberName)
-  doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.8)
-  doc.line(W / 2 - nw / 2, 101, W / 2 + nw / 2, 101)
+  // Reg number
+  doc.setTextColor(120, 120, 120); doc.setFontSize(7); doc.setFont('helvetica', 'normal')
+  doc.text('Regd. No. S/1L/52021', mx + 3, 16)
 
+  // Org name
+  doc.setTextColor(180, 50, 0); doc.setFontSize(isPortrait ? 14 : 16); doc.setFont('helvetica', 'bold')
+  doc.text('AKHIL BHARATIYA GOSWAMI SABHA', W / 2, 25, { align: 'center' })
+  doc.setFontSize(10); doc.setTextColor(100, 60, 0)
+  doc.text('Paschim Bangal', W / 2, 32, { align: 'center' })
+
+  // Address
+  doc.setFontSize(7.5); doc.setTextColor(80, 80, 80); doc.setFont('helvetica', 'normal')
+  doc.text('HQ: 24, Kashipur Road, Kolkata - 700 002  |  Mo. 90514 39163, 93310 38940', W / 2, 38, { align: 'center' })
+  doc.text('Email: abgsp3@gmail.com  |  Website: www.akhilbharatiyagoswami.com', W / 2, 44, { align: 'center' })
+
+  // Divider lines
+  doc.setDrawColor(255, 153, 51); doc.setLineWidth(1.2)
+  doc.line(mx, 54, W - mx, 54)
+  doc.setDrawColor(0, 90, 170); doc.setLineWidth(0.5)
+  doc.line(mx, 56, W - mx, 56)
+
+  // ── Ornate title badge ──
+  const badgeY = isPortrait ? 62 : 60
+  doc.setFillColor(140, 15, 15); doc.roundedRect(W / 2 - 36, badgeY, 72, 18, 5, 5, 'F')
+  doc.setDrawColor(212, 175, 55); doc.setLineWidth(1)
+  doc.roundedRect(W / 2 - 38, badgeY - 2, 76, 22, 6, 6)
+  doc.setTextColor(255, 215, 0); doc.setFontSize(14); doc.setFont('helvetica', 'bold')
+  doc.text(data.certificateTitle.toUpperCase(), W / 2, badgeY + 11, { align: 'center' })
+
+  // Year below badge (more spacing)
+  doc.setFontSize(9); doc.setTextColor(140, 15, 15)
+  doc.text(`Year ${new Date(data.issuedDate).getFullYear()}`, W / 2, badgeY + 26, { align: 'center' })
+
+  // ── Certificate title ──
+  const titleY = isPortrait ? 102 : 96
+  doc.setTextColor(60, 60, 60); doc.setFontSize(isPortrait ? 11 : 13); doc.setFont('helvetica', 'italic')
+  doc.text(data.certificateTitle, W / 2, titleY, { align: 'center' })
+
+  // ── Member name ──
+  const nameY = isPortrait ? 118 : 110
+  doc.setTextColor(180, 30, 0); doc.setFontSize(isPortrait ? 22 : 26); doc.setFont('helvetica', 'bold')
+  doc.text(data.memberName, W / 2, nameY, { align: 'center' })
+
+  // Member ID
   if (data.memberId) {
-    doc.setTextColor(150, 140, 100); doc.setFontSize(9); doc.setFont('helvetica', 'normal')
-    doc.text(`Member ID: ${data.memberId}`, W / 2, 110, { align: 'center' })
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 100, 100)
+    doc.text(`Member ID: ${data.memberId}`, W / 2, nameY + 9, { align: 'center' })
   }
 
+  // ── Description ──
   if (data.description) {
-    doc.setTextColor(200, 190, 160); doc.setFontSize(10); doc.setFont('helvetica', 'normal')
-    const lines = doc.splitTextToSize(data.description, W - 60)
-    doc.text(lines, W / 2, 123, { align: 'center' })
+    const descY = isPortrait ? 140 : 128
+    doc.setTextColor(50, 50, 50); doc.setFontSize(10); doc.setFont('helvetica', 'normal')
+    const lines = doc.splitTextToSize(data.description, W - mx * 2 - 10)
+    doc.text(lines, W / 2, descY, { align: 'center' })
   }
 
-  // Bottom
-  const bY = isPortrait ? 255 : 162
-  doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.5)
-  doc.line(40, bY, 120, bY); doc.line(W - 120, bY, W - 40, bY)
-  doc.setTextColor(212, 175, 55); doc.setFontSize(9); doc.setFont('helvetica', 'normal')
-  doc.text(fmtDate(data.issuedDate), 80, bY + 7, { align: 'center' })
-  doc.text('Date of Issue', 80, bY + 13, { align: 'center' })
-  doc.setFont('helvetica', 'bold')
-  doc.text(data.issuedBy || 'Akhil Bharatiya Goswami Sabha', W - 80, bY + 7, { align: 'center' })
-  doc.setFont('helvetica', 'normal')
-  doc.text('Authorised Signatory', W - 80, bY + 13, { align: 'center' })
+  // ── Notes ──
+  if (data.notes) {
+    const notesY = isPortrait ? 190 : 155
+    doc.setTextColor(80, 60, 20); doc.setFontSize(10); doc.setFont('helvetica', 'italic')
+    const nlines = doc.splitTextToSize(`"${data.notes}"`, W - mx * 2 - 10)
+    doc.text(nlines, W / 2, notesY, { align: 'center' })
+  }
 
-  // Gold bottom band
-  doc.setFillColor(212, 175, 55); doc.rect(15, H - 23, W - 30, 8, 'F')
-  doc.setTextColor(15, 20, 50); doc.setFontSize(7); doc.setFont('helvetica', 'bold')
-  doc.text('akhilbharatiyagoswami.com', W / 2, H - 17.5, { align: 'center' })
+  // ── 4 Signature lines ──
+  const sigY = isPortrait ? 255 : 168
+  const sigLabels = ['Founder', 'President', 'Secretary', 'Treasurer']
+  const sigSpacing = (W - mx * 2) / 4
+  sigLabels.forEach((label, i) => {
+    const x = mx + sigSpacing * i + sigSpacing / 2
+    doc.setDrawColor(80, 80, 80); doc.setLineWidth(0.3)
+    doc.line(x - 18, sigY, x + 18, sigY)
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60)
+    doc.text(label, x, sigY + 7, { align: 'center' })
+  })
+
+  // Date
+  doc.setFontSize(8); doc.setTextColor(100, 100, 100)
+  doc.text(`Issued: ${fmtDate(data.issuedDate)}`, W / 2, sigY + 18, { align: 'center' })
+
+  // Certificate number
+  if (data.certificateNumber) {
+    doc.setFontSize(7); doc.setTextColor(160, 160, 160)
+    doc.text(`Certificate No: ${data.certificateNumber}`, mx, H - 10)
+  }
 
   const safeName = data.memberName.replace(/\s+/g, '_')
   const safeTitle = data.certificateTitle.replace(/\s+/g, '_')
